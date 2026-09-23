@@ -9,6 +9,9 @@ code('''from pathlib import Path
 import sys
 import pandas as pd
 from IPython.display import display, HTML
+import importlib
+import phillips
+importlib.reload(phillips)
 from phillips import load_data, build_figure, export_results, static_chart
 print('Python:', sys.version.split()[0])
 print('Proyecto:', Path.cwd().name)
@@ -27,6 +30,7 @@ assert datos.desocupacion.between(0,100).all()
 print('Validaciones de las tres series: correctas')
 display(datos[['desocupacion','ipc_anual','ir_real_anual']].describe().round(3))
 ''')
+md('## Referencias de inflación y desempleo\n\nLa línea horizontal señala la **meta de inflación del 3%** del BCCh, definida para un horizonte de dos años; no exige que cada dato mensual sea 3%.\n\nLa banda vertical representa el rango **8,0–8,5% para 2024-T3** publicado en la minuta *Holguras en el mercado laboral*, citada en el IPoM de diciembre de 2024 (páginas 34 y 38 del PDF). Reúne estimaciones mediante filtros de Kalman multivariados y modelos VAR. La línea **8,25%** es el punto medio calculado por este proyecto, **no una estimación puntual oficial ni una cifra del IPoM de junio de 2026**. La banda no es un intervalo de confianza.\n\nEs una referencia histórica fija, no una trayectoria estimada para 2024–2026. Además, la referencia utiliza desempleo desestacionalizado y nuestros puntos usan ENE sin ajuste estacional: las distancias son ilustrativas, no brechas cíclicas oficiales. NAIRU y tasa natural de largo plazo no son conceptos necesariamente idénticos.\n\nFuentes: [minuta BCCh diciembre de 2024](https://www.bcentral.cl/documents/33528/6735463/Minutas%2Bcitadas%2Ben%2Bel%2BIPoM%2Bdiciembre%2B2024.pdf/d24985ae-cb5e-2f03-4499-ecfad3d86ade) y [IPoM junio de 2026, meta de inflación, página 3](https://www.bcentral.cl/documents/33528/8413153/IPoM%2Bjunio%2B2026.pdf/93388589-0929-4ad6-b166-10981ca34946). Parámetros y trazabilidad: `referencias_macro.json` y `fuentes/REFERENCIAS.md`.\n')
 md('''## Gráfico animado\n\nPulsa **Play** para recorrer la muestra y **Pausa** para detenerla. Puedes arrastrar el selector temporal; **Reiniciar** vuelve al primer mes. Pasa el cursor por una burbuja para ver las cifras y el trimestre de empleo.\n\nLos ejes y la escala de áreas permanecen fijos durante toda la animación. Al volver a una fecha anterior, el rastro también retrocede.\n''')
 code('''figura = build_figure(datos)
 export_results(datos, cobertura, excluidos, figura)
@@ -35,7 +39,7 @@ static_chart(datos)
 display(HTML(figura.to_html(full_html=False, include_plotlyjs=True, auto_play=False,
                            config={'responsive': True, 'displaylogo': False})))
 ''')
-md('''## Lectura económica y sensibilidad de fechas\n\nUna nube de puntos es una descripción, no una estimación causal de la curva de Phillips. La inflación depende también de expectativas, oferta, precios externos, tipo de cambio y política monetaria. La variación del IR real comparte el IPC como deflactor, por lo que no constituye una tercera variable independiente de la inflación.\n\nLa correlación siguiente usa niveles contemporáneos, sin controles ni correcciones por autocorrelación. Los trimestres móviles se superponen y las tasas anuales también comparten meses. Por eso no se presentan pruebas de significancia, NAIRU ni recomendaciones de tasas de interés.\n\nPara explorar la convención temporal, también se calcula la correlación con ENE asignada al mes final, restringiendo ambas alternativas a las mismas fechas. Este contraste cambia el emparejamiento, no el dato original.\n''')
+md('''## Lectura económica y sensibilidad de fechas\n\nUna nube de puntos es una descripción, no una estimación causal de la curva de Phillips. La inflación depende también de expectativas, oferta, precios externos, tipo de cambio y política monetaria. La variación del IR real comparte el IPC como deflactor, por lo que no constituye una tercera variable independiente de la inflación.\n\nLa correlación siguiente usa niveles contemporáneos, sin controles ni correcciones por autocorrelación. Los trimestres móviles se superponen y las tasas anuales también comparten meses. Por eso no se presentan pruebas de significancia ni recomendaciones de tasas de interés. Tampoco se estima una NAIRU propia; se incorpora únicamente la referencia histórica externa descrita arriba.\n\nPara explorar la convención temporal, también se calcula la correlación con ENE asignada al mes final, restringiendo ambas alternativas a las mismas fechas. Este contraste cambia el emparejamiento, no el dato original.\n''')
 code('''alternativa, _, _ = load_data(alignment='final')
 fechas_comunes = datos.fecha[datos.fecha.isin(alternativa.fecha)]
 a = datos[datos.fecha.isin(fechas_comunes)]
@@ -45,6 +49,7 @@ resumen = pd.DataFrame([
     {'alineación': 'Mes final', 'n': len(b), 'correlación IPC-desocupación': b.desocupacion.corr(b.ipc_anual)}
 ])
 display(resumen.round(3))
+display(datos[['mes','distancia_meta_ipc_pp','distancia_referencia_nairu_pp']].tail(1).round(3))
 display(datos.groupby(datos.fecha.dt.year)[['desocupacion','ipc_anual','ir_real_anual']].mean().round(3))
 print('Advertencia: el último año puede ser parcial; no comparar promedios como años completos.')
 ''')

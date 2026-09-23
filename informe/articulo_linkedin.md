@@ -8,19 +8,19 @@ El gráfico animado permite hacerlo: la desocupación ocupa el eje horizontal, l
 
 ![Gráfico de Phillips](../resultados/phillips_estatico.png)
 
-Cada punto combina el IPC y el IR real del mes con la ENE del trimestre móvil centrado en ese mes. El tamaño representa el valor absoluto de la variación anual del IR real; el gráfico interactivo distingue las caídas en naranja.
+Área proporcional a la magnitud de la variación anual del IR real. ENE asignada al mes central. Línea horizontal: meta de inflación del 3%. Línea vertical: punto medio propio de 8,25% del rango NAIRU histórico 8,0–8,5% del BCCh para 2024-T3 [5].
 
 ## Una trayectoria que cambia de dirección
 
 El punto inicial combina una inflación anual de 3,8%, una desocupación de 8,50% y un aumento anual del IR real de 2,78%. En junio de 2026, el punto final registra 4,3%, 9,53% y 3,27%, respectivamente. Entre los extremos, la desocupación aumenta 1,03 puntos porcentuales y la inflación 0,5 puntos. Sin embargo, esa comparación omite los cambios de dirección que aparecen durante el recorrido.
 
-En febrero de 2026, la inflación anual baja a 2,4%, mientras la desocupación se ubica en 8,93%. En junio, ambas variables son mayores: 4,3% y 9,53%. Este desplazamiento hacia arriba y hacia la derecha no encaja con una lectura mecánica según la cual más desempleo siempre debe coincidir con menos inflación. Es una descripción de cuatro meses, no una identificación del shock que los explica.
+El último punto se sitúa arriba y a la derecha del cruce de referencias: la inflación de 4,3% supera la meta en 1,30 puntos porcentuales y la desocupación de 9,53% está 1,28 puntos sobre el punto medio histórico de 8,25%. Estas distancias describen posiciones en el gráfico; no identifican por sí solas un shock de oferta ni una brecha cíclica oficial.
 
 ## Qué puede decir una curva de Phillips
 
 La intuición económica de la curva de Phillips relaciona las presiones inflacionarias con la holgura de la economía. Un mercado laboral más estrecho puede aumentar las presiones salariales y de costos. Pero la inflación observada también responde a expectativas, precios importados, tipo de cambio, productividad y perturbaciones de oferta. El análisis del Banco Central sobre la evidencia chilena subraya la necesidad de una especificación más amplia que una nube de inflación y desempleo [4].
 
-Por eso, la correlación cercana a cero no demuestra que esa relación económica haya desaparecido. Puede reflejar fuerzas que operan al mismo tiempo, rezagos, cambios de expectativas o una muestra demasiado breve. Tampoco permite estimar la tasa de desempleo compatible con inflación estable ni atribuir el movimiento a una decisión específica de política monetaria.
+La correlación cercana a cero no demuestra que la relación económica haya desaparecido. Puede reflejar fuerzas simultáneas, rezagos o una muestra breve. Tampoco permite estimar una NAIRU propia ni atribuir el movimiento a una decisión monetaria.
 
 ## El salario real agrega una dimensión relevante
 
@@ -36,11 +36,11 @@ La muestra se limita a la intersección disponible de las tres series: 30 meses 
 
 Las tasas no están desestacionalizadas y los cambios a doce meses comparten información entre períodos. Estas dependencias, junto con el reducido tamaño de la muestra, impiden tratar los puntos como observaciones independientes para una inferencia simple. Una investigación econométrica requeriría un horizonte más largo, expectativas de inflación, controles de oferta, rezagos y una estrategia explícita de identificación.
 
-## Una herramienta para formular mejores preguntas
+## Qué significan las líneas de referencia
 
-La animación sirve para identificar episodios, contrastar hipótesis y comunicar que inflación, empleo y poder adquisitivo no evolucionan de manera uniforme. La evidencia de este corte muestra que pueden coexistir remuneraciones reales crecientes, una tasa de desocupación mayor e inflación que cambia de dirección. Una evaluación de política económica necesita explicar esa combinación, no inferir una regla estable a partir de dos ejes.
+La minuta del BCCh citada en el IPoM de diciembre de 2024 presenta un rango NAIRU de 8,0–8,5% para el tercer trimestre de 2024, mediante filtros de Kalman multivariados y modelos VAR [5]. Usamos su punto medio, 8,25%, como convención visual propia, no como estimación puntual oficial ni como cifra de junio de 2026. La banda representa dispersión entre estimaciones, no un intervalo de confianza.
 
-¿Qué parte de estos movimientos corresponde a la demanda y cuál a costos, expectativas o cambios del mercado laboral? Esa es la pregunta que este gráfico ayuda a plantear y que un análisis posterior debería poner a prueba.
+La referencia es histórica y utiliza desempleo desestacionalizado, mientras nuestros puntos usan ENE sin ajuste estacional. No suponemos que la NAIRU haya permanecido constante ni la equiparamos automáticamente a la tasa natural de largo plazo. Por su parte, la meta del 3% corresponde a un horizonte de dos años [6]; no exige que la inflación de cada mes sea exactamente 3%. Estas referencias orientan la lectura, pero no bastan para recomendar una tasa de interés.
 
 ## Fuentes y reproducibilidad
 
@@ -51,5 +51,9 @@ La animación sirve para identificar episodios, contrastar hipótesis y comunica
 [3] INE. Índices de Remuneraciones y Costos Laborales; serie empalmada del IR real. https://www.ine.gob.cl/estadisticas-por-tema/mercado-laboral/remuneraciones-y-costos-laborales
 
 [4] Banco Central de Chile. IPoM, junio de 2016, recuadro sobre evidencia de la curva de Phillips para Chile. https://www.bcentral.cl/documents/33528/133297/bcch_archivo_164644_es.pdf/5c004bf3-b159-1ff4-78aa-b286738295b6
+
+[5] Banco Central de Chile. Minutas citadas en el IPoM diciembre de 2024. Holguras en el mercado laboral, secciones 1 y 4, páginas 34 y 38 del PDF. https://www.bcentral.cl/documents/33528/6735463/Minutas%2Bcitadas%2Ben%2Bel%2BIPoM%2Bdiciembre%2B2024.pdf/d24985ae-cb5e-2f03-4499-ecfad3d86ade
+
+[6] Banco Central de Chile. IPoM junio de 2026. La meta de inflación y la Tasa de Política Monetaria, página 3 del PDF. https://www.bcentral.cl/documents/33528/8413153/IPoM%2Bjunio%2B2026.pdf/93388589-0929-4ad6-b166-10981ca34946
 
 Cálculos propios con los CSV del INE incluidos en el proyecto. Corte de archivos recibido el 22 de septiembre de 2026. Código, datos y gráfico: https://github.com/alejandrohenriquezr/curva_phillips

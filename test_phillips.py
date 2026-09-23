@@ -33,6 +33,21 @@ class PhillipsTests(unittest.TestCase):
         self.assertEqual(f.frames[1].data[1].marker.size[0],0)
         self.assertEqual(f.frames[2].data[1].marker.size[0]/f.frames[0].data[1].marker.size[0],2)
         self.assertEqual(f.frames[2].data[1].marker.sizemode,'area')
+    def test_macro_references_and_distances(self):
+        d,_,_=load_data()
+        f=build_figure(d)
+        shapes=f.layout.shapes
+        self.assertEqual(len(shapes),3)
+        self.assertEqual((shapes[0].x0,shapes[0].x1),(8.,8.5))
+        self.assertEqual((shapes[1].x0,shapes[1].x1),(8.25,8.25))
+        self.assertEqual((shapes[2].y0,shapes[2].y1),(3.,3.))
+        np.testing.assert_allclose(d.distancia_meta_ipc_pp,d.ipc_anual-3)
+        np.testing.assert_allclose(d.distancia_referencia_nairu_pp,d.desocupacion-8.25)
+        for frame in f.frames:
+            self.assertFalse(frame.layout.shapes)
+        self.assertLess(f.layout.xaxis.range[0],8.)
+        self.assertGreater(f.layout.xaxis.range[1],8.5)
+
     def test_duplicate_month_rejected(self):
         with tempfile.TemporaryDirectory() as folder:
             p=Path(folder)

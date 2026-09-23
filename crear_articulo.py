@@ -40,6 +40,30 @@ sections=[
 ('source','[4] Banco Central de Chile. IPoM, junio de 2016, recuadro sobre evidencia de la curva de Phillips para Chile. https://www.bcentral.cl/documents/33528/133297/bcch_archivo_164644_es.pdf/5c004bf3-b159-1ff4-78aa-b286738295b6'),
 ('source','Cálculos propios con los CSV del INE incluidos en el proyecto. Corte de archivos recibido el 22 de septiembre de 2026. Código, datos y gráfico: https://github.com/alejandrohenriquezr/curva_phillips'),
 ]
+refs=json.loads((ROOT/'referencias_macro.json').read_text(encoding='utf-8-sig'))
+updated=[]
+for kind,text in sections:
+    if kind=='caption':
+        text='Área proporcional a la magnitud de la variación anual del IR real. ENE asignada al mes central. Línea horizontal: meta de inflación del 3%. Línea vertical: punto medio propio de 8,25% del rango NAIRU histórico 8,0–8,5% del BCCh para 2024-T3 [5].'
+    if kind=='p' and text.startswith('En febrero de 2026'):
+        text='El último punto se sitúa arriba y a la derecha del cruce de referencias: la inflación de 4,3% supera la meta en 1,30 puntos porcentuales y la desocupación de 9,53% está 1,28 puntos sobre el punto medio histórico de 8,25%. Estas distancias describen posiciones en el gráfico; no identifican por sí solas un shock de oferta ni una brecha cíclica oficial.'
+    if kind=='p' and text.startswith('Por eso, la correlación'):
+        text='La correlación cercana a cero no demuestra que la relación económica haya desaparecido. Puede reflejar fuerzas simultáneas, rezagos o una muestra breve. Tampoco permite estimar una NAIRU propia ni atribuir el movimiento a una decisión monetaria.'
+    if kind=='h' and text=='Una herramienta para formular mejores preguntas':
+        text='Qué significan las líneas de referencia'
+    if kind=='p' and text.startswith('La animación sirve'):
+        text='La minuta del BCCh citada en el IPoM de diciembre de 2024 presenta un rango NAIRU de 8,0–8,5% para el tercer trimestre de 2024, mediante filtros de Kalman multivariados y modelos VAR [5]. Usamos su punto medio, 8,25%, como convención visual propia, no como estimación puntual oficial ni como cifra de junio de 2026. La banda representa dispersión entre estimaciones, no un intervalo de confianza.'
+    if kind=='p' and text.startswith('¿Qué parte'):
+        text='La referencia es histórica y utiliza desempleo desestacionalizado, mientras nuestros puntos usan ENE sin ajuste estacional. No suponemos que la NAIRU haya permanecido constante ni la equiparamos automáticamente a la tasa natural de largo plazo. Por su parte, la meta del 3% corresponde a un horizonte de dos años [6]; no exige que la inflación de cada mes sea exactamente 3%. Estas referencias orientan la lectura, pero no bastan para recomendar una tasa de interés.'
+    if kind=='h' and text=='Fuentes y reproducibilidad':
+        updated.append(('break',''))
+    if kind=='source' and text.startswith('Cálculos propios'):
+        updated.extend([
+            ('source','[5] Banco Central de Chile. Minutas citadas en el IPoM diciembre de 2024. Holguras en el mercado laboral, secciones 1 y 4, páginas 34 y 38 del PDF. '+refs['nairu_url']),
+            ('source','[6] Banco Central de Chile. IPoM junio de 2026. La meta de inflación y la Tasa de Política Monetaria, página 3 del PDF. '+refs['meta_url'])])
+    updated.append((kind,text))
+sections=updated
+
 doc=Document()
 s=doc.sections[0]; s.page_width=Cm(21); s.page_height=Cm(29.7)
 s.top_margin=Cm(1.8); s.bottom_margin=Cm(1.8); s.left_margin=Cm(2); s.right_margin=Cm(2)

@@ -1,0 +1,16 @@
+{
+  "meta_inflacion_pct": 3.0,
+  "meta_fuente": "Banco Central de Chile, IPoM junio de 2026, La meta de inflación y la Tasa de Política Monetaria, página 3 del PDF.",
+  "meta_url": "https://www.bcentral.cl/documents/33528/8413153/IPoM%2Bjunio%2B2026.pdf/93388589-0929-4ad6-b166-10981ca34946",
+  "nairu_rango_pct": [
+    8.0,
+    8.5
+  ],
+  "nairu_regla_linea": "Punto medio aritmético del rango publicado: (8.0 + 8.5) / 2 = 8.25. Cálculo de este proyecto, no estimación puntual oficial.",
+  "nairu_periodo_estimado": "2024-T3",
+  "nairu_publicacion": "IPoM diciembre de 2024, minuta citada en el Recuadro II.1: Holguras en el mercado laboral, secciones 1 y 4 (páginas 34 y 38 del PDF).",
+  "nairu_metodos": "Conjunto de estimaciones mediante filtros de Kalman multivariados y modelos VAR; la línea resume el rango, no selecciona ni reestima un modelo.",
+  "nairu_url": "https://www.bcentral.cl/documents/33528/6735463/Minutas%2Bcitadas%2Ben%2Bel%2BIPoM%2Bdiciembre%2B2024.pdf/d24985ae-cb5e-2f03-4499-ecfad3d86ade",
+  "nairu_nota": "Referencia histórica fija. El rango representa dispersión entre estimaciones, no un intervalo de confianza. Estimaciones basadas en desempleo desestacionalizado; los puntos del proyecto usan ENE sin ajuste estacional. Las distancias son comparaciones ilustrativas, no brechas cíclicas oficiales. No se atribuye la cifra a junio de 2026.",
+  "fecha_verificacion": "2026-09-23"
+}
