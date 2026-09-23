@@ -19,3 +19,7 @@ Se mantiene la referencia histórica fija en toda la animación. La NAIRU es una
 Las estimaciones de referencia utilizan datos desestacionalizados; los puntos emplean la ENE sin ajuste estacional. Por ello, las distancias exportadas son comparaciones ilustrativas y no estimaciones oficiales de holgura. La clasificación de cuadrantes no prueba causalidad ni autoriza una recomendación automática de política monetaria.
 
 Verificación: 23 de septiembre de 2026. Se consultaron también el IPoM de junio de 2026 y sus minutas; no se identificó una NAIRU puntual publicada en esa edición. Se utiliza diciembre de 2024 como referencia verificable elegida para este ejercicio, sin afirmar que sea la estimación más reciente disponible del Banco Central.
+
+## IMACEC
+
+Se incorporan las series originales y desestacionalizadas empalmadas del BCCh, base promedio 2018=100. Identificadores, URLs BDE, fecha de actualización, descarga y hashes de las respuestas en [imacec_metadata.json](imacec_metadata.json). El CSV conserva los índices publicados con un decimal. Fórmulas y ventanas en [METODOLOGIA.md](../METODOLOGIA.md). El color es la variación anual del promedio móvil de tres meses de la serie original; el panel muestra el nivel mensual desestacionalizado.

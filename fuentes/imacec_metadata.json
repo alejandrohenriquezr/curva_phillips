@@ -1,0 +1,18 @@
+{
+  "imacec_original": {
+    "codigo": "F032.IMC.IND.Z.Z.EP18.Z.Z.0.M",
+    "url": "https://si3.bcentral.cl/siete/ES/Siete/Cuadro/CAP_CCNN/MN_CCNN76/CCNN2018_IMACEC_01_A?idSerie=F032.IMC.IND.Z.Z.EP18.Z.Z.0.M",
+    "actualizacion_bcch": "01.Sep.2026",
+    "sha256_respuesta": "b44aa2da7e432f204d93ba4e968da2c1110aa00830cd7459254d8efdb072aacd"
+  },
+  "imacec_sa": {
+    "codigo": "F032.IMC.IND.Z.Z.EP18.Z.Z.1.M",
+    "url": "https://si3.bcentral.cl/siete/ES/Siete/Cuadro/CAP_CCNN/MN_CCNN76/CCNN2018_IMACEC_03_A?idSerie=F032.IMC.IND.Z.Z.EP18.Z.Z.1.M",
+    "actualizacion_bcch": "01.Sep.2026",
+    "sha256_respuesta": "be14ca17e973a025695c0586880524258d5ffe1b0cf7c6b18ab8ad7363de5e57"
+  },
+  "descargado_utc": "2026-09-23T11:23:45.518776+00:00",
+  "base": "Promedio 2018=100",
+  "precision": "Índices publicados en la tabla web con un decimal; tasas calculadas son aproximaciones y pueden diferir de tasas oficiales calculadas con mayor precisión.",
+  "transformacion": "Color: variación interanual del promedio de tres índices originales centrado en el mes ENE. Panel: nivel mensual desestacionalizado oficial, sin volver a ajustar."
+}

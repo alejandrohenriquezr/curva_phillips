@@ -1,6 +1,6 @@
 # Curva de Phillips de Chile
 
-Cuaderno Jupyter y gráfico animado de desocupación, inflación anual e índice de remuneraciones real, con datos del INE incluidos en el repositorio.
+Cuaderno Jupyter y gráfico animado de desocupación, inflación anual e índice de remuneraciones real, con datos del INE y del BCCh incluidos en el repositorio. El color muestra el crecimiento interanual del promedio móvil de tres meses del IMACEC original; el panel inferior muestra el IMACEC desestacionalizado mensual.
 
 ## Abrir en Windows
 
@@ -36,13 +36,19 @@ Descarga y abre `resultados/phillips_animado.html` en un navegador. Incluye Plot
 - `requirements-notebook-lock.txt`: versiones exactas verificadas en Windows/Python 3.13.
 - `requirements.txt`, `main.py`, `extractors/`: pipeline original de descarga, conservado.
 
+## IMACEC y panel temporal
+
+El promedio de tres meses se centra en el mes de la ENE: junio compara mayo–julio con el mismo período del año anterior. El panel inferior tiene un cursor sincronizado y la misma cobertura temporal. Los índices BDE tienen un decimal y las tasas derivadas son aproximadas.
+
+[Fórmulas, alineación temporal y actualización](METODOLOGIA.md). Datos: `bcch_imacec_chile.csv`; fuentes: `fuentes/imacec_metadata.json`; descarga voluntaria: `python actualizar_imacec.py`.
+
 ## Metodología
 
 Corte de los CSV recibidos: enero de 2024 a junio de 2026, 30 meses comunes. ENE se asigna al **mes central** del trimestre móvil, respetando `mes_año` del archivo original. Por tanto, junio de 2026 usa empleo de mayo–julio de 2026. Esta es una comparación retrospectiva, no una base de información en tiempo real. El cuaderno incluye sensibilidad al mes final, sobre las mismas fechas comunes.
 
 Se selecciona exclusivamente `Glosa == "IPC General"` y su variación anual publicada. El IR es el índice **real** empalmado; se utiliza `var_12` sin volver a deflactarlo. Las series se unen por fecha con correspondencia uno a uno; faltantes se excluyen y documentan, nunca se rellenan con cero.
 
-El **área**, no el radio, es proporcional a `abs(IR anual)`. Verde indica variaciones positivas y naranja negativas. Un centro oscuro fijo localiza valores cero. Todos los fotogramas usan los mismos ejes y la misma escala de tamaños. Los puntos del rastro retienen el tamaño correspondiente a su propia fecha.
+El **área**, no el radio, es proporcional a `abs(IR anual)`. El color representa el IMACEC: naranja para caídas, claro para cero y azul para crecimiento; una barra lateral muestra los porcentajes. El signo del IR se consulta en el tooltip. Un centro oscuro fijo localiza valores cero. Todos los fotogramas usan los mismos ejes y la misma escala de tamaños. Los puntos del rastro retienen el tamaño correspondiente a su propia fecha.
 
 La correlación es descriptiva: muestra corta, tasas sin ajuste estacional, trimestres superpuestos y ausencia de controles. No estima causalidad, NAIRU ni el efecto de una decisión monetaria. El IR real por hora tampoco equivale al ingreso total de todos los hogares.
 
