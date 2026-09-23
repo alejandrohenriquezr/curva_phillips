@@ -1,0 +1,10 @@
+# Ignorar el archivo de credenciales local
+credentials.json
+__pycache__/
+.DS_Store
+
+.venv/
+.ipynb_checkpoints/
+.jupyter_runtime/
+.qa/
+*.log
