@@ -47,7 +47,7 @@ def main():
     data.to_csv(ROOT/'bcch_imacec_chile.csv', date_format='%Y-%m-%d', encoding='utf-8-sig')
     metadata.update(descargado_utc=datetime.now(timezone.utc).isoformat(),base='Promedio 2018=100',
                     precision='Índices publicados en la tabla web con un decimal; tasas calculadas son aproximaciones y pueden diferir de tasas oficiales calculadas con mayor precisión.',
-                    transformacion='Color: variación interanual del promedio de tres índices originales centrado en el mes ENE. Panel: nivel mensual desestacionalizado oficial, sin volver a ajustar.')
+                    transformacion='Color: variación interanual del promedio de tres índices originales centrado en el mes ENE. Panel: variación en 12 meses del índice desestacionalizado oficial, junto con IPC anual. Cierres de diciembre: promedio anual original IMACEC e IPC diciembre/diciembre; tamaño y color normalizados con las variaciones en 12 meses.')
     (ROOT/'fuentes'/'imacec_metadata.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
     print(data.tail(14).to_string())
 

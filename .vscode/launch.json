@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [{
+    "name": "Phillips: proceso completo",
+    "type": "debugpy",
+    "request": "launch",
+    "program": "${workspaceFolder}/orquestar.py",
+    "args": ["--fecha", "20260924"],
+    "cwd": "${workspaceFolder}",
+    "console": "integratedTerminal"
+  }]
+}

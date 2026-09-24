@@ -1,20 +1,20 @@
+from salidas import archivo, FECHA
 from pathlib import Path
 import sys
 import nbformat
 from nbclient import NotebookClient
-from jupyter_client.kernelspec import KernelSpecManager
+from jupyter_client import KernelManager
 
 root=Path(__file__).resolve().parent
-nb=nbformat.read(root/'Curva_de_Phillips.ipynb',as_version=4)
+nb=nbformat.read(root/archivo('Curva_de_Phillips.ipynb'),as_version=4)
 nbformat.validate(nb)
-# El kernel python3 de este entorno usa sys.executable; confirmar antes de ejecutar.
-km=KernelSpecManager()
-spec=km.get_kernel_spec('python3')
-print('Python ejecutor:',sys.executable,flush=True)
-print('Kernel:',spec.argv,flush=True)
-client=NotebookClient(nb,timeout=300,kernel_name='python3',resources={'metadata':{'path':str(root)}})
+# Fuerza el kernel al mismo intérprete que ejecuta el orquestador.
+manager=KernelManager(kernel_name='python3')
+manager.kernel_spec.argv=[sys.executable,'-m','ipykernel_launcher','-f','{connection_file}']
+print('Python ejecutor y kernel:',sys.executable,flush=True)
+client=NotebookClient(nb,timeout=600,km=manager,resources={'metadata':{'path':str(root)}})
 client.execute()
-nbformat.write(nb,root/'Curva_de_Phillips.ipynb')
+nbformat.write(nb,root/archivo('Curva_de_Phillips.ipynb'))
 from nbformat.sign import NotebookNotary
 NotebookNotary().sign(nb)
 errors=[o for c in nb.cells if c.cell_type=='code' for o in c.get('outputs',[]) if o.output_type=='error']

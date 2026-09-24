@@ -7,6 +7,13 @@ import pandas as pd
 from phillips import load_data, build_figure, load_imacec, ROOT
 
 class PhillipsTests(unittest.TestCase):
+    @classmethod
+    def complete_figure(cls):
+        if not hasattr(cls,'_figure'):
+            cls._data,_,_=load_data()
+            cls._figure=build_figure(cls._data)
+        return cls._data,cls._figure
+
     def test_join_and_alignment(self):
         d,_,_=load_data()
         ipc=pd.read_csv(ROOT/'ine_ipc_chile.csv')
@@ -37,14 +44,13 @@ class PhillipsTests(unittest.TestCase):
         self.assertEqual(f.layout.coloraxis.colorscale[1],(.5,'#f7f7f2'))
         for i,frame in enumerate(f.frames):
             self.assertEqual(frame.data[5].x[0],d.fecha.iloc[i].strftime('%Y-%m-%d'))
-            self.assertEqual(frame.data[5].y[0],d.imacec_sa.iloc[i])
+            self.assertEqual(frame.data[5].y[0],d.imacec_sa_anual.iloc[i])
             self.assertEqual(len(frame.data[4].x),i+1)
         self.assertEqual(f.frames[1].data[1].marker.size[0],0)
         self.assertEqual(f.frames[2].data[1].marker.size[0]/f.frames[0].data[1].marker.size[0],2)
         self.assertEqual(f.frames[2].data[1].marker.sizemode,'area')
     def test_macro_references_and_distances(self):
-        d,_,_=load_data()
-        f=build_figure(d)
+        d,f=self.complete_figure()
         shapes=f.layout.shapes
         self.assertEqual(len(shapes),3)
         self.assertEqual((shapes[0].x0,shapes[0].x1),(8.,8.5))
@@ -70,6 +76,32 @@ class PhillipsTests(unittest.TestCase):
             raw.drop(pd.Timestamp('2025-06-01')).to_csv(Path(folder)/'bcch_imacec_chile.csv')
             with self.assertRaisesRegex(ValueError,'faltan meses'):
                 load_imacec(folder)
+
+    def test_year_end_points_labels_and_pandemic(self):
+        d,f=self.complete_figure()
+        annual=load_imacec().set_index('fecha')
+        raw=pd.read_csv(ROOT/'bcch_imacec_chile.csv',parse_dates=['fecha']).set_index('fecha')
+        expected=100*(raw.loc['2021','imacec_original'].mean()/raw.loc['2020','imacec_original'].mean()-1)
+        self.assertAlmostEqual(annual.loc['2021-12-01','imacec_acumulado_anual'],expected)
+        self.assertAlmostEqual(annual.loc['2021-12-01','imacec_sa_anual'],100*(raw.loc['2021-12-01','imacec_sa']/raw.loc['2020-12-01','imacec_sa']-1))
+        self.assertEqual(int(d.pandemia.sum()),42)
+        self.assertFalse(d.loc[d.mes.eq('2020-02'),'pandemia'].iloc[0])
+        self.assertFalse(d.loc[d.mes.eq('2023-09'),'pandemia'].iloc[0])
+        final=f.frames[-1]
+        self.assertEqual(len(final.data),11)
+        dec=d[d.fecha.dt.month.eq(12)]
+        np.testing.assert_allclose(final.data[9].y,dec.imacec_acumulado_anual)
+        np.testing.assert_allclose(final.data[10].y,dec.ipc_anual)
+        limit=f.layout.meta['normalizacion_panel_limite_pct']
+        np.testing.assert_allclose(final.data[9].marker.size,dec.imacec_sa_anual.abs()/limit)
+        np.testing.assert_allclose(final.data[10].marker.color,dec.ipc_anual/limit)
+        labels={a.text for a in final.layout.annotations}
+        march=f.frames[list(d.mes).index('2020-03')]
+        visible={a.text for a in march.layout.annotations if a.visible is not False}
+        self.assertNotIn('01-2026',visible)
+        self.assertIn('03-2020',visible)
+        self.assertTrue({'03-2020','08-2023','01-2011','01-2026'}.issubset(labels))
+        self.assertEqual(sum(bool(c[9]) for c in final.data[0].customdata),42)
 
     def test_duplicate_month_rejected(self):
         with tempfile.TemporaryDirectory() as folder:

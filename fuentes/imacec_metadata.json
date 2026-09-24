@@ -14,5 +14,5 @@
   "descargado_utc": "2026-09-23T11:23:45.518776+00:00",
   "base": "Promedio 2018=100",
   "precision": "Índices publicados en la tabla web con un decimal; tasas calculadas son aproximaciones y pueden diferir de tasas oficiales calculadas con mayor precisión.",
-  "transformacion": "Color: variación interanual del promedio de tres índices originales centrado en el mes ENE. Panel: nivel mensual desestacionalizado oficial, sin volver a ajustar."
+  "transformacion": "Color: variación interanual del promedio de tres índices originales centrado en el mes ENE. Panel: variación en 12 meses del índice desestacionalizado oficial, junto con IPC anual. Cierres de diciembre: promedio anual original IMACEC e IPC diciembre/diciembre; tamaño y color normalizados con las variaciones en 12 meses."
 }

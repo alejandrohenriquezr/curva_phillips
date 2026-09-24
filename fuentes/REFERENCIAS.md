@@ -22,7 +22,7 @@ Verificación: 23 de septiembre de 2026. Se consultaron también el IPoM de juni
 
 ## IMACEC
 
-Se incorporan las series originales y desestacionalizadas empalmadas del BCCh, base promedio 2018=100. Identificadores, URLs BDE, fecha de actualización, descarga y hashes de las respuestas en [imacec_metadata.json](imacec_metadata.json). El CSV conserva los índices publicados con un decimal. Fórmulas y ventanas en [METODOLOGIA.md](../METODOLOGIA.md). El color es la variación anual del promedio móvil de tres meses de la serie original; el panel muestra el nivel mensual desestacionalizado.
+Se incorporan las series originales y desestacionalizadas empalmadas del BCCh, base promedio 2018=100. Identificadores, URLs BDE, fecha de actualización, descarga y hashes de las respuestas en [imacec_metadata.json](imacec_metadata.json). El CSV conserva los índices publicados con un decimal. Fórmulas y ventanas en [METODOLOGIA.md](../METODOLOGIA.md). El color es la variación anual del promedio móvil de tres meses de la serie original; el panel muestra la variación en 12 meses del índice desestacionalizado y la inflación anual del IPC. Los puntos de diciembre muestran el crecimiento del promedio anual original del IMACEC y la inflación diciembre/diciembre; tamaño y color usan la variación en 12 meses normalizada en toda la muestra.
 
 ## IPC histórico empalmado
 

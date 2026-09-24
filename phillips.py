@@ -1,3 +1,4 @@
+from salidas import archivo, FECHA
 """Análisis reproducible de los CSV del INE y BCCh; no descarga ni modifica las fuentes."""
 from pathlib import Path
 import hashlib
@@ -5,6 +6,7 @@ import json
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+from graficos import enhance, figure_html, annual_normalization, date_labels, PANDEMIC_NOTE
 
 ROOT = Path(__file__).resolve().parent
 REFERENCIAS = json.loads((ROOT/'referencias_macro.json').read_text(encoding='utf-8-sig'))
@@ -26,6 +28,10 @@ def load_imacec(root=ROOT, alignment='central'):
         raise ValueError('IMACEC: índices no finitos o no positivos')
     d['imacec_promedio_3m']=d.imacec_original.rolling(3,center=alignment=='central',min_periods=3).mean()
     d['imacec_promedio_anual']=100*(d.imacec_promedio_3m/d.imacec_promedio_3m.shift(12)-1)
+    d['imacec_sa_anual']=100*(d.imacec_sa/d.imacec_sa.shift(12)-1)
+    # Acumulado de actividad: promedio enero-mes / mismo período del año anterior.
+    cumulative=d.imacec_original.groupby(d.fecha.dt.year).cumsum()
+    d['imacec_acumulado_anual']=100*(cumulative/cumulative.shift(12)-1)
     d['imacec_sa_mensual']=100*(d.imacec_sa/d.imacec_sa.shift(1)-1)
     d['imacec_inicio_promedio']=d.fecha-pd.DateOffset(months=1 if alignment=='central' else 2)
     d['imacec_fin_promedio']=d.fecha+pd.DateOffset(months=1 if alignment=='central' else 0)
@@ -83,11 +89,13 @@ def load_data(root=ROOT, alignment='central'):
     data['ir_magnitud'] = data.ir_real_anual.abs()
     data['ir_signo'] = np.where(data.ir_real_anual>=0,'Aumento','Caída')
     data['alineacion_ene']=alignment
+    data['pandemia']=data.fecha.between('2020-03-01','2023-08-01')
+    data['ipc_acumulado_diciembre']=data.ipc_anual.where(data.fecha.dt.month.eq(12))
     data['distancia_meta_ipc_pp'] = data.ipc_anual - META_INFLACION
     data['distancia_referencia_nairu_pp'] = data.desocupacion - NAIRU_REFERENCIA
     return data, coverage, missing
 
-def build_figure(data):
+def _base_figure(data):
     d=data.reset_index(drop=True)
     sizeref=2*max(float(d.ir_magnitud.max()),1e-9)/(48**2)
     bound=max(float(d.imacec_promedio_anual.abs().max()),.1)
@@ -133,8 +141,12 @@ def build_figure(data):
     fig.update_layout(title=dict(x=.06,y=.98,yanchor='top'))
     return fig
 
+def build_figure(data):
+    return enhance(_base_figure(data),data)
+
+
 def economic_summary(data):
-    columns=['desocupacion','ipc_anual','ir_real_anual','imacec_promedio_anual','imacec_sa','imacec_sa_mensual']
+    columns=['desocupacion','ipc_anual','ir_real_anual','imacec_promedio_anual','imacec_sa','imacec_sa_mensual','imacec_sa_anual','imacec_acumulado_anual']
     def row(r):
         return {'mes':r.mes,**{c:float(r[c]) for c in columns}}
     periods=[]
@@ -153,17 +165,18 @@ def economic_summary(data):
 def export_results(data, coverage, missing, fig, out=ROOT/'resultados'):
     out=Path(out); out.mkdir(exist_ok=True)
     summary=economic_summary(data)
-    (out/'resumen_economico.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
-    pd.DataFrame(summary['subperiodos']).to_csv(out/'correlaciones_subperiodos.csv',index=False,encoding='utf-8-sig')
-    data.to_csv(out/'datos_phillips.csv',index=False,encoding='utf-8-sig')
-    coverage.to_csv(out/'cobertura.csv',index=False,encoding='utf-8-sig')
-    missing.to_csv(out/'meses_excluidos.csv',index=False,encoding='utf-8-sig')
-    fig.write_html(out/'phillips_animado.html',include_plotlyjs=True,auto_play=False,config={'responsive':True,'displaylogo':False})
-    (out/'referencias_macro.json').write_text(json.dumps(REFERENCIAS,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    (out/archivo('resumen_economico.json')).write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
+    pd.DataFrame(summary['subperiodos']).to_csv(out/archivo('correlaciones_subperiodos.csv'),index=False,encoding='utf-8-sig')
+    data.to_csv(out/archivo('datos_phillips.csv'),index=False,encoding='utf-8-sig')
+    coverage.to_csv(out/archivo('cobertura.csv'),index=False,encoding='utf-8-sig')
+    missing.to_csv(out/archivo('meses_excluidos.csv'),index=False,encoding='utf-8-sig')
+    (out/archivo('phillips_animado.html')).write_text(figure_html(fig),encoding='utf8')
+    data.loc[data.fecha.dt.month.eq(12),['mes','imacec_acumulado_anual','imacec_sa_anual','ipc_acumulado_diciembre','ipc_anual']].to_csv(out/archivo('cierres_anuales.csv'),index=False,encoding='utf-8-sig')
+    (out/archivo('referencias_macro.json')).write_text(json.dumps(REFERENCIAS,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     manifest={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in [*ROOT.glob('ine_*_chile.csv'),ROOT/'bcch_imacec_chile.csv']}
-    (out/'fuentes_sha256.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+    (out/archivo('fuentes_sha256.json')).write_text(json.dumps(manifest,indent=2),encoding='utf-8')
 
-def static_chart(d, out=ROOT/'resultados'/'phillips_estatico.png'):
+def static_chart(d, out=ROOT/'resultados'/archivo('phillips_estatico.png')):
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
@@ -172,26 +185,34 @@ def static_chart(d, out=ROOT/'resultados'/'phillips_estatico.png'):
     cmap=LinearSegmentedColormap.from_list('actividad',[v[1] for v in ACTIVITY_COLORS])
     bound=max(float(d.imacec_promedio_anual.abs().max()),.1)
     norm=TwoSlopeNorm(vmin=-bound,vcenter=0,vmax=bound)
-    fig=plt.figure(figsize=(10,7.5),layout='constrained')
-    gs=fig.add_gridspec(2,2,height_ratios=[3.5,1],width_ratios=[24,1])
+    fig=plt.figure(figsize=(10,8.2),layout='constrained')
+    gs=fig.add_gridspec(2,2,height_ratios=[3,1.5],width_ratios=[24,1])
     ax=fig.add_subplot(gs[0,0]); panel=fig.add_subplot(gs[1,0]); bar=fig.add_subplot(gs[0,1])
     ax.axvspan(*NAIRU_RANGO,color='#7c3aed',alpha=.06,zorder=0)
     ax.axvline(NAIRU_REFERENCIA,color='#7c3aed',ls='-.',lw=1.3,label='NAIRU ref. 8,25%*')
     ax.axhline(META_INFLACION,color='#2563eb',ls='--',lw=1.3,label='Meta de inflación 3%')
     ax.plot(d.desocupacion,d.ipc_anual,c='#a8b3bf',lw=1.1,zorder=1)
-    points=ax.scatter(d.desocupacion,d.ipc_anual,s=d.ir_magnitud*85,c=d.imacec_promedio_anual,cmap=cmap,norm=norm,edgecolors='#64748b',linewidths=.4,zorder=2)
-    for i,label in [(0,'Inicio'),(len(d)-1,'Final')]:
-        r=d.iloc[i];ax.annotate(f'{label} {r.mes}',(r.desocupacion,r.ipc_anual),xytext=(5,9),textcoords='offset points',fontsize=9)
+    points=ax.scatter(d.desocupacion,d.ipc_anual,s=d.ir_magnitud*85,c=d.imacec_promedio_anual,cmap=cmap,norm=norm,edgecolors='#64748b',linewidths=np.where(d.pandemia,1.3,.4),linestyles=['--' if flag else '-' for flag in d.pandemia],zorder=2)
+    for _,a in date_labels(d,ax.get_xlim(),ax.get_ylim(),width=650,height=350):
+        ax.annotate(a['text'],(a['x'],a['y']),xytext=(a['ax']*.6,-a['ay']*.6),textcoords='offset points',fontsize=6.5,
+                    bbox=dict(facecolor='white',edgecolor='none',alpha=.85,pad=.6),arrowprops=dict(arrowstyle='-',color='#64748b',lw=.4))
     ax.set(xlabel='Desocupación (%) · trimestre móvil, mes central',ylabel='IPC · variación anual (%)',title=f'Chile · {d.mes.iloc[0]} a {d.mes.iloc[-1]}')
     ax.legend(loc='lower left',fontsize=8)
     cb=fig.colorbar(points,cax=bar);cb.set_label('IMACEC promedio 3m · variación interanual (%)')
-    panel.plot(d.fecha,d.imacec_sa,color='#334155',lw=1.5)
-    panel.scatter(d.fecha.iloc[-1],d.imacec_sa.iloc[-1],c=[d.imacec_promedio_anual.iloc[-1]],cmap=cmap,norm=norm,edgecolors='#0f172a',s=35,zorder=3)
-    panel.set(title='IMACEC desestacionalizado · nivel mensual',ylabel='2018=100',xlim=(d.fecha.iloc[0],d.fecha.iloc[-1]))
+    panel.plot(d.fecha,d.imacec_sa_anual,color='#2166ac',lw=1.2,label='IMACEC SA · 12 meses')
+    panel.plot(d.fecha,d.ipc_anual,color='#b33b37',lw=1.2,label='IPC · 12 meses')
+    limit=annual_normalization(d)
+    dec=d[d.fecha.dt.month.eq(12)]
+    for annual,rate,marker,label in [('imacec_acumulado_anual','imacec_sa_anual','D','IMACEC acumulado anual'),('ipc_acumulado_diciembre','ipc_anual','s','IPC acumulado anual')]:
+        normalized=dec[rate]/limit
+        panel.scatter(dec.fecha,dec[annual],s=normalized.abs()*150,c=normalized,cmap=cmap,vmin=-1,vmax=1,marker=marker,edgecolors='#334155',linewidths=.6,zorder=3,label=label)
+    panel.axhline(0,color='#94a3b8',lw=.6)
+    panel.set(title='Tasas en 12 meses y acumulados de diciembre',ylabel='Variación (%)',xlim=(d.fecha.iloc[0],d.fecha.iloc[-1]))
+    panel.legend(loc='upper left',fontsize=6,ncol=2)
     panel.xaxis.set_major_locator(mdates.YearLocator(2) if len(d)>72 else mdates.MonthLocator(interval=4));panel.xaxis.set_major_formatter(mdates.DateFormatter('%Y' if len(d)>72 else '%Y-%m'))
     for axis in [ax,panel]:
         axis.grid(alpha=.15);axis.spines[['top','right']].set_visible(False)
-    fig.text(.01,-.04,'Fuente: INE y BCCh. Área ∝ |IR real anual|; color = crecimiento del promedio 3m de IMACEC original.\n* Referencia histórica 2024-T3 publicada en dic. 2024. IMACEC calculado con índices de un decimal.',fontsize=8.5)
+    fig.text(.01,-.065,'Fuente: INE y BCCh. Arriba: área ∝ |IR real anual|, color = IMACEC promedio 3m interanual.\nDiciembre: rombos = promedio anual IMACEC original; cuadrados = IPC dic./dic. Tamaño y color: 12 meses normalizada.\n'+PANDEMIC_NOTE+'\n* NAIRU histórica 2024-T3; índices IMACEC redondeados a un decimal.',fontsize=7)
     fig.savefig(out,dpi=180,bbox_inches='tight');plt.close(fig)
 
 if __name__=='__main__':

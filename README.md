@@ -1,94 +1,56 @@
 # Curva de Phillips de Chile
 
-Cuaderno Jupyter y gráfico animado de desocupación, inflación anual e índice de remuneraciones real, con datos del INE y del BCCh incluidos en el repositorio. El color muestra el crecimiento interanual del promedio móvil de tres meses del IMACEC original; el panel inferior muestra el IMACEC desestacionalizado mensual.
+Edición **20260924**, con 186 meses comunes de enero de 2011 a junio de 2026. Datos locales del INE y del Banco Central de Chile. El análisis es descriptivo: no estima causalidad, NAIRU propia ni una recomendación monetaria.
 
-## Abrir en Windows
+## Ejecutar todo en VS Code
 
-1. En este equipo el entorno `%LOCALAPPDATA%\curva_phillips\venv` se configura durante la preparación del proyecto. Para una instalación nueva, instala Python 3.11 o superior y ejecuta `INSTALAR.bat` una vez.
-2. Haz doble clic en **ABRIR_JUPYTER.bat**.
-3. En el cuaderno, selecciona **Run → Run All Cells**. También puedes ejecutar una celda con **Shift + Enter**.
-4. Pulsa **Play** en el gráfico; usa Pausa, Reiniciar o el selector de mes.
-5. Mantén abierta la ventana que inició Jupyter. Para detener el servidor, presiona Ctrl+C en esa ventana y confirma cuando lo solicite.
+1. Abre la carpeta `C:\Proyectos\Curva_de_Phillips` en VS Code.
+2. Instala las extensiones **Python** y **Jupyter** de Microsoft si faltan.
+3. Ejecuta `INSTALAR.bat` una vez para instalar todas las dependencias, incluido Word.
+4. En `Ctrl+Shift+P` → **Python: Select Interpreter**, selecciona `%LOCALAPPDATA%\curva_phillips\venv\Scripts\python.exe` (opción para introducir la ruta si no aparece).
+5. Pulsa **Ctrl+Shift+B** y elige **Phillips: ejecutar todo**. También puedes usar F5 con **Phillips: proceso completo**.
 
-En PowerShell, desde la carpeta del proyecto:
-
-```powershell
-& "$env:LOCALAPPDATA\curva_phillips\venv\Scripts\python.exe" -m notebook Curva_de_Phillips.ipynb
-```
-
-El acceso utiliza el Python del proyecto directamente. Evita el error `jupyter no se reconoce` sin depender del PATH global. Durante el diagnóstico, `python` resolvía a un alias de WindowsApps y `py` a `C:\Python313\python.exe`, que no tenía pip. Instalar un paquete con un pip de otro entorno no lo hace disponible para todos los Python.
-
-## Ver el gráfico sin instalar nada
-
-Descarga y abre `resultados/phillips_animado.html` en un navegador. Incluye Plotly y los datos, y funciona sin internet. GitHub muestra el archivo como código: usa **Download raw file** y luego abre la copia descargada. GitHub no reproduce JavaScript dentro de la vista del cuaderno.
-
-## Archivos
-
-- `Curva_de_Phillips.ipynb`: cuaderno explicado, con resultados de ejecución.
-- `phillips.py`: limpieza, validación, gráfico y exportaciones.
-- `resultados/phillips_animado.html`: gráfico con Play, pausa, reinicio, selector temporal y rastro.
-- `resultados/phillips_estatico.png`: imagen del recorrido completo.
-- `resultados/datos_phillips.csv`: observaciones utilizadas.
-- `resultados/resumen_economico.json`: cifras del informe, extremos y correlaciones.
-- `resultados/correlaciones_subperiodos.csv`: comparación descriptiva de ventanas históricas.
-- `resultados/cobertura.csv`, `meses_excluidos.csv`, `fuentes_sha256.json`: trazabilidad.
-- `informe/Articulo_LinkedIn_Curva_Phillips.docx`: artículo con análisis económico, gráfico y fuentes.
-- `informe/articulo_linkedin.md`: texto editable del artículo.
-- `requirements-notebook.txt`: dependencias del análisis (Python 3.11+).
-- `requirements-notebook-lock.txt`: versiones exactas verificadas en Windows/Python 3.13.
-- `requirements.txt`, `main.py`, `extractors/`: pipeline original de descarga, conservado.
-
-## IMACEC y panel temporal
-
-El promedio de tres meses se centra en el mes de la ENE: junio compara mayo–julio con el mismo período del año anterior. El panel inferior tiene un cursor sincronizado y la misma cobertura temporal. Los índices BDE tienen un decimal y las tasas derivadas son aproximadas.
-
-[Fórmulas, alineación temporal y actualización](METODOLOGIA.md). Datos: `bcch_imacec_chile.csv`; fuentes: `fuentes/imacec_metadata.json`; descarga voluntaria: `python actualizar_imacec.py`.
-
-## Metodología
-
-Corte de los CSV recibidos: enero de 2011 a junio de 2026, 186 meses comunes. ENE se asigna al **mes central** del trimestre móvil, respetando `mes_año` del archivo original. Por tanto, junio de 2026 usa empleo de mayo–julio de 2026. Esta es una comparación retrospectiva, no una base de información en tiempo real. El cuaderno incluye sensibilidad al mes final, sobre las mismas fechas comunes.
-
-El extractor utiliza la serie histórica empalmada del IPC (base 2023), añade `Glosa = "IPC General"` porque el archivo contiene únicamente ese agregado y conserva la variación anual publicada. Los niveles comienzan en diciembre de 2009; la variación anual publicada y el IR anual comienzan en enero de 2011. Se selecciona exclusivamente `Glosa == "IPC General"` y su variación anual publicada. El IR es el índice **real** empalmado; se utiliza `var_12` sin volver a deflactarlo. Las series se unen por fecha con correspondencia uno a uno; faltantes se excluyen y documentan, nunca se rellenan con cero.
-
-El **área**, no el radio, es proporcional a `abs(IR anual)`. El color representa el IMACEC: naranja para caídas, claro para cero y azul para crecimiento; una barra lateral muestra los porcentajes. El signo del IR se consulta en el tooltip. Un centro oscuro fijo localiza valores cero. Todos los fotogramas usan los mismos ejes y la misma escala de tamaños. Los puntos del rastro retienen el tamaño correspondiente a su propia fecha.
-
-La correlación es descriptiva: regímenes distintos, tasas sin ajuste estacional, trimestres superpuestos y ausencia de controles. No estima causalidad, NAIRU ni el efecto de una decisión monetaria. El IR real por hora tampoco equivale al ingreso total de todos los hogares.
-
-## Referencias de inflación y desempleo
-
-La línea horizontal señala la **meta de inflación del 3%** del BCCh, definida para un horizonte de dos años; no exige que cada dato mensual sea 3%.
-
-La banda vertical representa el rango **8,0–8,5% para 2024-T3** publicado en la minuta *Holguras en el mercado laboral*, citada en el IPoM de diciembre de 2024 (páginas 34 y 38 del PDF). Reúne estimaciones mediante filtros de Kalman multivariados y modelos VAR. La línea **8,25%** es el punto medio calculado por este proyecto, **no una estimación puntual oficial ni una cifra del IPoM de junio de 2026**. La banda no es un intervalo de confianza.
-
-Es una referencia histórica fija, no una trayectoria estimada para 2011–2026. Además, la referencia utiliza desempleo desestacionalizado y nuestros puntos usan ENE sin ajuste estacional: las distancias son ilustrativas, no brechas cíclicas oficiales. NAIRU y tasa natural de largo plazo no son conceptos necesariamente idénticos.
-
-Fuentes: [minuta BCCh diciembre de 2024](https://www.bcentral.cl/documents/33528/6735463/Minutas%2Bcitadas%2Ben%2Bel%2BIPoM%2Bdiciembre%2B2024.pdf/d24985ae-cb5e-2f03-4499-ecfad3d86ade) y [IPoM junio de 2026, meta de inflación, página 3](https://www.bcentral.cl/documents/33528/8413153/IPoM%2Bjunio%2B2026.pdf/93388589-0929-4ad6-b166-10981ca34946). Parámetros y trazabilidad: `referencias_macro.json` y `fuentes/REFERENCIAS.md`.
-
-## Ejecutar y comprobar
+Alternativa en la terminal PowerShell de VS Code, sin activar el entorno:
 
 ```powershell
-& "$env:LOCALAPPDATA\curva_phillips\venv\Scripts\python.exe" phillips.py
-& "$env:LOCALAPPDATA\curva_phillips\venv\Scripts\python.exe" -m unittest test_phillips -v
-& "$env:LOCALAPPDATA\curva_phillips\venv\Scripts\python.exe" verificar_cuaderno.py
+cd C:\Proyectos\Curva_de_Phillips
+& "$env:LOCALAPPDATA\curva_phillips\venv\Scripts\python.exe" -X utf8 orquestar.py --fecha 20260924
 ```
 
-`verificar_cuaderno.py` ejecuta todas las celdas y guarda el cuaderno con resultados. Puede tardar en el primer inicio, especialmente en una unidad sincronizada con Google Drive.
+O ejecuta `EJECUTAR_TODO.bat`. El orquestador usa el mismo Python para pruebas, análisis, kernel y Word. Si falla una etapa, detiene la ejecución y registra el error. El parámetro opcional `--python-documento` permite usar otro Python con python-docx para Word; normalmente no es necesario.
 
-## Actualización voluntaria
+El proceso comprende pruebas, creación del notebook, ejecución de todas las celdas (que genera tablas, PNG y HTML), y creación del Word y Markdown. El registro queda en `resultados/20260924_ejecucion.json`. No publica automáticamente en GitHub ni LinkedIn.
 
-Guarda una copia de los CSV antes de actualizarlos. Desde el entorno ejecuta `python main.py` y revisa que los tres extractores hayan finalizado correctamente: el pipeline original captura errores por separado. Después ejecuta el cuaderno. La actualización puede cambiar el período común y las cifras por revisiones del INE. Revisa el artículo antes de reutilizarlo con otro corte.
+## Archivos de esta edición
 
-No se publica automáticamente en LinkedIn. El Word está preparado para revisión y publicación por su autor.
+- `20260924_Curva_de_Phillips.ipynb`: cuaderno explicado y ejecutado.
+- `resultados/20260924_phillips_animado.html`: gráfico autónomo con Play, pausa, reinicio y selector mensual; funciona sin conexión.
+- `resultados/20260924_phillips_estatico.png`: gráfico para el informe.
+- `informe/20260924_Articulo_LinkedIn_Curva_Phillips.docx`: informe actualizado.
+- `informe/20260924_articulo_linkedin.md`: texto del informe.
+- `resultados/20260924_datos_phillips.csv`, `20260924_cierres_anuales.csv`, `20260924_resumen_economico.json` y `20260924_correlaciones_subperiodos.csv`: datos y cifras reproducibles.
+- Cobertura, meses excluidos y hashes también llevan el prefijo de fecha.
 
-## Fuentes
+Las versiones anteriores permanecen en la carpeta. Para trabajar con esta edición, abre el archivo que comienza con `20260924_`. `ABRIR_JUPYTER.bat` abre ese cuaderno. Selecciona el kernel del entorno del proyecto en VS Code. GitHub no ejecuta el JavaScript de un notebook: descarga el HTML para usar la animación.
 
-- [INE: ENE](https://www.ine.gob.cl/estadisticas-por-tema/mercado-laboral/ocupacion-y-desocupacion).
-- [INE: IPC](https://www.ine.gob.cl/estadisticas-por-tema/precios-e-inflacion/indice-de-precios-al-consumidor).
-- [INE: remuneraciones](https://www.ine.gob.cl/estadisticas-por-tema/mercado-laboral/remuneraciones-y-costos-laborales).
-- [Banco Central: evidencia de Phillips, IPoM junio de 2016](https://www.bcentral.cl/documents/33528/133297/bcch_archivo_164644_es.pdf/5c004bf3-b159-1ff4-78aa-b286738295b6).
+## Lectura del gráfico
 
-Las URL exactas de los tabulados están en los extractores. Los archivos de datos se atribuyen al INE; no se les asigna una licencia nueva en este proyecto.
+Phillips: eje X = desocupación ENE; eje Y = IPC anual; área proporcional a la magnitud del IR real anual; color divergente centrado en cero = crecimiento interanual del promedio móvil 3m del IMACEC original. Etiquetas MM-AAAA en enero, marzo de 2020 y agosto de 2023. Círculos con borde segmentado: ventana de pandemia Covid-19 en Chile definida para el gráfico, marzo de 2020–agosto de 2023.
 
+Panel inferior: IMACEC desestacionalizado e IPC en variación de 12 meses. En diciembre, rombos para el crecimiento del promedio anual del IMACEC original y cuadrados para inflación diciembre/diciembre. La posición vertical muestra el acumulado. Tamaño y color codifican la tasa a 12 meses normalizada con un máximo absoluto común a ambas series y fijo en toda la muestra. El tooltip explica ambas cifras; no se suman tasas. No hay punto de cierre para 2026, que es parcial.
 
-Para regenerar el Word, instala `requirements-document.txt` en un entorno Python y ejecuta `python crear_articulo.py` después de ejecutar el cuaderno o `python phillips.py`, que genera también `resumen_economico.json`. El generador lee las cifras de ese resumen y exige revisar la interpretación si cambia la cobertura. Revisa visualmente el documento antes de publicar.
+La NAIRU de referencia, 8,25%, es el punto medio propio del rango BCCh 8,0–8,5% para 2024-T3, publicado en diciembre de 2024; no es una estimación oficial para cada año del gráfico. La horizontal es la meta de inflación del 3% a horizonte de dos años. Véanse [fórmulas y metodología](METODOLOGIA.md) y [fuentes](fuentes/REFERENCIAS.md).
 
+## Datos y actualización voluntaria
+
+La ejecución normal usa los cuatro CSV locales y no necesita internet. El IPC histórico empalmado tiene niveles desde diciembre de 2009, pero sus tasas anuales publicadas y el IR anual disponibles comienzan en enero de 2011. El extractor incorpora `Glosa = IPC General`. ENE se asigna al mes central: junio corresponde a mayo–julio. Es una comparación retrospectiva.
+
+Para descargar fuentes nuevas antes de ejecutar:
+
+```powershell
+& "$env:LOCALAPPDATA\curva_phillips\venv\Scripts\python.exe" -X utf8 orquestar.py --fecha 20260924 --actualizar-datos
+```
+
+Guarda una copia de los CSV si quieres conservar el corte: esta opción los sustituye. Si cambia la cobertura, el informe exige revisar el análisis histórico antes de regenerarse. Cambiar solo `--fecha` cambia los nombres, no actualiza datos ni reescribe conclusiones. El Word debe revisarse visualmente antes de publicar.
+
+Los scripts principales son `orquestar.py`, `phillips.py` (cálculos y exportación), `graficos.py` (presentación y bordes SVG), `salidas.py` (prefijo), `crear_cuaderno.py`, `verificar_cuaderno.py` y `crear_articulo.py`. Los bordes segmentados se incorporan tanto al HTML independiente como al HTML del notebook mediante un script local de Plotly. No requieren extensiones adicionales.

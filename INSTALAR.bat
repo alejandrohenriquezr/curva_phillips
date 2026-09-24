@@ -7,7 +7,7 @@ if not exist "%PHILLIPS_ENV%\Scripts\python.exe" (
   pause
   exit /b 1
 )
-"%PHILLIPS_ENV%\Scripts\python.exe" -m pip install -r requirements-notebook.txt
+"%PHILLIPS_ENV%\Scripts\python.exe" -m pip install -r requirements-completo.txt
 if errorlevel 1 (
   pause
   exit /b 1

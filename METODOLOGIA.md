@@ -10,9 +10,25 @@ $$g_t=100\left(\frac{\bar I_t}{\bar I_{t-12}}-1\right)$$
 
 El color usa $g_t$: **variación interanual del promedio de niveles**, no promedio de tres tasas interanuales. Por ejemplo, junio de 2026 compara mayo–julio de 2026 con mayo–julio de 2025. Requiere el dato del mes siguiente: es una visualización retrospectiva, no una señal disponible en tiempo real en junio. Con la alineación alternativa al mes final se usa $(I_{t-2}+I_{t-1}+I_t)/3$.
 
-El panel muestra $S_t$ en las mismas fechas de los puntos. El cursor y el punto activo siguen el selector y Play. La línea oscura llega al mes seleccionado; la gris muestra el resto de la muestra como contexto retrospectivo. La variación mensual, incluida en los datos para el análisis, es:
+El panel inferior muestra las tasas en 12 meses del IMACEC desestacionalizado y del IPC:
 
-$$m_t=100(S_t/S_{t-1}-1)$$
+$$a_t=100(S_t/S_{t-12}-1),\qquad \pi_t=100(IPC_t/IPC_{t-12}-1).$$
+
+La inflación se toma de la tasa oficial publicada. La variación mensual del IMACEC se conserva en los datos como $m_t=100(S_t/S_{t-1}-1)$, pero no es la serie del panel. El cursor y la línea oscura siguen el mes seleccionado; el resto es contexto retrospectivo.
+
+En cada diciembre, un rombo marca el crecimiento del **promedio anual del IMACEC original**:
+
+$$G_Y=100\left(\frac{\sum_{m=1}^{12} I_{Y,m}}{\sum_{m=1}^{12} I_{Y-1,m}}-1\right).$$
+
+Un cuadrado marca la inflación **diciembre contra diciembre**. Coincide con la tasa IPC a 12 meses publicada en diciembre; no se suman tasas redondeadas. No se dibujan cierres de años incompletos.
+
+Tamaño y color de los puntos de diciembre usan una normalización común a las **tasas mensuales en 12 meses**, sobre toda la muestra:
+
+$$L=\max(0.1,\max_t|a_t|,\max_t|\pi_t|),\quad n_t=v_t/L,\quad A_t=k|n_t|.$$
+
+El color usa naranja en $-1$, claro en $0$ y azul en $+1$. La forma identifica la serie. La coordenada vertical muestra el acumulado, mientras tamaño y color codifican la tasa a 12 meses: ambas se detallan en el tooltip. La escala permanece fija en todos los fotogramas.
+
+Cada enero de Phillips lleva una etiqueta MM-AAAA, además de 03-2020 y 08-2023. Los círculos entre marzo de 2020 y agosto de 2023, inclusive, tienen borde segmentado: período de pandemia Covid-19 en Chile **definido para esta visualización**. No se identifica este intervalo con toda la vigencia jurídica de la alerta sanitaria. Véase [Gobierno de Chile, fin de alerta el 31 de agosto de 2023](https://www.gob.cl/noticias/fin-alerta-sanitaria-covid-19-coronavirus-enfermedades-respiratorias-mascarillas-teletrabajo/).
 
 **Otras variables y referencias**
 
