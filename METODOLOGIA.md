@@ -30,4 +30,4 @@ $$\rho_{u,\pi}=\frac{\sum_t(u_t-\bar u)(\pi_t-\bar\pi)}{\sqrt{\sum_t(u_t-\bar u)
 
 Series BCCh: `F032.IMC.IND.Z.Z.EP18.Z.Z.0.M` (original) y `F032.IMC.IND.Z.Z.EP18.Z.Z.1.M` (desestacionalizada). [Descripción oficial del IMACEC](https://www.bcentral.cl/areas/estadisticas/imacec).
 
-Para actualizar voluntariamente: `python actualizar_imacec.py`, luego `python phillips.py` y `python verificar_cuaderno.py`. La actualización de INE sigue en `python main.py`. Revisar el Word si cambia el corte; el análisis narrativo corresponde a enero de 2024–junio de 2026.
+Para actualizar voluntariamente: `python actualizar_imacec.py`, luego `python phillips.py` y `python verificar_cuaderno.py`. La actualización de INE sigue en `python main.py`. Revisar el Word si cambia el corte; el análisis narrativo corresponde a enero de 2011–junio de 2026.

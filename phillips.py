@@ -117,7 +117,7 @@ def build_figure(data):
         margin=dict(l=90,r=185,t=125,b=210),showlegend=False,
         xaxis=dict(domain=[0,1],anchor='y',title='Desocupación (%) · trimestre móvil ENE',range=limits(pd.concat([d.desocupacion,pd.Series(NAIRU_RANGO)])),ticksuffix='%'),
         yaxis=dict(domain=[.38,1],anchor='x',title='IPC · variación anual (%)',range=limits(pd.concat([d.ipc_anual,pd.Series([META_INFLACION])])),ticksuffix='%'),
-        xaxis2=dict(domain=[0,1],anchor='y2',type='date',range=[dates[0],dates[-1]],tickformat='%b %Y',dtick='M3',tickangle=0),
+        xaxis2=dict(domain=[0,1],anchor='y2',type='date',range=[dates[0],dates[-1]],tickformat='%Y' if len(d)>72 else '%b %Y',dtick='M24' if len(d)>72 else 'M3',tickangle=0),
         yaxis2=dict(domain=[0,.19],anchor='x2',title='Índice 2018=100',range=panel_range),
         coloraxis=dict(cmin=-bound,cmax=bound,cmid=0,cauto=False,colorscale=ACTIVITY_COLORS,colorbar=dict(title=dict(text='IMACEC promedio 3m<br>Variación interanual'),x=1.035,y=.69,len=.62,thickness=18,ticksuffix='%',tickvals=[-bound,-bound/2,0,bound/2,bound],ticktext=[f'{v:+.1f}%' if v else '0%' for v in [-bound,-bound/2,0,bound/2,bound]])),
         annotations=[dict(x=0,y=1.07,xref='paper',yref='paper',showarrow=False,xanchor='left',text='Área ∝ |IR real anual| · color: actividad (naranja − / claro 0 / azul +)'),
@@ -133,8 +133,28 @@ def build_figure(data):
     fig.update_layout(title=dict(x=.06,y=.98,yanchor='top'))
     return fig
 
+def economic_summary(data):
+    columns=['desocupacion','ipc_anual','ir_real_anual','imacec_promedio_anual','imacec_sa','imacec_sa_mensual']
+    def row(r):
+        return {'mes':r.mes,**{c:float(r[c]) for c in columns}}
+    periods=[]
+    for label,start,end in [('2011–2019','2011-01','2019-12'),('2020–2023','2020-01','2023-12'),('2024–2026','2024-01','2026-06')]:
+        part=data[data.mes.between(start,end)]
+        if len(part)>1:
+            periods.append({'periodo':label,'desde':part.mes.iloc[0],'hasta':part.mes.iloc[-1],'n':len(part),'correlacion':float(part.desocupacion.corr(part.ipc_anual))})
+    return {'n':len(data),'desde':data.mes.iloc[0],'hasta':data.mes.iloc[-1],
+            'correlacion':float(data.desocupacion.corr(data.ipc_anual)),
+            'inicio':row(data.iloc[0]),'final':row(data.iloc[-1]),
+            'ir_negativos':int((data.ir_real_anual<0).sum()),'imacec_negativos':int((data.imacec_promedio_anual<0).sum()),
+            'extremos':{c:{'min':row(data.loc[data[c].idxmin()]),'max':row(data.loc[data[c].idxmax()])} for c in columns},
+            'subperiodos':periods,'observaciones':{r.mes:row(r) for _,r in data.iterrows()}}
+
+
 def export_results(data, coverage, missing, fig, out=ROOT/'resultados'):
     out=Path(out); out.mkdir(exist_ok=True)
+    summary=economic_summary(data)
+    (out/'resumen_economico.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
+    pd.DataFrame(summary['subperiodos']).to_csv(out/'correlaciones_subperiodos.csv',index=False,encoding='utf-8-sig')
     data.to_csv(out/'datos_phillips.csv',index=False,encoding='utf-8-sig')
     coverage.to_csv(out/'cobertura.csv',index=False,encoding='utf-8-sig')
     missing.to_csv(out/'meses_excluidos.csv',index=False,encoding='utf-8-sig')
@@ -168,7 +188,7 @@ def static_chart(d, out=ROOT/'resultados'/'phillips_estatico.png'):
     panel.plot(d.fecha,d.imacec_sa,color='#334155',lw=1.5)
     panel.scatter(d.fecha.iloc[-1],d.imacec_sa.iloc[-1],c=[d.imacec_promedio_anual.iloc[-1]],cmap=cmap,norm=norm,edgecolors='#0f172a',s=35,zorder=3)
     panel.set(title='IMACEC desestacionalizado · nivel mensual',ylabel='2018=100',xlim=(d.fecha.iloc[0],d.fecha.iloc[-1]))
-    panel.xaxis.set_major_locator(mdates.MonthLocator(interval=4));panel.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+    panel.xaxis.set_major_locator(mdates.YearLocator(2) if len(d)>72 else mdates.MonthLocator(interval=4));panel.xaxis.set_major_formatter(mdates.DateFormatter('%Y' if len(d)>72 else '%Y-%m'))
     for axis in [ax,panel]:
         axis.grid(alpha=.15);axis.spines[['top','right']].set_visible(False)
     fig.text(.01,-.04,'Fuente: INE y BCCh. Área ∝ |IR real anual|; color = crecimiento del promedio 3m de IMACEC original.\n* Referencia histórica 2024-T3 publicada en dic. 2024. IMACEC calculado con índices de un decimal.',fontsize=8.5)

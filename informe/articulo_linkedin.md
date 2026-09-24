@@ -1,68 +1,68 @@
-# Inflación y empleo en Chile vistos a través de la curva de Phillips
+# Inflación empleo y actividad en Chile entre 2011 y 2026
 
-Enero de 2024 a junio de 2026 | Análisis para LinkedIn
+Enero de 2011 a junio de 2026 | Análisis para LinkedIn
 
-Entre enero de 2024 y junio de 2026, la relación contemporánea entre inflación y desocupación en esta muestra chilena fue prácticamente nula. La correlación de las 30 observaciones es −0,011. El resultado invita a mirar la trayectoria de ambas variables y las remuneraciones reales, sin convertir una asociación estadística de corto plazo en una conclusión causal.
+Ampliar el horizonte cambia la lectura de la curva de Phillips. En los 186 meses comunes, la correlación contemporánea entre inflación y desocupación es 0,124, una asociación positiva débil. En 2024–2026 era prácticamente nula. La comparación por períodos muestra que este promedio no describe una relación estable ni permite inferir causalidad.
 
-El gráfico combina cuatro dimensiones: desocupación en el eje horizontal, inflación anual en el vertical, variación anual del IR real en el área y crecimiento interanual del promedio de tres meses del IMACEC en el color. Naranja indica caída de actividad, un tono claro indica cercanía a cero y azul indica crecimiento. El panel inferior muestra el IMACEC desestacionalizado.
+La visualización conecta inflación, empleo, remuneraciones reales y actividad: desocupación en el eje horizontal, inflación anual en el vertical, magnitud del cambio anual del IR real en el área y crecimiento interanual del promedio móvil de tres meses del IMACEC en el color. Naranja indica caída de actividad, claro cercanía a cero y azul crecimiento. El panel inferior muestra el nivel desestacionalizado.
 
 ![Gráfico de Phillips](../resultados/phillips_estatico.png)
 
-Área: magnitud del crecimiento anual del IR real. Color: variación interanual del promedio móvil 3m del IMACEC original, centrado como la ENE. Panel: nivel mensual desestacionalizado. Referencias: inflación 3% y punto medio NAIRU histórico 8,25% [5].
+Área proporcional al valor absoluto del IR real anual; su signo se consulta en el gráfico interactivo. Color del IMACEC con escala simétrica fija. ENE e IMACEC promedio 3m alineados al mes central. Referencias: inflación 3% y punto medio histórico NAIRU 8,25% [5–7].
 
-## Una trayectoria que cambia de dirección
+## Lo que cambia al incorporar quince años de historia
 
-El punto inicial combina una inflación anual de 3,8%, una desocupación de 8,50% y un aumento anual del IR real de 2,78%. En junio de 2026, el punto final registra 4,3%, 9,53% y 3,27%, respectivamente. Entre los extremos, la desocupación aumenta 1,03 puntos porcentuales y la inflación 0,5 puntos. Sin embargo, esa comparación omite los cambios de dirección que aparecen durante el recorrido.
+En 2011-01, el punto inicial registra inflación de 2,7%, desocupación de 7,44% y aumento anual del IR real de 2,88%. En 2026-06, los valores son 4,3%, 9,53% y 3,27%. La comparación de extremos oculta episodios con dinámicas muy distintas.
 
-El último punto se sitúa arriba y a la derecha del cruce de referencias: la inflación de 4,3% supera la meta en 1,30 puntos porcentuales y la desocupación de 9,53% está 1,28 puntos sobre el punto medio histórico de 8,25%. Estas distancias describen posiciones en el gráfico; no identifican por sí solas un shock de oferta ni una brecha cíclica oficial.
+La desocupación alcanza su máximo muestral de 13,09% en 2020-06, cuando la inflación es 2,6%. El máximo de inflación llega después: 14,1% en 2022-08, con desempleo de 8,04%. Esta separación temporal desaconseja interpretar la nube como un intercambio contemporáneo fijo.
 
-## Qué puede decir una curva de Phillips
+## El promedio agregado no representa todos los períodos
 
-La intuición económica de la curva de Phillips relaciona las presiones inflacionarias con la holgura de la economía. Un mercado laboral más estrecho puede aumentar las presiones salariales y de costos. Pero la inflación observada también responde a expectativas, precios importados, tipo de cambio, productividad y perturbaciones de oferta. El análisis del Banco Central sobre la evidencia chilena subraya la necesidad de una especificación más amplia que una nube de inflación y desempleo [4].
+Las correlaciones descriptivas por ventanas predefinidas son: 2011–2019: −0,172 (108 meses); 2020–2023: −0,628 (48 meses); 2024–2026: −0,011 (30 meses). El último período termina en junio de 2026. Estos cortes son una forma de comparar episodios; no son regímenes identificados econométricamente.
 
-La correlación cercana a cero no demuestra que la relación económica haya desaparecido. Puede reflejar fuerzas simultáneas, rezagos o una muestra breve. Tampoco permite estimar una NAIRU propia ni atribuir el movimiento a una decisión monetaria.
+Que las tres correlaciones parciales sean negativas y la agregada positiva no es un error. La covariación total combina los movimientos dentro de cada período con las diferencias entre sus promedios. Por eso, mezclar episodios puede cambiar el signo de la asociación. No corresponde interpretar +0,124 como evidencia de que un aumento del desempleo cause más inflación, ni las correlaciones negativas como prueba causal de una curva de Phillips.
 
-## El salario real agrega una dimensión relevante
+## La pregunta económica sigue abierta
 
-El IR real crece en términos anuales en los 30 meses comunes, con variaciones entre 1,40% y 3,74%. En junio de 2026, el aumento de 3,27% convive con una desocupación elevada respecto del comienzo de la muestra. Esta coexistencia recuerda que el poder adquisitivo de la remuneración por hora y la posibilidad de acceder a un empleo son dimensiones distintas del bienestar laboral.
+La curva de Phillips vincula presiones inflacionarias con holgura, expectativas y otros determinantes. Una comparación útil requiere controlar oferta, precios externos, productividad y rezagos [4]. La muestra ampliada permite observar más episodios, pero su extensión no resuelve por sí sola la identificación. Las tasas anuales y los trimestres móviles comparten información entre observaciones; la inflación y el empleo también responden a fuerzas comunes.
 
-El indicador del INE mide remuneraciones reales por hora en su ámbito de cobertura. No equivale al ingreso laboral total de los hogares: no incorpora del mismo modo el desempleo, los cambios de horas trabajadas o todas las formas de ocupación. Además, el IR real utiliza el IPC como deflactor. No es una variable estadísticamente independiente de la inflación y no debe volver a descontársele el IPC [3].
+## El salario real también puede retroceder
 
-## Leer el gráfico con sus límites
+El IR real presenta caídas interanuales en 19 de 186 meses. Su mínimo es −2,85% en 2022-07 y su máximo 5,13% en 2013-04. La conclusión anterior de crecimiento en todos los meses solo era válida para 2024–2026. La ampliación revela pérdidas de poder adquisitivo que ese corte reciente no mostraba.
 
-La ENE entrega trimestres móviles que comparten dos meses entre observaciones consecutivas. Aquí se utiliza el mes central, respetando la convención de los archivos: junio de 2026 corresponde a mayo–julio de 2026. El ejercicio es retrospectivo; ese punto no representa lo que se conocía en tiempo real durante junio. El cuaderno permite contrastar la asignación al mes final.
+El área usa el valor absoluto: una caída salarial grande también produce una burbuja grande. El color representa actividad, no el signo del salario. El IR mide remuneraciones reales por hora en su cobertura y no equivale al ingreso total de los hogares ni incorpora el desempleo de la misma forma. Ya está deflactado por IPC: no debe descontarse nuevamente la inflación [3].
 
-La intersección de las cuatro variables conserva 30 meses, de enero de 2024 a junio de 2026. El IMACEC llega hasta julio de 2026 y permite calcular el promedio centrado en junio. No se rellenan faltantes ni se prolonga artificialmente la animación. Para inflación se utiliza exclusivamente el IPC General y su variación anual publicada.
+## Contracción rebote y efecto de base en la actividad
 
-La ENE, el IPC, el IR y el IMACEC usado para el color no están desestacionalizados; el panel inferior sí utiliza la serie ajustada oficial y los cambios a doce meses comparten información entre períodos. Estas dependencias, junto con el reducido tamaño de la muestra, impiden tratar los puntos como observaciones independientes para una inferencia simple. Una investigación econométrica requeriría un horizonte más largo, expectativas de inflación, controles de oferta, rezagos y una estrategia explícita de identificación.
+El crecimiento interanual del promedio móvil del IMACEC alcanza −15,01% en 2020-05 y 19,13% en 2021-06. Hay 29 meses con tasas negativas. El rebote interanual debe leerse junto con el nivel desestacionalizado: crecer respecto de una base deprimida no equivale a estar por encima de una trayectoria potencial.
 
-## Qué significan las líneas de referencia
+La escala simétrica conserva los extremos históricos, por lo que variaciones pequeñas aparecen próximas al tono claro. La barra lateral y el tooltip permiten distinguirlas de cero. El IMACEC mide actividad; no estima por sí solo una brecha de producto ni la NAIRU.
 
-La minuta del BCCh citada en el IPoM de diciembre de 2024 presenta un rango NAIRU de 8,0–8,5% para el tercer trimestre de 2024, mediante filtros de Kalman multivariados y modelos VAR [5]. Usamos su punto medio, 8,25%, como convención visual propia, no como estimación puntual oficial ni como cifra de junio de 2026. La banda representa dispersión entre estimaciones, no un intervalo de confianza.
+## Qué muestra el último punto
 
-La referencia es histórica y utiliza desempleo desestacionalizado, mientras nuestros puntos usan ENE sin ajuste estacional. No suponemos que la NAIRU haya permanecido constante ni la equiparamos automáticamente a la tasa natural de largo plazo. Por su parte, la meta del 3% corresponde a un horizonte de dos años [6]; no exige que la inflación de cada mes sea exactamente 3%. Estas referencias orientan la lectura, pero no bastan para recomendar una tasa de interés.
+En 2026-06, el promedio móvil del IMACEC varía −0,30% interanual, mientras su nivel desestacionalizado es 113,8 y su cambio mensual 0,62%. La actividad trimestral móvil ligeramente inferior a la de un año antes coexiste con inflación de 4,3%, desocupación de 9,53% y crecimiento del IR real de 3,27%. Frecuencias distintas pueden dar señales diferentes; esta combinación no identifica automáticamente un shock ni prescribe una tasa de interés.
 
-## La actividad aporta contexto a la relación entre inflación y empleo
+## Fechas cobertura y referencias
 
-El crecimiento interanual del promedio móvil del IMACEC original pasa de aproximadamente 3,20% en enero de 2024 a −0,30% en junio de 2026. Su máximo en la muestra es 4,26% en abril de 2025. Los cinco puntos de febrero a junio de 2026 presentan tasas negativas, con un mínimo de −0,77% en abril. Los colores se acercan al tono claro porque estas contracciones son pequeñas frente al máximo positivo; la escala se mantiene simétrica alrededor de cero.
+El IPC histórico tiene niveles desde diciembre de 2009, pero las tasas anuales publicadas y el IR real anual disponibles comienzan en enero de 2011. La intersección conserva 186 meses hasta junio de 2026. Junio usa ENE e IMACEC promedio de mayo–julio: requiere conocer julio y es retrospectivo. No se rellenan faltantes. El panel muestra el IMACEC desestacionalizado mensual hasta la misma fecha central.
 
-El último punto combina actividad trimestral móvil ligeramente inferior a la de un año antes, inflación de 4,3%, desocupación de 9,53% y crecimiento del IR real de 3,27%. Es una combinación compatible con actividad débil y presiones de precios persistentes, pero no identifica sus causas. Rezagos, oferta, composición sectorial, productividad y participación laboral pueden alterar el vínculo entre producción, empleo y salarios. El IMACEC no mide por sí solo la brecha de producto ni determina la NAIRU.
+La línea vertical de 8,25% es nuestro punto medio del rango 8,0–8,5% para 2024-T3, publicado en la minuta del IPoM de diciembre de 2024 mediante estimaciones Kalman multivariadas y VAR [5]. No es una NAIRU oficial de 2026 ni de cada año desde 2011. La banda refleja dispersión entre estimaciones, no un intervalo de confianza. La referencia usa desempleo desestacionalizado, a diferencia de los puntos. Las distancias son ilustrativas, no brechas oficiales. La meta de inflación del 3% se refiere al horizonte de dos años [6].
 
-El panel permite separar el nivel de actividad de su crecimiento interanual. El IMACEC desestacionalizado sube de 113,1 en mayo a 113,8 en junio de 2026, aproximadamente 0,62% mensual, aunque el promedio mayo–julio cae 0,30% frente a un año antes. No hay contradicción: se comparan frecuencias y ventanas distintas. El dato de julio entra en el promedio centrado en junio, pero no extiende el panel más allá de las fechas de la muestra.
+## Fórmulas utilizadas
 
-## Fórmulas y decisiones de medición
+Sean Iₜ el IMACEC original y Sₜ el desestacionalizado, ambos con promedio 2018=100. Promedio centrado: Īₜ = (Iₜ₋₁ + Iₜ + Iₜ₊₁) / 3. Color: gₜ = 100 × (Īₜ / Īₜ₋₁₂ − 1). Se comparan promedios de niveles, no promedios de tasas. Con alineación al mes final, la ventana es t−2, t−1 y t. Variación mensual: mₜ = 100 × (Sₜ / Sₜ₋₁ − 1); el panel representa Sₜ.
 
-Sea Iₜ el IMACEC original y Sₜ el desestacionalizado, ambos con promedio 2018=100. Promedio centrado: Īₜ = (Iₜ₋₁ + Iₜ + Iₜ₊₁) / 3. Color: gₜ = 100 × (Īₜ / Īₜ₋₁₂ − 1). Se divide el promedio de niveles entre el de un año antes; no se promedian tasas. Variación mensual del panel: mₜ = 100 × (Sₜ / Sₜ₋₁ − 1); la línea representa Sₜ, no mₜ.
+Desocupación: uₜ = 100 × desocupados / fuerza de trabajo. Inflación: πₜ = 100 × (IPCₜ / IPCₜ₋₁₂ − 1), usando la tasa publicada. IR real: rₜ = 100 × (IRᴿₜ / IRᴿₜ₋₁₂ − 1). Área: Aₜ = k × |rₜ|. Color: L = máximo de |gₜ| en la muestra (mínimo 0,1); zₜ = (gₜ + L) / (2L). Naranja en −L, claro en 0 y azul en +L; escala fija en todos los fotogramas.
 
-Desocupación: uₜ = 100 × desocupados / fuerza de trabajo. Inflación: πₜ = 100 × (IPCₜ / IPCₜ₋₁₂ − 1), usando la variación publicada. IR real: rₜ = 100 × (IRᴿₜ / IRᴿₜ₋₁₂ − 1). Área: Aₜ = k × |rₜ|, con k fijo; su signo figura en el tooltip. Color: L = máximo de |gₜ| en la muestra (mínimo 0,1); zₜ = (gₜ + L) / (2L), con naranja en −L, claro en 0 y azul en +L.
+Referencia vertical: u* = (8,0 + 8,5) / 2 = 8,25%. Distancias: uₜ − u* y πₜ − 3, en puntos porcentuales. Correlación de Pearson: ρ = Σ[(uₜ − ū)(πₜ − π̄)] / √{Σ(uₜ − ū)² × Σ(πₜ − π̄)²}. Las medias corresponden a cada ventana; la muestra completa tiene 186 observaciones. No se presentan pruebas de significancia ni una estimación causal.
 
-Referencia vertical: u* = (8,0 + 8,5) / 2 = 8,25%. Distancias: uₜ − u* y πₜ − 3, en puntos porcentuales. El promedio centrado requiere conocer el mes siguiente. Las tasas IMACEC se calculan con índices BDE redondeados a un decimal y son aproximadas; las series oficiales pueden revisarse [7]. Código, fórmulas y metadatos permiten reproducir el corte local. La correlación descriptiva es la de Pearson: ρ = Σ[(uₜ − ū)(πₜ − π̄)] / √{Σ(uₜ − ū)² × Σ(πₜ − π̄)²}, con medias calculadas sobre los 30 meses comunes.
+Las tasas IMACEC se calculan con índices BDE publicados con un decimal y son aproximadas; las fuentes pueden revisarse [7]. El resumen numérico y las correlaciones se exportan con el cuaderno. El informe toma sus cifras de ese resumen para evitar diferencias entre tablas, gráficos y texto.
 
 ## Fuentes y reproducibilidad
 
 [1] INE. Encuesta Nacional de Empleo, series vigentes. https://www.ine.gob.cl/estadisticas-por-tema/mercado-laboral/ocupacion-y-desocupacion
 
-[2] INE. Índice de Precios al Consumidor. https://www.ine.gob.cl/estadisticas-por-tema/precios-e-inflacion/indice-de-precios-al-consumidor
+[2] INE. IPC histórico empalmado, diciembre de 2009 a la fecha, base 2023. Variación anual publicada desde enero de 2011. URL exacta en extractors/ipc_extractor.py. https://www.ine.gob.cl/estadisticas-por-tema/precios-e-inflacion/indice-de-precios-al-consumidor
 
 [3] INE. Índices de Remuneraciones y Costos Laborales; serie empalmada del IR real. https://www.ine.gob.cl/estadisticas-por-tema/mercado-laboral/remuneraciones-y-costos-laborales
 
@@ -74,4 +74,4 @@ Referencia vertical: u* = (8,0 + 8,5) / 2 = 8,25%. Distancias: uₜ − u* y π�
 
 [7] Banco Central de Chile. BDE, IMACEC empalmado original y desestacionalizado, índices 2018=100. Series F032.IMC.IND.Z.Z.EP18.Z.Z.0.M y F032.IMC.IND.Z.Z.EP18.Z.Z.1.M. Actualización BDE 1 de septiembre de 2026; descarga 23 de septiembre de 2026. https://www.bcentral.cl/areas/estadisticas/imacec
 
-Cálculos propios con los CSV del INE y del BCCh incluidos en el proyecto. Corte INE recibido el 22 de septiembre de 2026; IMACEC descargado el 23 de septiembre de 2026. Código, datos y gráfico: https://github.com/alejandrohenriquezr/curva_phillips
+Cálculos propios con los CSV locales del INE y del BCCh. IPC histórico empalmado incorporado en septiembre de 2026; fechas, cobertura y hashes en resultados. Código y datos: https://github.com/alejandrohenriquezr/curva_phillips

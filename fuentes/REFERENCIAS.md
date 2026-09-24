@@ -23,3 +23,7 @@ Verificación: 23 de septiembre de 2026. Se consultaron también el IPoM de juni
 ## IMACEC
 
 Se incorporan las series originales y desestacionalizadas empalmadas del BCCh, base promedio 2018=100. Identificadores, URLs BDE, fecha de actualización, descarga y hashes de las respuestas en [imacec_metadata.json](imacec_metadata.json). El CSV conserva los índices publicados con un decimal. Fórmulas y ventanas en [METODOLOGIA.md](../METODOLOGIA.md). El color es la variación anual del promedio móvil de tres meses de la serie original; el panel muestra el nivel mensual desestacionalizado.
+
+## IPC histórico empalmado
+
+Archivo INE: serie histórica empalmada diciembre de 2009 a la fecha, hoja `Serie_empalmada`, base 2023. Columnas: Año, Mes, Índice, Variación Mensual (%) y Variación 12 Meses (%). El extractor añade `Glosa = IPC General`. Se preservan las tasas anuales oficiales y los faltantes originales. El corte actual permite 186 meses comunes, enero de 2011 a junio de 2026. URL completa en `extractors/ipc_extractor.py`; versión del CSV identificada por SHA-256 en resultados.

@@ -8,7 +8,8 @@ class IPCExtractor(BaseExtractor):
 
   def __init__(self):
     super().__init__(name="IPC_Chile_Oficial")
-    self.url = "https://www.ine.gob.cl/docs/default-source/%C3%ADndice-de-precios-al-consumidor/cuadros-estadisticos/base-anual-2023_100/series-de-tiempo/ipc-xls.xlsx"
+    #self.url = "https://www.ine.gob.cl/docs/default-source/%C3%ADndice-de-precios-al-consumidor/cuadros-estadisticos/base-anual-2023_100/series-de-tiempo/ipc-xls.xlsx"
+    self.url = "https://www.ine.gob.cl/docs/default-source/%C3%ADndice-de-precios-al-consumidor/cuadros-estadisticos/series-empalmadas-y-antecedentes-historicos/series-empalmadas-diciembre-2009-a-la-fecha/serie-hist%C3%B3rica-empalmada-ipc-diciembre-2009-a-la-fecha-xls.xlsx"
 
   def fetch_raw_data(self) -> dict:
     print(f"📡 Intentando conectar con el servidor del INE Chile...")
@@ -25,7 +26,13 @@ class IPCExtractor(BaseExtractor):
 
     # 1. Elimina únicamente las primeras 3 filas (títulos del cuadro y fila en blanco)
     # La fila 4 pasa a ser la cabecera del DataFrame.
-    df = pd.read_excel(excel_file, sheet_name=0, skiprows=3)
+    df = pd.read_excel(
+      excel_file,
+      sheet_name="Serie_empalmada",
+      skiprows=3
+    )
+
+    df["Glosa"] = "IPC General"
     print(f"📊 Excel cargado en memoria. Columnas detectadas inicialmente: {list(df.columns)}")
     print(f"📉 Filas detectadas inicialmente: {len(df)}")
 

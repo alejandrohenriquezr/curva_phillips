@@ -29,6 +29,8 @@ Descarga y abre `resultados/phillips_animado.html` en un navegador. Incluye Plot
 - `resultados/phillips_animado.html`: gráfico con Play, pausa, reinicio, selector temporal y rastro.
 - `resultados/phillips_estatico.png`: imagen del recorrido completo.
 - `resultados/datos_phillips.csv`: observaciones utilizadas.
+- `resultados/resumen_economico.json`: cifras del informe, extremos y correlaciones.
+- `resultados/correlaciones_subperiodos.csv`: comparación descriptiva de ventanas históricas.
 - `resultados/cobertura.csv`, `meses_excluidos.csv`, `fuentes_sha256.json`: trazabilidad.
 - `informe/Articulo_LinkedIn_Curva_Phillips.docx`: artículo con análisis económico, gráfico y fuentes.
 - `informe/articulo_linkedin.md`: texto editable del artículo.
@@ -44,13 +46,13 @@ El promedio de tres meses se centra en el mes de la ENE: junio compara mayo–ju
 
 ## Metodología
 
-Corte de los CSV recibidos: enero de 2024 a junio de 2026, 30 meses comunes. ENE se asigna al **mes central** del trimestre móvil, respetando `mes_año` del archivo original. Por tanto, junio de 2026 usa empleo de mayo–julio de 2026. Esta es una comparación retrospectiva, no una base de información en tiempo real. El cuaderno incluye sensibilidad al mes final, sobre las mismas fechas comunes.
+Corte de los CSV recibidos: enero de 2011 a junio de 2026, 186 meses comunes. ENE se asigna al **mes central** del trimestre móvil, respetando `mes_año` del archivo original. Por tanto, junio de 2026 usa empleo de mayo–julio de 2026. Esta es una comparación retrospectiva, no una base de información en tiempo real. El cuaderno incluye sensibilidad al mes final, sobre las mismas fechas comunes.
 
-Se selecciona exclusivamente `Glosa == "IPC General"` y su variación anual publicada. El IR es el índice **real** empalmado; se utiliza `var_12` sin volver a deflactarlo. Las series se unen por fecha con correspondencia uno a uno; faltantes se excluyen y documentan, nunca se rellenan con cero.
+El extractor utiliza la serie histórica empalmada del IPC (base 2023), añade `Glosa = "IPC General"` porque el archivo contiene únicamente ese agregado y conserva la variación anual publicada. Los niveles comienzan en diciembre de 2009; la variación anual publicada y el IR anual comienzan en enero de 2011. Se selecciona exclusivamente `Glosa == "IPC General"` y su variación anual publicada. El IR es el índice **real** empalmado; se utiliza `var_12` sin volver a deflactarlo. Las series se unen por fecha con correspondencia uno a uno; faltantes se excluyen y documentan, nunca se rellenan con cero.
 
 El **área**, no el radio, es proporcional a `abs(IR anual)`. El color representa el IMACEC: naranja para caídas, claro para cero y azul para crecimiento; una barra lateral muestra los porcentajes. El signo del IR se consulta en el tooltip. Un centro oscuro fijo localiza valores cero. Todos los fotogramas usan los mismos ejes y la misma escala de tamaños. Los puntos del rastro retienen el tamaño correspondiente a su propia fecha.
 
-La correlación es descriptiva: muestra corta, tasas sin ajuste estacional, trimestres superpuestos y ausencia de controles. No estima causalidad, NAIRU ni el efecto de una decisión monetaria. El IR real por hora tampoco equivale al ingreso total de todos los hogares.
+La correlación es descriptiva: regímenes distintos, tasas sin ajuste estacional, trimestres superpuestos y ausencia de controles. No estima causalidad, NAIRU ni el efecto de una decisión monetaria. El IR real por hora tampoco equivale al ingreso total de todos los hogares.
 
 ## Referencias de inflación y desempleo
 
@@ -58,7 +60,7 @@ La línea horizontal señala la **meta de inflación del 3%** del BCCh, definida
 
 La banda vertical representa el rango **8,0–8,5% para 2024-T3** publicado en la minuta *Holguras en el mercado laboral*, citada en el IPoM de diciembre de 2024 (páginas 34 y 38 del PDF). Reúne estimaciones mediante filtros de Kalman multivariados y modelos VAR. La línea **8,25%** es el punto medio calculado por este proyecto, **no una estimación puntual oficial ni una cifra del IPoM de junio de 2026**. La banda no es un intervalo de confianza.
 
-Es una referencia histórica fija, no una trayectoria estimada para 2024–2026. Además, la referencia utiliza desempleo desestacionalizado y nuestros puntos usan ENE sin ajuste estacional: las distancias son ilustrativas, no brechas cíclicas oficiales. NAIRU y tasa natural de largo plazo no son conceptos necesariamente idénticos.
+Es una referencia histórica fija, no una trayectoria estimada para 2011–2026. Además, la referencia utiliza desempleo desestacionalizado y nuestros puntos usan ENE sin ajuste estacional: las distancias son ilustrativas, no brechas cíclicas oficiales. NAIRU y tasa natural de largo plazo no son conceptos necesariamente idénticos.
 
 Fuentes: [minuta BCCh diciembre de 2024](https://www.bcentral.cl/documents/33528/6735463/Minutas%2Bcitadas%2Ben%2Bel%2BIPoM%2Bdiciembre%2B2024.pdf/d24985ae-cb5e-2f03-4499-ecfad3d86ade) y [IPoM junio de 2026, meta de inflación, página 3](https://www.bcentral.cl/documents/33528/8413153/IPoM%2Bjunio%2B2026.pdf/93388589-0929-4ad6-b166-10981ca34946). Parámetros y trazabilidad: `referencias_macro.json` y `fuentes/REFERENCIAS.md`.
 
@@ -88,5 +90,5 @@ No se publica automáticamente en LinkedIn. El Word está preparado para revisi�
 Las URL exactas de los tabulados están en los extractores. Los archivos de datos se atribuyen al INE; no se les asigna una licencia nueva en este proyecto.
 
 
-Para regenerar el Word, instala `requirements-document.txt` en un entorno Python y ejecuta `python crear_articulo.py` después de generar el gráfico. Revisa visualmente el documento antes de publicar.
+Para regenerar el Word, instala `requirements-document.txt` en un entorno Python y ejecuta `python crear_articulo.py` después de ejecutar el cuaderno o `python phillips.py`, que genera también `resumen_economico.json`. El generador lee las cifras de ese resumen y exige revisar la interpretación si cambia la cobertura. Revisa visualmente el documento antes de publicar.
 
