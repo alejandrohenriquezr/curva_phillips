@@ -102,6 +102,17 @@ class PhillipsTests(unittest.TestCase):
         self.assertIn('03-2020',visible)
         self.assertTrue({'03-2020','08-2023','01-2011','01-2026'}.issubset(labels))
         self.assertEqual(sum(bool(c[9]) for c in final.data[0].customdata),42)
+        records=final.data[0].customdata
+        normal={}
+        for c in records:
+            if c[9]: self.assertEqual(c[10],'#334155')
+            else: normal.setdefault(c[0][:4],set()).add(c[10])
+        self.assertTrue(all(len(colors)==1 for colors in normal.values()))
+        self.assertEqual(len({next(iter(colors)) for colors in normal.values()}),len(normal))
+        self.assertEqual([t.name for t in final.data if t.showlegend],['IMACEC · 12 meses','IPC · 12 meses'])
+        self.assertEqual(f.layout.annotations[2].align,'left')
+        self.assertEqual(f.layout.annotations[2].xanchor,'left')
+
 
     def test_duplicate_month_rejected(self):
         with tempfile.TemporaryDirectory() as folder:

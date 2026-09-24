@@ -1,5 +1,7 @@
 """Ejecuta validación, cuaderno, gráficos y Word con un único comando."""
 import argparse
+import importlib.util
+from salidas import normalizar_fecha
 from datetime import datetime
 import json
 import os
@@ -11,13 +13,23 @@ import time
 ROOT=Path(__file__).resolve().parent
 
 def main():
+    for stream in [sys.stdout,sys.stderr]:
+        if hasattr(stream,"reconfigure"): stream.reconfigure(encoding="utf8")
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--fecha',default='20260924',help='Prefijo AAAAMMDD de los resultados')
+    p.add_argument('--fecha',default=None,help='Prefijo AAAAMMDD_HH_MM; por defecto fecha y hora local al iniciar')
     p.add_argument('--actualizar-datos',action='store_true',help='Descargar fuentes actuales antes de procesar; puede exigir revisar el análisis del informe')
     p.add_argument('--python-documento',default=sys.executable,help='Python con python-docx; por defecto el mismo intérprete')
     args=p.parse_args()
-    if len(args.fecha)!=8 or not args.fecha.isdigit():p.error('--fecha debe ser AAAAMMDD')
-    datetime.strptime(args.fecha,'%Y%m%d')
+    try: args.fecha=normalizar_fecha(args.fecha)
+    except ValueError: p.error('--fecha debe ser AAAAMMDD_HH_MM, por ejemplo 20260924_07_32')
+    modules=['pandas','numpy','plotly','matplotlib','nbformat','nbclient','ipykernel','notebook','requests','openpyxl']
+    if args.python_documento==sys.executable: modules.append('docx')
+    missing=[m for m in modules if importlib.util.find_spec(m) is None]
+    print('Python del proceso:',sys.executable,flush=True)
+    if missing:
+        print('Faltan dependencias: '+', '.join(missing),file=sys.stderr)
+        print('Instálalas en este mismo Python y vuelve a ejecutar:\n& "'+sys.executable+'" -m pip install -r "'+str(ROOT/'requirements-completo.txt')+'"',file=sys.stderr)
+        return 1
     env=os.environ.copy();env['PHILLIPS_FECHA']=args.fecha;env['PYTHONUTF8']='1'
     (ROOT/'resultados').mkdir(exist_ok=True)
     log={'fecha_edicion':args.fecha,'python':sys.executable,'pasos':[],'estado':'en_proceso'}
@@ -43,4 +55,4 @@ def main():
     finally:
         (ROOT/'resultados'/f'{args.fecha}_ejecucion.json').write_text(json.dumps(log,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
 
-if __name__=='__main__':main()
+if __name__=='__main__':sys.exit(main())

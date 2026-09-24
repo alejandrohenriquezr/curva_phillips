@@ -8,3 +8,5 @@ __pycache__/
 .jupyter_runtime/
 .qa/
 *.log
+
+venv/

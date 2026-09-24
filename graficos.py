@@ -2,6 +2,11 @@
 import numpy as np
 import plotly.graph_objects as go
 
+YEAR_COLORS=['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#393b79','#637939','#8c6d31','#843c39','#7b4173','#3182bd','#31a354','#756bb1','#e6550d','#636363']
+
+def border_color(year,pandemic=False):
+    return '#334155' if pandemic else YEAR_COLORS[(int(year)-2011)%len(YEAR_COLORS)]
+
 PANDEMIC_NOTE='Círculos con línea segmentada: período de pandemia de Covid-19 en Chile (03-2020–08-2023; ventana del gráfico).'
 DASH_SCRIPT=r'''
 (function(){
@@ -14,8 +19,8 @@ DASH_SCRIPT=r'''
     const index=p.__data__ && Number.isInteger(p.__data__.i)?p.__data__.i:j;
     const c=gd.data[k].customdata[index]; const pandemic=c && c[9];
     p.style.strokeDasharray=pandemic?'4,2':'none';
-    p.style.strokeWidth=pandemic?'2px':(k===1?'2.5px':'0.6px');
-    p.style.stroke=pandemic?'#334155':(k===1?'#0f172a':'#64748b');
+    p.style.strokeWidth=pandemic?'2px':(k===1?'2.5px':'1.5px');
+    p.style.stroke=c[10];
     p.setAttribute('data-pandemia',pandemic?'true':'false');
    });
   });
@@ -71,12 +76,15 @@ def enhance(fig,data):
         'Área y color de esos puntos: tasa a 12 meses normalizada de toda la muestra; cero = área nula.<br>'+
         PANDEMIC_NOTE+'<br>* NAIRU 8,25%: punto medio propio del rango BCCh 2024-T3, no estimación oficial 2026.')
     notes[2].y=-.24
+    notes[2].update(x=0,xanchor='left',align='left')
     def update_traces(i,old):
         traces=list(old)
         for k in [0,1]:
             records=[list(c) for c in traces[k].customdata]
             ids=range(i+1) if k==0 else [i]
-            for c,j in zip(records,ids):c.append(bool(d.pandemia.iloc[j]))
+            for c,j in zip(records,ids):
+                c.extend([bool(d.pandemia.iloc[j]),border_color(d.fecha.iloc[j].year,d.pandemia.iloc[j])])
+            traces[k].marker.line=dict(color=[c[10] for c in records],width=1.5 if k==0 else 2.5)
             traces[k].customdata=records
         for k in [3,4,5]:
             traces[k].y=(d.imacec_sa_anual.tolist() if k==3 else d.imacec_sa_anual.iloc[:i+1].tolist() if k==4 else [float(d.imacec_sa_anual.iloc[i])])
@@ -93,6 +101,8 @@ def enhance(fig,data):
                 marker=dict(symbol=symbol,size=normalized.abs().tolist(),sizemode='area',sizeref=2/(23**2),color=normalized.tolist(),coloraxis='coloraxis2',line=dict(color='#334155',width=1)),
                 customdata=np.column_stack([dec[rate],normalized]).tolist(),
                 hovertemplate=('%{x|%Y} · '+label+'<br>Acumulado del año: %{y:+.2f}%<br>Tasa 12 meses usada para tamaño/color: %{customdata[0]:+.2f}%<br>Normalizada: %{customdata[1]:+.3f}<extra></extra>'),name=label,cliponaxis=False))
+        for k,t in enumerate(traces): t.showlegend=k in [4,8]
+        traces[4].name='IMACEC · 12 meses';traces[8].name='IPC · 12 meses'
         return traces
     initial=update_traces(0,fig.data)
     # Agregar las cuatro trazas nuevas sin perder las originales.
@@ -101,7 +111,7 @@ def enhance(fig,data):
     for i,frame in enumerate(fig.frames):
         frame.data=update_traces(i,frame.data);frame.traces=list(range(11))
         frame.layout.annotations=notes+[dict(a,visible=j<=i) for j,a in labels]
-    fig.update_layout(height=1280,margin=dict(l=90,r=220,t=125,b=320),
+    fig.update_layout(showlegend=True,legend=dict(orientation='h',x=0,y=.29,xanchor='left',yanchor='top',itemclick=False,itemdoubleclick=False),height=1280,margin=dict(l=90,r=220,t=125,b=320),
         yaxis=dict(domain=[.43,1]),yaxis2=dict(domain=[0,.255],title='Variación (%)',range=panel_range,ticksuffix='%'),
         coloraxis2=dict(cmin=-1,cmax=1,cmid=0,cauto=False,colorscale=[[0,'#d97706'],[.5,'#f7f7f2'],[1,'#2166ac']],
             colorbar=dict(title=dict(text='Puntos diciembre<br>12 meses normalizada'),x=1.04,y=.13,len=.30,thickness=15,tickvals=[-1,0,1],ticktext=['−1','0','+1'])),

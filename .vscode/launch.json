@@ -5,7 +5,7 @@
     "type": "debugpy",
     "request": "launch",
     "program": "${workspaceFolder}/orquestar.py",
-    "args": ["--fecha", "20260924"],
+    "args": [],
     "cwd": "${workspaceFolder}",
     "console": "integratedTerminal"
   }]

@@ -6,7 +6,7 @@ import json
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from graficos import enhance, figure_html, annual_normalization, date_labels, PANDEMIC_NOTE
+from graficos import enhance, figure_html, annual_normalization, date_labels, PANDEMIC_NOTE, border_color
 
 ROOT = Path(__file__).resolve().parent
 REFERENCIAS = json.loads((ROOT/'referencias_macro.json').read_text(encoding='utf-8-sig'))
@@ -192,7 +192,7 @@ def static_chart(d, out=ROOT/'resultados'/archivo('phillips_estatico.png')):
     ax.axvline(NAIRU_REFERENCIA,color='#7c3aed',ls='-.',lw=1.3,label='NAIRU ref. 8,25%*')
     ax.axhline(META_INFLACION,color='#2563eb',ls='--',lw=1.3,label='Meta de inflación 3%')
     ax.plot(d.desocupacion,d.ipc_anual,c='#a8b3bf',lw=1.1,zorder=1)
-    points=ax.scatter(d.desocupacion,d.ipc_anual,s=d.ir_magnitud*85,c=d.imacec_promedio_anual,cmap=cmap,norm=norm,edgecolors='#64748b',linewidths=np.where(d.pandemia,1.3,.4),linestyles=['--' if flag else '-' for flag in d.pandemia],zorder=2)
+    points=ax.scatter(d.desocupacion,d.ipc_anual,s=d.ir_magnitud*85,c=d.imacec_promedio_anual,cmap=cmap,norm=norm,edgecolors=[border_color(r.fecha.year,r.pandemia) for r in d.itertuples()],linewidths=np.where(d.pandemia,1.3,1),linestyles=['--' if flag else '-' for flag in d.pandemia],zorder=2)
     for _,a in date_labels(d,ax.get_xlim(),ax.get_ylim(),width=650,height=350):
         ax.annotate(a['text'],(a['x'],a['y']),xytext=(a['ax']*.6,-a['ay']*.6),textcoords='offset points',fontsize=6.5,
                     bbox=dict(facecolor='white',edgecolor='none',alpha=.85,pad=.6),arrowprops=dict(arrowstyle='-',color='#64748b',lw=.4))
