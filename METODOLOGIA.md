@@ -49,3 +49,15 @@ Series BCCh: `F032.IMC.IND.Z.Z.EP18.Z.Z.0.M` (original) y `F032.IMC.IND.Z.Z.EP18
 Para actualizar voluntariamente: `python actualizar_imacec.py`, luego `python phillips.py` y `python verificar_cuaderno.py`. La actualización de INE sigue en `python main.py`. Revisar el Word si cambia el corte; el análisis narrativo corresponde a enero de 2011–junio de 2026.
 
 El borde distingue el año fuera de la ventana de pandemia; dentro se conserva el borde gris segmentado. El relleno sigue codificando IMACEC. Las salidas comparten la fecha y hora local de inicio AAAAMMDD_HH_MM.
+
+## Desestacionalización experimental del IPC
+
+`ipc_x13.py` invoca el ejecutable oficial X-13ARIMA-SEATS y solicita explícitamente la descomposición SEATS (no X-11). Entrada: niveles mensuales positivos del IPC General empalmado, con fechas únicas y sin huecos. No se rellenan faltantes ni se concatenan índices de bases diferentes. Se usa toda la serie diciembre de 2009–agosto de 2026, no solo la intersección con ENE e IR.
+
+Especificación: logaritmos, `automdl`, atípicos automáticos AO/LS/TC, horizonte interno de 36 meses y SEATS sin aproximación automática de modelos inadmisibles. No se añaden feriados extranjeros ni regresores de días hábiles. Los pronósticos internos sirven al filtro y no se agregan como observaciones a los gráficos. La serie final es `s11`, que conserva el irregular: no debe confundirse con la tendencia `s12` ni con una inflación subyacente. `s10` y `s13` se conservan para auditoría.
+
+Para índice ajustado A_t: mensual = 100(A_t/A_{t-1}−1); anual = 100(A_t/A_{t-12}−1). El cierre de diciembre usa la tasa anual de la variante seleccionada. En modo original se conservan tasas oficiales y faltantes; no se reemplazan por cálculos con niveles redondeados. La tabla comparativa agrega el cálculo anual sobre niveles originales como control de redondeo.
+
+La estimación no es oficial del INE. Se vuelve a estimar al cambiar los datos, especificación o ejecutable. Utiliza información de toda la muestra y sus extremos están sujetos a revisión; no es una estimación en tiempo real. Los diagnósticos se guardan sin ocultar advertencias ni sustituir fallos por otro método. La ejecución actual detecta un pico de días de negociación en residuos; debe evaluarse calendario chileno y estabilidad antes de un uso oficial. Desestacionalizar el IPC no transforma la ENE o el IR y no elimina los problemas causales de una curva de Phillips descriptiva.
+
+Fuente del software y documentación: [U.S. Census Bureau](https://www.census.gov/data/software/x13as.X-13ARIMA-SEATS.html). [Manual de referencia](https://www2.census.gov/software/x-13arima-seats/x13as/unix-linux/documentation/docx13as.pdf).

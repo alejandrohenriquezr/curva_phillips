@@ -17,6 +17,8 @@ def main():
         if hasattr(stream,"reconfigure"): stream.reconfigure(encoding="utf8")
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--fecha',default=None,help='Prefijo AAAAMMDD_HH_MM; por defecto fecha y hora local al iniciar')
+    p.add_argument('--ipc',choices=['original','sa'],default='original',help='IPC publicado o ajuste experimental X-13/SEATS')
+    p.add_argument('--instalar-x13',action='store_true',help='Descargar ejecutable oficial antes del proceso')
     p.add_argument('--actualizar-datos',action='store_true',help='Descargar fuentes actuales antes de procesar; puede exigir revisar el análisis del informe')
     p.add_argument('--python-documento',default=sys.executable,help='Python con python-docx; por defecto el mismo intérprete')
     args=p.parse_args()
@@ -30,12 +32,20 @@ def main():
         print('Faltan dependencias: '+', '.join(missing),file=sys.stderr)
         print('Instálalas en este mismo Python y vuelve a ejecutar:\n& "'+sys.executable+'" -m pip install -r "'+str(ROOT/'requirements-completo.txt')+'"',file=sys.stderr)
         return 1
-    env=os.environ.copy();env['PHILLIPS_FECHA']=args.fecha;env['PYTHONUTF8']='1'
+    env=os.environ.copy();env['PHILLIPS_FECHA']=args.fecha;env['PYTHONUTF8']='1';env['PHILLIPS_IPC']=args.ipc
     (ROOT/'resultados').mkdir(exist_ok=True)
     log={'fecha_edicion':args.fecha,'python':sys.executable,'pasos':[],'estado':'en_proceso'}
+    if args.instalar_x13:
+        subprocess.run([sys.executable,'instalar_x13.py'],cwd=ROOT,check=True)
+    if args.ipc=='sa':
+        from ipc_x13 import executable
+        executable()
+    log['ipc_ajuste']=args.ipc
+    prefix=args.fecha+('_ipc_sa' if args.ipc=='sa' else '')
     steps=[]
     if args.actualizar_datos:steps.extend([('Descarga INE',[sys.executable,'main.py']),('Descarga BCCh',[sys.executable,'actualizar_imacec.py'])])
     steps.extend([('Pruebas',[sys.executable,'-m','unittest','test_phillips','-v']),
+                  ('Pruebas X-13',[sys.executable,'-m','unittest','test_ipc_x13','-v']),
                   ('Crear cuaderno',[sys.executable,'crear_cuaderno.py']),
                   ('Ejecutar cuaderno y exportar gráficos',[sys.executable,'verificar_cuaderno.py']),
                   ('Generar Word y Markdown',[args.python_documento,'crear_articulo.py'])])
@@ -45,7 +55,7 @@ def main():
             result=subprocess.run(command,cwd=ROOT,env=env,check=False)
             log['pasos'].append({'paso':label,'segundos':round(time.monotonic()-start,2),'codigo':result.returncode})
             if result.returncode:raise RuntimeError(f'Falló {label}; revisar el mensaje anterior. No se marca esta edición como completa.')
-        outputs=[ROOT/f'{args.fecha}_Curva_de_Phillips.ipynb',ROOT/'resultados'/f'{args.fecha}_phillips_animado.html',ROOT/'informe'/f'{args.fecha}_Articulo_LinkedIn_Curva_Phillips.docx',ROOT/'informe'/f'{args.fecha}_articulo_linkedin.md']
+        outputs=[ROOT/f'{prefix}_Curva_de_Phillips.ipynb',ROOT/'resultados'/f'{prefix}_phillips_animado.html',ROOT/'informe'/f'{prefix}_Articulo_LinkedIn_Curva_Phillips.docx',ROOT/'informe'/f'{prefix}_articulo_linkedin.md']
         for path in outputs:
             if not path.is_file() or not path.stat().st_size:raise RuntimeError(f'Falta resultado: {path}')
         log['estado']='correcto';log['archivos']=[str(x) for x in outputs]
@@ -53,6 +63,6 @@ def main():
     except Exception as exc:
         log['estado']='error';log['error']=str(exc);raise
     finally:
-        (ROOT/'resultados'/f'{args.fecha}_ejecucion.json').write_text(json.dumps(log,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
+        (ROOT/'resultados'/f'{prefix}_ejecucion.json').write_text(json.dumps(log,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
 
 if __name__=='__main__':sys.exit(main())

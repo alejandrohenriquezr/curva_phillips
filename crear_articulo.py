@@ -16,6 +16,7 @@ if (summary['desde'],summary['hasta']) != ('2011-01','2026-06'):
     raise ValueError('El corte cambió: revisar el análisis económico antes de regenerar el artículo.')
 def f(value,digits=2): return f'{value:.{digits}f}'.replace('-', '−').replace('.', ',')
 n=summary['n']; first=summary['inicio']; last=summary['final']; ext=summary['extremos']; obs=summary['observaciones']
+ipc_mode=summary.get('ipc_ajuste','original')
 periods=summary['subperiodos']
 period_text='; '.join(f"{p['periodo']}: {f(p['correlacion'],3)} ({p['n']} meses)" for p in periods)
 sections=[
@@ -31,7 +32,7 @@ sections=[
 ('p',f"La desocupación alcanza su máximo muestral de {f(ext['desocupacion']['max']['desocupacion'])}% en {ext['desocupacion']['max']['mes']}, cuando la inflación es {f(ext['desocupacion']['max']['ipc_anual'],1)}%. El máximo de inflación llega después: {f(ext['ipc_anual']['max']['ipc_anual'],1)}% en {ext['ipc_anual']['max']['mes']}, con desempleo de {f(ext['ipc_anual']['max']['desocupacion'])}%. Esta separación temporal desaconseja interpretar la nube como un intercambio contemporáneo fijo."),
 ('h','El promedio agregado no representa todos los períodos'),
 ('p',f"Las correlaciones descriptivas por ventanas predefinidas son: {period_text}. El último período termina en junio de 2026. Estos cortes son una forma de comparar episodios; no son regímenes identificados econométricamente."),
-('p','Que las tres correlaciones parciales sean negativas y la agregada positiva no es un error. La covariación total combina los movimientos dentro de cada período con las diferencias entre sus promedios. Por eso, mezclar episodios puede cambiar el signo de la asociación. No corresponde interpretar +0,124 como evidencia de que un aumento del desempleo cause más inflación, ni las correlaciones negativas como prueba causal de una curva de Phillips.'),
+('p',f'Que las tres correlaciones parciales sean negativas y la agregada positiva no es un error. La covariación total combina los movimientos dentro de cada período con las diferencias entre sus promedios. Por eso, mezclar episodios puede cambiar el signo de la asociación. No corresponde interpretar {f(summary["correlacion"],3)} como evidencia de que un aumento del desempleo cause más inflación, ni las correlaciones negativas como prueba causal de una curva de Phillips.'),
 ('h','La pregunta económica sigue abierta'),
 ('p','La curva de Phillips vincula presiones inflacionarias con holgura, expectativas y otros determinantes. Una comparación útil requiere controlar oferta, precios externos, productividad y rezagos [4]. La muestra ampliada permite observar más episodios, pero su extensión no resuelve por sí sola la identificación. Las tasas anuales y los trimestres móviles comparten información entre observaciones; la inflación y el empleo también responden a fuerzas comunes.'),
 ('break',''),
@@ -96,6 +97,32 @@ sections[ix:ix]=[
 ('p',f'Estas escalas no se recalculan en cada fotograma. Así, una burbuja no cambia de significado al reproducir o retroceder. Los archivos de esta edición usan el prefijo {FECHA} y el orquestador registra las etapas y resultados de la ejecución.'),
 ('break','')]
 sections.append(('source','[8] Gobierno de Chile. Fin de alerta sanitaria por Covid-19 y enfermedades respiratorias, 31 de agosto de 2023. https://www.gob.cl/noticias/fin-alerta-sanitaria-covid-19-coronavirus-enfermedades-respiratorias-mascarillas-teletrabajo/'))
+
+# La variante SA se identifica y no se atribuye al INE.
+if ipc_mode=='sa':
+    meta=json.loads((ROOT/'resultados'/archivo('ipc_x13_metadatos.json')).read_text(encoding='utf8'))
+    import csv
+    with (ROOT/'resultados'/archivo('ipc_comparacion.csv')).open(encoding='utf-8-sig') as source:
+        comparison=list(csv.DictReader(source))
+    latest=comparison[-1]
+    replacements={
+        'Análisis para LinkedIn':'Análisis con IPC desestacionalizado experimental',
+        'inflación anual en el vertical':'inflación anual del IPC ajustado X-13/SEATS en el vertical',
+        'usando la tasa publicada.':'usando el índice IPC ajustado X-13/SEATS.',
+        'se usa la tasa anual publicada de diciembre para evitar diferencias de redondeo.':'se calcula sobre el índice ajustado de diciembre contra diciembre.',
+    }
+    sections=[(kind, __import__('functools').reduce(lambda t,p:t.replace(*p),replacements.items(),text)) for kind,text in sections]
+    ix=next(i for i,(kind,text) in enumerate(sections) if kind=='h' and text=='Fuentes y reproducibilidad')
+    sections[ix:ix]=[
+        ('h','Ajuste estacional experimental del IPC'),
+        ('p',f"Esta edición utiliza X-13ARIMA-SEATS con descomposición SEATS sobre los {meta['n']} niveles empalmados mensuales de {meta['desde']} a {meta['hasta']}. El modelo regARIMA seleccionado fue {meta['modelo_regarima']}, con logaritmos y detección automática de valores atípicos AO, LS y TC. El archivo de especificación y el informe completo del programa acompañan los resultados [9]."),
+        ('p','El ajuste se aplica al nivel del índice, no a las tasas publicadas. Si Pₜᴬ es el índice desestacionalizado, la variación mensual es 100 × (Pₜᴬ / Pₜ₋₁ᴬ − 1) y la de 12 meses es 100 × (Pₜᴬ / Pₜ₋₁₂ᴬ − 1). La medida de diciembre usa diciembre contra diciembre ajustados; no es la inflación acumulada oficial. Las tasas originales publicadas permanecen en el CSV comparativo.'),
+        ('p',f"En {latest['fecha'][:7]}, último IPC disponible, la variación mensual publicada es {f(float(latest['ipc_mensual_original']))}% y la ajustada {f(float(latest['ipc_mensual_sa']))}%. A 12 meses son {f(float(latest['ipc_anual_original']))}% y {f(float(latest['ipc_anual_sa']))}%, respectivamente. El gráfico de Phillips termina antes, en {last['mes']}, por la intersección con empleo y remuneraciones."),
+        ('p','Las diferencias a 12 meses pueden ser pequeñas porque se compara el mismo mes del año; el ajuste suele ser más informativo al comparar meses consecutivos. Parte de la diferencia frente a la tasa publicada también procede del redondeo del índice empalmado, por lo que se exporta además su variación original recalculada.'),
+        ('p','El diagnóstico advierte un pico de días de negociación en el espectro de los residuos. No se incorporaron regresores de días hábiles ni feriados específicos de Chile. La estimación es exploratoria: requiere evaluar efectos calendario, estabilidad y revisiones antes de un uso oficial. La eliminación de estacionalidad no equivale a eliminar todos los efectos de calendario.'),
+        ('p','Se utiliza la muestra completa disponible, incluida información posterior a los puntos históricos. Es un ejercicio retrospectivo, sujeto a revisión al incorporar observaciones; no reconstruye lo que se conocía en tiempo real. El IR real y la ENE mantienen su tratamiento anterior. La referencia de inflación de 3% conserva su sentido oficial y la distancia calculada con IPC ajustado es solo ilustrativa.'),
+        ('break','')]
+    sections.append(('source','[9] U.S. Census Bureau. X-13ARIMA-SEATS v1.1 build 62 y manual de referencia. https://www.census.gov/data/software/x13as.X-13ARIMA-SEATS.html'))
 
 doc=Document()
 s=doc.sections[0]; s.page_width=Cm(21); s.page_height=Cm(29.7)

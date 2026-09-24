@@ -67,3 +67,35 @@ El Python que ejecuta el proceso necesita todas las dependencias. En la terminal
 Usa `python orquestar.py` si activaste ese entorno; el comando `py` puede seleccionar otro intérprete según su configuración. El orquestador muestra el ejecutable y detecta dependencias faltantes antes de las pruebas. No instala paquetes automáticamente. `INSTALAR.bat` y los lanzadores utilizan ahora el mismo `venv` de la carpeta.
 
 Cada ejecución fija una fecha y hora local al inicio, por ejemplo `20260924_07_32`, compartida por todos sus archivos. Puedes indicarla con `--fecha 20260924_07_32`. Dos ejecuciones dentro del mismo minuto utilizan el mismo prefijo y reemplazan esa edición. La fecha es de generación, no el corte de las series.
+
+## IPC con o sin ajuste estacional X-13
+
+Instala una vez el ejecutable oficial de Census (v1.1 build 62):
+
+```powershell
+.\venv\Scripts\python.exe instalar_x13.py
+```
+
+Después elige la variante para ejecutar todo:
+
+```powershell
+# Tasas originales publicadas por INE (opción predeterminada)
+.\venv\Scripts\python.exe orquestar.py --ipc original
+
+# IPC desestacionalizado experimental con SEATS
+.\venv\Scripts\python.exe orquestar.py --ipc sa
+```
+
+Puedes combinar instalación y proceso con `--ipc sa --instalar-x13`. El instalador descarga únicamente el ejecutable del archivo oficial de Census. Para usar un binario ya instalado, define `$env:X13_EXECUTABLE = 'C:\ruta\x13as_ascii.exe'`. El ejecutable no se publica en el repositorio. El IPC original no requiere X-13.
+
+En el notebook, cambia `IPC_AJUSTE = 'original'` por `IPC_AJUSTE = 'sa'` en la primera celda y ejecuta todas las celdas. El selector cambia el eje del IPC en Phillips, la serie del panel inferior, los cierres de diciembre y las estadísticas exportadas. Para generar también un Word coherente con esa selección utiliza el orquestador. Los resultados SA se llaman `AAAAMMDD_HH_MM_ipc_sa_...`, de modo que las dos variantes pueden coexistir incluso con la misma fecha y hora.
+
+El código de ajuste está en [ipc_x13.py](ipc_x13.py). Para generar solo la comparación del IPC:
+
+```powershell
+.\venv\Scripts\python.exe ipc_x13.py
+```
+
+La tabla `ipc_comparacion.csv` incluye índices original y ajustado, variaciones mensuales y anuales, tendencia, factor estacional e irregular. Se conservan las tasas oficiales y se añade la variación anual calculada desde niveles originales para distinguir el redondeo del efecto estacional. El directorio fechado `x13` guarda la especificación `.spc`, el informe `.out`, las advertencias `.err` y las tablas SEATS `s10`–`s13`; los metadatos incluyen hashes del CSV, ejecutable y especificación. Se reutiliza la caché solo cuando esos tres insumos coinciden.
+
+El ajuste es **experimental del proyecto, no oficial del INE**. Usa toda la historia mensual disponible, transformación logarítmica, selección ARIMA y detección de atípicos. No ajusta la ENE ni el IR. No incluye regresores de calendario chileno: la ejecución actual advierte un posible efecto calendario en residuos. Los datos ajustados pueden revisarse y usan información posterior a cada observación histórica. Consulte [METODOLOGIA.md](METODOLOGIA.md) y los diagnósticos antes de interpretar el resultado.

@@ -10,3 +10,6 @@ __pycache__/
 *.log
 
 venv/
+
+.cache_x13/
+herramientas/x13/

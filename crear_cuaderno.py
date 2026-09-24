@@ -1,4 +1,5 @@
 from salidas import archivo, FECHA
+import os
 import json
 from pathlib import Path
 root=Path(__file__).resolve().parent
@@ -16,6 +17,9 @@ from IPython.display import display, HTML
 import importlib
 import os
 os.environ['PHILLIPS_FECHA'] = '{FECHA}'
+# Cambia a 'original' o 'sa' y vuelve a ejecutar todas las celdas.
+IPC_AJUSTE = '{os.environ.get('PHILLIPS_IPC','original')}'
+os.environ['PHILLIPS_IPC'] = IPC_AJUSTE
 import salidas, graficos
 importlib.reload(salidas)
 importlib.reload(graficos)
@@ -25,12 +29,16 @@ from phillips import load_data, build_figure, export_results, static_chart, econ
 print('Python:', sys.version.split()[0])
 print('Proyecto:', Path.cwd().name)
 ''')
-md('''## Qué representa cada variable\n\n- **Eje horizontal:** tasa de desocupación nacional de la ENE, en porcentaje, sin ajuste estacional. Es un trimestre móvil, no una estimación mensual independiente.\n- **Eje vertical:** variación a doce meses del **IPC General**, publicada en el CSV. No se promedian divisiones del IPC ni se calcula un cambio a doce meses a partir de índices con bases distintas.\n- **Área de la burbuja:** proporcional al valor absoluto de la variación anual del índice de remuneraciones **real**, por hora. El signo del IR se consulta al pasar el cursor; el color representa el IMACEC, no el salario real. Un centro oscuro permite localizar una variación exactamente cero sin asignarle un área económica ficticia.\n\nEl IR ya está deflactado por IPC; restar nuevamente la inflación sería un error. Se usa `var_12`, contrastada con los niveles separados por doce meses.\n\n**Fechas:** seguimos la convención de los CSV: ENE se asigna al mes central (por ejemplo, mayo–julio corresponde a junio). Esto sirve para una comparación retrospectiva; el punto no representa información disponible en tiempo real en junio. La fecha final del trimestre también queda en la tabla.\n''')
-code('''datos, cobertura, excluidos = load_data()
+md('''## Qué representa cada variable\n\n- **Eje horizontal:** tasa de desocupación nacional de la ENE, en porcentaje, sin ajuste estacional. Es un trimestre móvil, no una estimación mensual independiente.\n- **Eje vertical:** variación a doce meses del **IPC General**, publicada en el CSV en modo `original` o calculada sobre el índice ajustado X-13/SEATS en modo `sa`. No se promedian divisiones del IPC ni se calcula un cambio a doce meses a partir de índices con bases distintas.\n- **Área de la burbuja:** proporcional al valor absoluto de la variación anual del índice de remuneraciones **real**, por hora. El signo del IR se consulta al pasar el cursor; el color representa el IMACEC, no el salario real. Un centro oscuro permite localizar una variación exactamente cero sin asignarle un área económica ficticia.\n\nEl IR ya está deflactado por IPC; restar nuevamente la inflación sería un error. Se usa `var_12`, contrastada con los niveles separados por doce meses.\n\n**Fechas:** seguimos la convención de los CSV: ENE se asigna al mes central (por ejemplo, mayo–julio corresponde a junio). Esto sirve para una comparación retrospectiva; el punto no representa información disponible en tiempo real en junio. La fecha final del trimestre también queda en la tabla.\n''')
+code('''datos, cobertura, excluidos = load_data(ipc_ajuste=IPC_AJUSTE)
 display(cobertura)
 print(f'Período común: {datos.mes.iloc[0]} a {datos.mes.iloc[-1]} · {len(datos)} observaciones')
 print(f'Meses excluidos por falta de alguna variable: {len(excluidos)}')
 display(datos[['mes','Trimestre','fecha_final_ene','desocupacion','ipc_anual','ir_real_anual','imacec_promedio_anual','imacec_sa_anual','imacec_acumulado_anual','estado_ir']].tail(12).round(3))
+''')
+md('''## Elegir IPC original o desestacionalizado
+
+En la primera celda cambia `IPC_AJUSTE` a `original` o `sa` y ejecuta todas las celdas. El modo SA requiere el ejecutable oficial: `python instalar_x13.py`. X-13 ajusta el nivel empalmado completo y calcula después tasas mensuales y de 12 meses. Exporta `ipc_comparacion.csv`, especificación y diagnóstico. Es experimental, revisable y no oficial del INE; no ajusta ENE ni IR. El indicador de diciembre usa el IPC seleccionado. Los archivos SA agregan `ipc_sa` para no reemplazar los originales.
 ''')
 md('''## Comprobaciones antes de graficar\n\nEl código exige fechas únicas, uniones uno a uno, valores finitos y continuidad mensual. Nunca reemplaza faltantes por cero. La tabla `meses_excluidos.csv` permite auditar la intersección de las series. El archivo `fuentes_sha256.json` identifica la versión exacta de los CSV utilizados.\n''')
 code('''assert not datos.fecha.duplicated().any()
@@ -49,7 +57,7 @@ static_chart(datos)
 display(HTML(figure_html(figura, full_html=False)))
 ''')
 md('''## Lectura económica y sensibilidad de fechas\n\nUna nube de puntos es una descripción, no una estimación causal de la curva de Phillips. La inflación depende también de expectativas, oferta, precios externos, tipo de cambio y política monetaria. La variación del IR real comparte el IPC como deflactor, por lo que no constituye una variable independiente de la inflación.\n\nLa comparación por subperíodos muestra cómo cambia la asociación según la ventana elegida. La ampliación incorpora caídas y rebotes de actividad y episodios de alta inflación. Las burbujas claras pueden representar variaciones pequeñas respecto de los extremos históricos, no necesariamente cero.\n\nLa correlación siguiente usa niveles contemporáneos, sin controles ni correcciones por autocorrelación. Los trimestres móviles se superponen y las tasas anuales también comparten meses. Por eso no se presentan pruebas de significancia ni recomendaciones de tasas de interés. Tampoco se estima una NAIRU propia; se incorpora únicamente la referencia histórica externa descrita arriba.\n\nPara explorar la convención temporal, también se calcula la correlación con ENE asignada al mes final, restringiendo ambas alternativas a las mismas fechas. Este contraste cambia el emparejamiento, no el dato original.\n''')
-code('''alternativa, _, _ = load_data(alignment='final')
+code('''alternativa, _, _ = load_data(alignment='final', ipc_ajuste=IPC_AJUSTE)
 fechas_comunes = datos.fecha[datos.fecha.isin(alternativa.fecha)]
 a = datos[datos.fecha.isin(fechas_comunes)]
 b = alternativa[alternativa.fecha.isin(fechas_comunes)]

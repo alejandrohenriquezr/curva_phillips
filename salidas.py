@@ -16,4 +16,8 @@ def normalizar_fecha(value=None):
 FECHA=normalizar_fecha(os.environ.get('PHILLIPS_FECHA'))
 os.environ['PHILLIPS_FECHA']=FECHA
 
-def archivo(nombre): return f'{FECHA}_{nombre}'
+def archivo(nombre):
+    mode=os.environ.get('PHILLIPS_IPC','original')
+    if mode not in ('original','sa'):raise ValueError('PHILLIPS_IPC debe ser original o sa')
+    suffix='_ipc_sa' if mode=='sa' else ''
+    return f'{FECHA}{suffix}_{nombre}'

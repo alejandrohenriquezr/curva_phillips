@@ -1,6 +1,7 @@
 from salidas import archivo, FECHA
 """Análisis reproducible de los CSV del INE y BCCh; no descarga ni modifica las fuentes."""
 from pathlib import Path
+import os
 import hashlib
 import json
 import numpy as np
@@ -42,14 +43,24 @@ def unique_months(df, name):
         raise ValueError(f'{name}: fechas ausentes o duplicadas')
     return df.sort_values('fecha').reset_index(drop=True)
 
-def load_data(root=ROOT, alignment='central'):
+def load_data(root=ROOT, alignment='central', ipc_ajuste='original'):
     if alignment not in ('central', 'final'):
         raise ValueError('alignment debe ser central o final')
+    if ipc_ajuste not in ('original','sa'):raise ValueError('ipc_ajuste debe ser original o sa')
     root = Path(root)
     ipc = pd.read_csv(root/'ine_ipc_chile.csv')
     ipc = ipc.loc[ipc.Glosa.str.strip().eq('IPC General')].copy()
     ipc['fecha'] = pd.to_datetime(dict(year=ipc['Año'], month=ipc['Mes'], day=1))
     ipc = unique_months(ipc, 'IPC').rename(columns={'Variación 12 Meses (%)':'ipc_anual'})
+    ipc['ipc_anual_original']=ipc.ipc_anual
+    ipc['ipc_mensual_original']=ipc['Variación Mensual (%)']
+    ipc['ipc_indice_original']=ipc['Índice']
+    if ipc_ajuste=='sa':
+        from ipc_x13 import ajustar_ipc
+        adjusted,_=ajustar_ipc(root)
+        ipc=ipc.merge(adjusted[['fecha','ipc_indice_sa','ipc_mensual_sa','ipc_anual_sa']],on='fecha',validate='one_to_one')
+        ipc['ipc_anual']=ipc.ipc_anual_sa
+
     ir = pd.read_csv(root/'ine_ir_chile.csv')
     ir['fecha'] = pd.to_datetime(dict(year=ir['año'], month=ir['mes'], day=1))
     ir = unique_months(ir, 'IR').rename(columns={'var_12':'ir_real_anual', 'estado':'estado_ir'})
@@ -72,7 +83,7 @@ def load_data(root=ROOT, alignment='central'):
     imacec=load_imacec(root,alignment)
     parts_data = [('IPC',ipc,'ipc_anual'), ('IR real',ir,'ir_real_anual'), ('ENE',ene,'desocupacion'), ('IMACEC original',imacec,'imacec_original'), ('IMACEC desestacionalizado',imacec,'imacec_sa'), ('IMACEC promedio 3m interanual',imacec,'imacec_promedio_anual')]
     coverage = pd.DataFrame([{'serie':name,'desde':d.fecha.min().strftime('%Y-%m'),'hasta':d.fecha.max().strftime('%Y-%m'),'filas':len(d),'faltantes':int(d[col].isna().sum())} for name,d,col in parts_data])
-    union = ipc[['fecha','ipc_anual']].merge(ir[['fecha','ir_real_anual','estado_ir']],on='fecha',how='outer',validate='one_to_one').merge(ene[['fecha','desocupacion','Trimestre','fecha_central_ene','fecha_final_ene']],on='fecha',how='outer',validate='one_to_one').sort_values('fecha')
+    union = ipc[[c for c in ipc.columns if c=='fecha' or c.startswith('ipc_')]].merge(ir[['fecha','ir_real_anual','estado_ir']],on='fecha',how='outer',validate='one_to_one').merge(ene[['fecha','desocupacion','Trimestre','fecha_central_ene','fecha_final_ene']],on='fecha',how='outer',validate='one_to_one').sort_values('fecha')
     union=union.merge(imacec,on='fecha',how='outer',validate='one_to_one').sort_values('fecha')
     required=['ipc_anual','ir_real_anual','desocupacion','imacec_promedio_anual','imacec_sa']
     missing = union[union[required].isna().any(axis=1)].copy()
@@ -90,6 +101,7 @@ def load_data(root=ROOT, alignment='central'):
     data['ir_signo'] = np.where(data.ir_real_anual>=0,'Aumento','Caída')
     data['alineacion_ene']=alignment
     data['pandemia']=data.fecha.between('2020-03-01','2023-08-01')
+    data['ipc_ajuste']=ipc_ajuste
     data['ipc_acumulado_diciembre']=data.ipc_anual.where(data.fecha.dt.month.eq(12))
     data['distancia_meta_ipc_pp'] = data.ipc_anual - META_INFLACION
     data['distancia_referencia_nairu_pp'] = data.desocupacion - NAIRU_REFERENCIA
@@ -142,7 +154,20 @@ def _base_figure(data):
     return fig
 
 def build_figure(data):
-    return enhance(_base_figure(data),data)
+    fig=enhance(_base_figure(data),data)
+    if data.ipc_ajuste.iloc[0]=='sa':
+        label='IPC SA experimental'
+        fig.layout.yaxis.title.text=label+' · variación anual (%)'
+        fig.layout.annotations[2].text += '<br>IPC SA: estimación propia X-13/SEATS, revisable; advertencia de posible efecto calendario.'
+        fig.update_layout(height=1310,margin=dict(b=350))
+        for traces in [fig.data,*[f.data for f in fig.frames]]:
+            traces[8].name=label+' · 12 meses'
+            for t in traces:
+                if t.hovertemplate: t.hovertemplate=t.hovertemplate.replace('IPC anual:',label+':').replace('IPC 12 meses:',label+' 12 meses:').replace('IPC diciembre/diciembre',label+' diciembre/diciembre')
+        for frame in fig.frames:
+            frame.layout.annotations[2].text=fig.layout.annotations[2].text
+    return fig
+
 
 
 def economic_summary(data):
@@ -154,7 +179,7 @@ def economic_summary(data):
         part=data[data.mes.between(start,end)]
         if len(part)>1:
             periods.append({'periodo':label,'desde':part.mes.iloc[0],'hasta':part.mes.iloc[-1],'n':len(part),'correlacion':float(part.desocupacion.corr(part.ipc_anual))})
-    return {'n':len(data),'desde':data.mes.iloc[0],'hasta':data.mes.iloc[-1],
+    return {'ipc_ajuste':str(data.ipc_ajuste.iloc[0]),'n':len(data),'desde':data.mes.iloc[0],'hasta':data.mes.iloc[-1],
             'correlacion':float(data.desocupacion.corr(data.ipc_anual)),
             'inicio':row(data.iloc[0]),'final':row(data.iloc[-1]),
             'ir_negativos':int((data.ir_real_anual<0).sum()),'imacec_negativos':int((data.imacec_promedio_anual<0).sum()),
@@ -196,11 +221,12 @@ def static_chart(d, out=ROOT/'resultados'/archivo('phillips_estatico.png')):
     for _,a in date_labels(d,ax.get_xlim(),ax.get_ylim(),width=650,height=350):
         ax.annotate(a['text'],(a['x'],a['y']),xytext=(a['ax']*.6,-a['ay']*.6),textcoords='offset points',fontsize=6.5,
                     bbox=dict(facecolor='white',edgecolor='none',alpha=.85,pad=.6),arrowprops=dict(arrowstyle='-',color='#64748b',lw=.4))
-    ax.set(xlabel='Desocupación (%) · trimestre móvil, mes central',ylabel='IPC · variación anual (%)',title=f'Chile · {d.mes.iloc[0]} a {d.mes.iloc[-1]}')
+    ipc_label='IPC SA experimental' if d.ipc_ajuste.iloc[0]=='sa' else 'IPC'
+    ax.set(xlabel='Desocupación (%) · trimestre móvil, mes central',ylabel=ipc_label+' · variación anual (%)',title=f'Chile · {d.mes.iloc[0]} a {d.mes.iloc[-1]}')
     ax.legend(loc='lower left',fontsize=8)
     cb=fig.colorbar(points,cax=bar);cb.set_label('IMACEC promedio 3m · variación interanual (%)')
     panel.plot(d.fecha,d.imacec_sa_anual,color='#2166ac',lw=1.2,label='IMACEC SA · 12 meses')
-    panel.plot(d.fecha,d.ipc_anual,color='#b33b37',lw=1.2,label='IPC · 12 meses')
+    panel.plot(d.fecha,d.ipc_anual,color='#b33b37',lw=1.2,label=ipc_label+' · 12 meses')
     limit=annual_normalization(d)
     dec=d[d.fecha.dt.month.eq(12)]
     for annual,rate,marker,label in [('imacec_acumulado_anual','imacec_sa_anual','D','IMACEC acumulado anual'),('ipc_acumulado_diciembre','ipc_anual','s','IPC acumulado anual')]:
@@ -216,7 +242,7 @@ def static_chart(d, out=ROOT/'resultados'/archivo('phillips_estatico.png')):
     fig.savefig(out,dpi=180,bbox_inches='tight');plt.close(fig)
 
 if __name__=='__main__':
-    data,coverage,missing=load_data()
+    data,coverage,missing=load_data(ipc_ajuste=os.environ.get('PHILLIPS_IPC','original'))
     fig=build_figure(data)
     export_results(data,coverage,missing,fig)
     static_chart(data)

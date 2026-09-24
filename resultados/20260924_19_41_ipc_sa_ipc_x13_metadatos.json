@@ -1,0 +1,17 @@
+{
+  "metodo": "X-13ARIMA-SEATS / SEATS",
+  "version": "1.1 build 62 (instalador del proyecto; verificar cabecera de ipc.out si se usa otro ejecutable)",
+  "fuente_sha256": "c8f40e8d57ebddc3bf04a46ece0f1a70b44377e62f295ae7c94a5d4f3a7cb055",
+  "ejecutable_sha256": "2e43194361ee096797f0431765193c316196ea6776f11535e76281a413d49669",
+  "spec_sha256": "d0c5413df01df9e22aa65f74092ade79c3d89567492cd035a06482bfbd7082f9",
+  "modelo_regarima": "(1 1 1)(0 1 1)",
+  "desde": "2009-12",
+  "hasta": "2026-08",
+  "n": 201,
+  "transformacion": "log",
+  "atipicos": "AO LS TC automáticos",
+  "calendario": "Sin regresores de días hábiles ni feriados chilenos",
+  "advertencias": "Error messages generated from processing the X-13ARIMA-SEATS spec file\n     ipc.spc:\n\n\n  \n WARNING: At least one visually significant trading day peak has been\n          found in the estimated spectrum of the regARIMA residuals.",
+  "experimental": true,
+  "nota": "Estimación retrospectiva de muestra completa; revisable al añadir datos. No es una serie oficial del INE."
+}

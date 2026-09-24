@@ -12,4 +12,6 @@ jobs:
         with:
           python-version: '3.13'
       - run: python -m pip install -r requirements-completo.txt
-      - run: python orquestar.py
+      - run: python instalar_x13.py
+      - run: python orquestar.py --ipc original
+      - run: python orquestar.py --ipc sa
