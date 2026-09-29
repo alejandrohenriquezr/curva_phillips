@@ -1,0 +1,2 @@
+-r requirements-notebook.txt
+statsmodels>=0.14,<1
