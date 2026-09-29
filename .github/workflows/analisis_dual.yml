@@ -1,0 +1,29 @@
+name: Verificar análisis anual y mensual
+
+on:
+  push:
+    branches:
+      - analisis_anual_mensual
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  analizar:
+    runs-on: ubuntu-latest
+    steps:
+      # Descarga el proyecto de la rama o PR que activó el workflow.
+      - uses: actions/checkout@v4
+
+      # Usa una versión moderna de Python compatible con el proyecto.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      # Instala dependencias del cuaderno más statsmodels.
+      - run: python -m pip install -r requirements-analisis.txt
+
+      # Ejecuta las pruebas numéricas y de generación de HTML.
+      - run: python -m unittest test_analisis_dual -v
+
+      # Genera los dos informes y el HTML combinado con pestañas.
+      - run: python analisis_dual.py
