@@ -74,3 +74,7 @@ La publicación usa una copia HTML del notebook porque un archivo `.ipynb` no se
 - [Análisis anual y mensual](documentacion/ANALISIS_ANUAL_MENSUAL.md)
 - [Despliegue del cuaderno](documentacion/DESPLIEGUE_CUADERNO.md)
 - [Referencias](documentacion/REFERENCIAS.md)
+
+## Validación automática
+
+El workflow `Validar y generar productos` instala las dependencias, ejecuta las pruebas, genera el cuaderno, los informes y el sitio, y conserva todos los productos como artefacto descargable.
