@@ -1,9 +1,14 @@
 @echo off
+setlocal
 cd /d "%~dp0"
-set "PHILLIPS_PYTHON=%~dp0venv\Scripts\python.exe"
-if not exist "%PHILLIPS_PYTHON%" (
- echo Ejecuta INSTALAR.bat primero.
- exit /b 1
+
+if not exist ".venv\Scripts\python.exe" (
+  echo Falta el entorno .venv. Ejecute primero INSTALAR.bat
+  exit /b 1
 )
-"%PHILLIPS_PYTHON%" -X utf8 orquestar.py %*
-if errorlevel 1 pause
+
+".venv\Scripts\python.exe" scripts\08_ejecutar_todo.py %*
+if errorlevel 1 exit /b 1
+
+if exist "site\index.html" start "" "site\index.html"
+exit /b 0

@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "curva-phillips-chile"
+version = "0.3.0"
+description = "Análisis reproducible de Curva de Phillips para Chile"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,2 +1,0 @@
--r requirements-notebook.txt
--r requirements-document.txt

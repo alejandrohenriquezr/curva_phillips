@@ -1,15 +1,26 @@
-# Ignorar el archivo de credenciales local
-credentials.json
-__pycache__/
-.DS_Store
-
+# Entorno Python
 .venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
 .ipynb_checkpoints/
-.jupyter_runtime/
-.qa/
-*.log
 
-venv/
+# Salidas generadas: se publican como artefactos/Pages, no se versionan
+resultados/*
+!resultados/.gitkeep
+informes/*
+!informes/.gitkeep
+cuadernos_jupyter/*
+!cuadernos_jupyter/.gitkeep
+site/
 
+# Cachés y herramientas descargadas
 .cache_x13/
 herramientas/x13/
+
+# Temporales
+*.tmp.csv
+*.log
+.DS_Store
+Thumbs.db

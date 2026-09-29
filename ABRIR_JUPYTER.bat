@@ -1,10 +1,10 @@
 @echo off
+setlocal
 cd /d "%~dp0"
-set "PHILLIPS_PYTHON=%~dp0venv\Scripts\python.exe"
-if not exist "%PHILLIPS_PYTHON%" (
-  echo Primero ejecuta INSTALAR.bat
-  pause
+
+if not exist ".venv\Scripts\python.exe" (
+  echo Falta el entorno .venv. Ejecute primero INSTALAR.bat
   exit /b 1
 )
-"%PHILLIPS_PYTHON%" -m notebook
-if errorlevel 1 pause
+
+".venv\Scripts\python.exe" -m jupyter lab "%CD%\cuadernos_jupyter"

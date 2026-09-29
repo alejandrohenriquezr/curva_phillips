@@ -1,0 +1,42 @@
+name: Validar y generar productos
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -e .
+
+      - name: Instalar X-13
+        run: python scripts/02_instalar_x13.py
+
+      - name: Ejecutar pruebas
+        run: python -m unittest discover -s tests -v
+
+      - name: Generar análisis completo
+        run: python scripts/08_ejecutar_todo.py --ipc original
+
+      - name: Guardar productos
+        uses: actions/upload-artifact@v4
+        with:
+          name: curva-phillips-productos
+          path: |
+            cuadernos_jupyter/**
+            informes/**
+            resultados/**
+            site/**
+          if-no-files-found: error
