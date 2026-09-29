@@ -27,3 +27,18 @@ jobs:
 
       # Genera los dos informes y el HTML combinado con pestañas.
       - run: python analisis_dual.py
+
+      # Conserva informes y tablas como artefacto descargable de GitHub Actions.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: informes-phillips-anual-mensual
+          path: |
+            resultados/informe_phillips_anual.html
+            resultados/informe_phillips_mensual.html
+            resultados/informe_phillips_dual.html
+            resultados/modelos_anuales.csv
+            resultados/coeficientes_anuales.csv
+            resultados/modelos_mensuales.csv
+            resultados/coeficientes_mensuales.csv
+            resultados/resumen_modelos.json
+          if-no-files-found: error
