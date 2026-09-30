@@ -2,7 +2,7 @@
 
 Esta extensión del proyecto `curva_phillips` genera dos análisis econométricos y tres HTML:
 
-- `informes/informe_phillips_anual.html`: datos anuales 2011–2025; 2010 se usa como rezago.
+- `informes/informe_phillips_anual.html`: datos anuales 1986–2025; la ecuación de aceleración comienza en 1987. IR está disponible desde 2006 y actividad desde 2010.
 - `informes/informe_phillips_mensual.html`: 186 meses comunes, enero de 2011 a junio de 2026.
 - `informes/informe_phillips_dual.html`: las dos versiones anteriores reunidas en dos pestañas: **Datos anuales** y **Datos mensuales**.
 
@@ -18,13 +18,19 @@ La especificación central impone que la inflación no acelera cuando el desempl
 Δπ_t = β (u_t - 8,25) + ε_t
 ```
 
-Con la tabla anualizada entregada para el proyecto, la estimación reproducida es aproximadamente:
+Con la tabla anualizada actualizada, la muestra larga reproduce aproximadamente:
 
 ```text
-Δπ_t = -0,126 (u_t - 8,25)
+1987–2025: Δπ_t = -0,240 (u_t - 8,25)
 ```
 
-El script también estima una curva estática, una versión de aceleración con constante, una versión con inflación rezagada y otra que incorpora actividad económica. Los errores estándar son HAC/Newey-West con un rezago.
+Como contraste de comparabilidad, la ventana utilizada anteriormente se conserva:
+
+```text
+2011–2025: Δπ_t = -0,126 (u_t - 8,25)
+```
+
+El script también estima una curva estática, una versión de aceleración con constante, una versión con inflación rezagada, una especificación con IR y otra con actividad económica. Debido a la disponibilidad desigual de IR y actividad, cada modelo informa su tamaño muestral efectivo. Los errores estándar son HAC/Newey-West con un rezago.
 
 ### Informe mensual
 
@@ -64,12 +70,12 @@ Luego generar los informes con:
 EJECUTAR_TODO.bat
 ```
 
-El BAT abre automáticamente `resultados\informe_phillips_dual.html`.
+El BAT abre automáticamente `site\index.html`, desde donde se accede al informe combinado y al cuaderno.
 
 ### Opción 2: clonar desde GitHub
 
 ```powershell
-git clone -b analisis_anual_mensual https://github.com/alejandrohenriquezr/curva_phillips.git
+git clone -b estructura_ordenada https://github.com/alejandrohenriquezr/curva_phillips.git
 cd curva_phillips
 .\INSTALAR.bat
 .\EJECUTAR_TODO.bat
@@ -93,10 +99,10 @@ Para usar explícitamente el XLSX original:
 ## Pruebas
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest test_analisis_dual -v
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-Las pruebas verifican la pendiente anual con NAIRU impuesta, la cobertura mensual de 186 meses, el modelo mensual seleccionado por BIC y la presencia de las dos pestañas en el HTML combinado.
+Las pruebas verifican la muestra anual 1986–2025, la pendiente central 1987–2025, el contraste 2011–2025, la cobertura mensual de 186 meses, el modelo mensual seleccionado por BIC y la presencia de las dos pestañas en el HTML combinado.
 
 ## Archivos de resultados
 
@@ -112,4 +118,8 @@ resultados/resumen_modelos.json
 
 ## Interpretación
 
-Los modelos son descriptivos. La NAIRU de 8,25% se mantiene fija por decisión del ejercicio y no se reestima para cada año o mes. AIC y BIC se comparan únicamente entre especificaciones con la misma variable dependiente. Los errores HAC corrigen la inferencia por autocorrelación y heterocedasticidad, pero no convierten las asociaciones en efectos causales.
+Los modelos son descriptivos. La NAIRU de 8,25% se mantiene fija por decisión del ejercicio y no se reestima para cada año o mes. AIC y BIC se comparan únicamente entre especificaciones con la misma variable dependiente y la misma muestra efectiva. Los errores HAC corrigen la inferencia por autocorrelación y heterocedasticidad, pero no convierten las asociaciones en efectos causales.
+
+## Advertencia sobre la NAIRU en la muestra larga
+
+La referencia de 8,25% se mantiene fija por decisión del ejercicio. No debe interpretarse como una estimación histórica de la NAIRU válida para todo 1986–2025. La ampliación de la muestra sirve para evaluar estabilidad y sensibilidad de la relación de Phillips, no para atribuir a 8,25% el carácter de tasa natural constante durante cuatro décadas.
