@@ -51,7 +51,6 @@ Copiar estos archivos a la raíz del repositorio `curva_phillips`:
 ```text
 scripts/06_analisis_anual_mensual.py
 datos/datos_anualizados.csv
-datos/datos_anualizados.xlsx   # opcional; si existe se usa antes que el CSV
 requirements.txt
 INSTALAR.bat
 EJECUTAR_TODO.bat
@@ -90,12 +89,6 @@ py -3 -m venv .venv
 .\.venv\Scripts\python.exe scripts/06_analisis_anual_mensual.py
 ```
 
-Para usar explícitamente el XLSX original:
-
-```powershell
-.\.venv\Scripts\python.exe scripts/06_analisis_anual_mensual.py --anual datos/datos_anualizados.xlsx
-```
-
 ## Pruebas
 
 ```powershell
@@ -123,3 +116,7 @@ Los modelos son descriptivos. La NAIRU de 8,25% se mantiene fija por decisión d
 ## Advertencia sobre la NAIRU en la muestra larga
 
 La referencia de 8,25% se mantiene fija por decisión del ejercicio. No debe interpretarse como una estimación histórica de la NAIRU válida para todo 1986–2025. La ampliación de la muestra sirve para evaluar estabilidad y sensibilidad de la relación de Phillips, no para atribuir a 8,25% el carácter de tasa natural constante durante cuatro décadas.
+
+## Animación mensual
+
+La visualización interactiva ordena las observaciones por tasa de desocupación de menor a mayor. El orden es exclusivamente de presentación: los modelos y transformaciones mensuales siguen usando la serie cronológica. El panel inferior conserva la cronología completa y mueve únicamente el marcador de la observación activa.
