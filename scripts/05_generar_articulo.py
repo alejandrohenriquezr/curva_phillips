@@ -6,6 +6,7 @@ sys.path.insert(0, str(PROJECT/"src"))
 
 from curva_phillips.salidas import archivo, FECHA
 from curva_phillips.rutas import PROJECT_ROOT, REPORTS_DIR, RESULTS_DIR
+from curva_phillips.analisis_dual import cargar_anual, analizar_anual, preparar_mensual, analizar_mensual
 import json
 from docx import Document
 from docx.shared import Cm, Pt, RGBColor
@@ -25,15 +26,37 @@ n=summary['n']; first=summary['inicio']; last=summary['final']; ext=summary['ext
 ipc_mode=summary.get('ipc_ajuste','original')
 periods=summary['subperiodos']
 period_text='; '.join(f"{p['periodo']}: {f(p['correlacion'],3)} ({p['n']} meses)" for p in periods)
+
+# Resultados econométricos que alimentan los dos capítulos del artículo.
+anual=analizar_anual(cargar_anual())
+mensual_modelos=analizar_mensual(preparar_mensual())
+a_central=anual['central']
+a_reciente=anual['contraste_reciente']
+m_central=mensual_modelos['central']
+m_mejor=mensual_modelos['modelos'][mensual_modelos['mejor_nivel']]
+
 sections=[
-('title','Inflación empleo y actividad en Chile entre 2011 y 2026'),
-('subtitle','Enero de 2011 a junio de 2026 | Análisis para LinkedIn'),
-('p',f"Ampliar el horizonte cambia la lectura de la curva de Phillips. En los {n} meses comunes, la correlación contemporánea entre inflación y desocupación es {f(summary['correlacion'],3)}, una asociación positiva débil. En 2024–2026 era prácticamente nula. La comparación por períodos muestra que este promedio no describe una relación estable ni permite inferir causalidad."),
-('p','La visualización conecta inflación, empleo, remuneraciones reales y actividad: desocupación en el eje horizontal, inflación anual en el vertical, magnitud del cambio anual del IR real en el área y crecimiento interanual del promedio móvil de tres meses del IMACEC en el color. Naranja indica caída de actividad, claro cercanía a cero y azul crecimiento. El panel inferior compara las variaciones en 12 meses del IMACEC desestacionalizado y del IPC e identifica los acumulados de diciembre.'),
-('image',''),
-('caption','Enero y extremos de la ventana Covid etiquetados MM-AAAA. Bordes segmentados: 03-2020–08-2023. Área proporcional al valor absoluto del IR real anual; su signo se consulta en el gráfico interactivo. Color del IMACEC con escala simétrica fija. ENE e IMACEC promedio 3m alineados al mes central. Referencias: inflación 3% y punto medio histórico NAIRU 8,25% [5–7].'),
+('title','Curva de Phillips en Chile: evidencia anual y mensual'),
+('subtitle','Datos anuales 1986–2025 y mensuales enero 2011–junio 2026 | Análisis para LinkedIn'),
+('h','La curva de Phillips: concepto y marco teórico'),
+('p','La curva de Phillips relaciona la holgura del mercado laboral con la dinámica de salarios o precios. En su versión simple, una menor tasa de desempleo se asocia con mayor presión inflacionaria. Una representación básica es πₜ = α − βuₜ + εₜ, con β > 0. Esta ecuación describe una asociación; por sí sola no identifica causalidad.'),
+('p','La formulación moderna incorpora expectativas y otros determinantes: πₜ = α + ρπₜ₋₁ − β(uₜ − u*) + γzₜ + εₜ. Aquí u* representa una referencia de desempleo compatible con inflación estable y zₜ resume factores como actividad, shocks de oferta, precios externos o tipo de cambio. Si las expectativas se aproximan por la inflación pasada, puede expresarse también como Δπₜ = −β(uₜ − u*) + εₜ.'),
+('p','En este ejercicio se mantiene u* = 8,25% como referencia fija, correspondiente al punto medio de un rango histórico para 2024-T3 citado por el Banco Central. No debe interpretarse como una NAIRU constante para 1986–2025 ni como una estimación oficial de 2026.'),
 ('break',''),
-('h','Lo que cambia al incorporar quince años de historia'),
+('h','Capítulo I. Evidencia con datos anuales: 1986–2025'),
+('p',f"La tabla anual amplía la perspectiva histórica. IPC y desempleo están disponibles entre 1986 y 2025; el IR anual comienza en 2006 y la actividad económica en 2010. Por ello, los modelos con covariables adicionales utilizan muestras efectivas más cortas."),
+('p',f"La especificación central restringida estima Δπₜ = {f(float(a_central.params['brecha_desempleo']),3)} × (uₜ − 8,25), con {int(a_central.nobs)} observaciones entre 1987 y 2025 y p-valor HAC de {f(float(a_central.pvalues['brecha_desempleo']),3)}. El signo es el previsto por Phillips, pero la incertidumbre estadística sigue siendo elevada."),
+('p',f"Como contraste, para 2011–2025 la pendiente es {f(float(a_reciente.params['brecha_desempleo']),3)}, con p-valor HAC de {f(float(a_reciente.pvalues['brecha_desempleo']),3)}. La diferencia entre ambas ventanas muestra que la magnitud estimada depende del horizonte elegido; por eso no conviene tratar la pendiente como un parámetro estructural estable."),
+('p',f"En la especificación anual con inflación rezagada, la persistencia inflacionaria gana importancia frente a la brecha de desempleo. El resultado es coherente con una lectura moderna de la curva de Phillips: la holgura laboral es una pieza del mecanismo, no una explicación suficiente por sí sola."),
+('break',''),
+('h','Capítulo II. Evidencia con datos mensuales: enero 2011–junio 2026'),
+('p',f"En los {n} meses comunes, la correlación contemporánea entre inflación y desocupación es {f(summary['correlacion'],3)}, una asociación positiva débil. En 2024–2026 era prácticamente nula. La comparación por períodos muestra que este promedio no describe una relación estable ni permite inferir causalidad."),
+('p',f"La réplica mensual de la ecuación de aceleración entrega una pendiente de {f(float(m_central.params['brecha_desempleo']),3)} con errores HAC(12). Entre las especificaciones en niveles comparables por BIC, el modelo seleccionado es {mensual_modelos['mejor_nivel']}; allí la persistencia de la inflación domina el ajuste y la brecha de desempleo aporta bastante menos información."),
+('p','La visualización conecta inflación, empleo, remuneraciones reales y actividad: desocupación en el eje horizontal, inflación anual en el vertical, magnitud del cambio anual del IR real en el área y crecimiento interanual del promedio móvil de tres meses del IMACEC en el color. La animación recorre ahora las observaciones por tasa de desocupación de menor a mayor; las fechas permanecen visibles en etiquetas y tooltips.'),
+('image',''),
+('caption','Animación ordenada por desocupación ascendente. Las fechas identifican cada observación, pero Play no representa avance temporal. Área proporcional al valor absoluto del IR real anual; color del IMACEC con escala simétrica fija. El panel inferior conserva las series en orden cronológico. Referencias: inflación 3% y punto medio histórico NAIRU 8,25% [5–7].'),
+('break',''),
+('h','Qué muestra la serie mensual completa'),
 ('p',f"En {first['mes']}, el punto inicial registra inflación de {f(first['ipc_anual'],1)}%, desocupación de {f(first['desocupacion'])}% y aumento anual del IR real de {f(first['ir_real_anual'])}%. En {last['mes']}, los valores son {f(last['ipc_anual'],1)}%, {f(last['desocupacion'])}% y {f(last['ir_real_anual'])}%. La comparación de extremos oculta episodios con dinámicas muy distintas."),
 ('p',f"La desocupación alcanza su máximo muestral de {f(ext['desocupacion']['max']['desocupacion'])}% en {ext['desocupacion']['max']['mes']}, cuando la inflación es {f(ext['desocupacion']['max']['ipc_anual'],1)}%. El máximo de inflación llega después: {f(ext['ipc_anual']['max']['ipc_anual'],1)}% en {ext['ipc_anual']['max']['mes']}, con desempleo de {f(ext['ipc_anual']['max']['desocupacion'])}%. Esta separación temporal desaconseja interpretar la nube como un intercambio contemporáneo fijo."),
 ('h','El promedio agregado no representa todos los períodos'),
@@ -50,6 +73,10 @@ sections=[
 ('p','La escala simétrica conserva los extremos históricos, por lo que variaciones pequeñas aparecen próximas al tono claro. La barra lateral y el tooltip permiten distinguirlas de cero. El IMACEC mide actividad; no estima por sí solo una brecha de producto ni la NAIRU.'),
 ('h','Qué muestra el último punto'),
 ('p',f"En {last['mes']}, el promedio móvil del IMACEC varía {f(last['imacec_promedio_anual'])}% interanual, mientras su nivel desestacionalizado es {f(last['imacec_sa'],1)} y su cambio mensual {f(last['imacec_sa_mensual'])}%. La actividad trimestral móvil ligeramente inferior a la de un año antes coexiste con inflación de {f(last['ipc_anual'],1)}%, desocupación de {f(last['desocupacion'])}% y crecimiento del IR real de {f(last['ir_real_anual'])}%. Frecuencias distintas pueden dar señales diferentes; esta combinación no identifica automáticamente un shock ni prescribe una tasa de interés."),
+('h','Qué concluyen juntas ambas frecuencias'),
+('p',f"Los datos anuales y mensuales apuntan en la misma dirección metodológica: al imponer la estructura de aceleración con u* = 8,25%, la pendiente es negativa, pero imprecisa. En la frecuencia mensual, la inflación rezagada y la actividad explican una parte sustantiva de la dinámica; en la anual, la pendiente cambia al ampliar la ventana histórica."),
+('p','La evidencia no elimina el contenido económico de la curva de Phillips, pero sí desaconseja una lectura mecánica de un intercambio fijo entre inflación y desempleo. Para Chile, una especificación útil debe considerar persistencia inflacionaria, actividad, shocks de oferta y cambios de régimen, además de la holgura laboral.'),
+('p','La pregunta para discusión es entonces: ¿cuánto de la inflación chilena puede atribuirse realmente a la holgura laboral una vez que se incorporan expectativas, persistencia, actividad y shocks de oferta?'),
 ('break',''),
 ('h','Fechas cobertura y referencias'),
 ('p',f"El IPC histórico tiene niveles desde diciembre de 2009, pero las tasas anuales publicadas y el IR real anual disponibles comienzan en enero de 2011. La intersección conserva {n} meses hasta junio de 2026. Junio usa ENE e IMACEC promedio de mayo–julio: requiere conocer julio y es retrospectivo. No se rellenan faltantes. El panel muestra IMACEC desestacionalizado e IPC en variación de 12 meses, hasta la misma fecha central."),
@@ -94,7 +121,7 @@ closing=obs['2025-12']
 sections[ix:ix]=[
 ('h','Cómo leer los cierres anuales y las fechas destacadas'),
 ('p','El gráfico de Phillips identifica cada enero con MM-AAAA y añade 03-2020 y 08-2023. Fuera de la pandemia, el color del borde distingue cada año. Los círculos de marzo de 2020 a agosto de 2023 llevan borde segmentado: es la ventana de pandemia Covid-19 en Chile adoptada para esta visualización. Permite localizar esos meses sin atribuir todos sus cambios a una sola causa. No equivale a una estimación de los efectos de la pandemia ni a las fechas completas de vigencia legal de la alerta sanitaria, que terminó el 31 de agosto de 2023 [8].'),
-('p','El panel inferior compara dos tasas mensuales a 12 meses: IMACEC desestacionalizado en azul e IPC en rojo. El IMACEC del color de Phillips sigue siendo la variación anual de su promedio móvil de tres meses original; es una medida distinta. El cursor temporal mantiene sincronizados ambos paneles.'),
+('p','El panel inferior compara dos tasas mensuales a 12 meses: IMACEC desestacionalizado en azul e IPC en rojo. El IMACEC del color de Phillips sigue siendo la variación anual de su promedio móvil de tres meses original; es una medida distinta. Como la animación está ordenada por desempleo, el panel temporal permanece completo y el cursor salta a la fecha de la observación activa.'),
 ('p','En diciembre se agregan rombos para el crecimiento del promedio anual del IMACEC original y cuadrados para la inflación acumulada diciembre contra diciembre. El rombo puede quedar fuera de la línea azul porque compara promedios anuales originales, mientras la línea compara niveles mensuales desestacionalizados. No se suman las tasas mensuales ni las tasas interanuales.'),
 ('p',f"En 2025, el acumulado del IMACEC original es aproximadamente {f(closing['imacec_acumulado_anual'])}%, mientras su tasa desestacionalizada a 12 meses de diciembre es {f(closing['imacec_sa_anual'])}%. La inflación de cierre es {f(closing['ipc_anual'],1)}%. En junio de 2026, las tasas a 12 meses son {f(last['imacec_sa_anual'])}% para IMACEC desestacionalizado y {f(last['ipc_anual'],1)}% para IPC. El contraste describe trayectorias de actividad y precios, sin establecer causalidad."),
 ('h','Acumulados y normalización de los puntos'),
