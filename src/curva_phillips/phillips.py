@@ -109,49 +109,162 @@ def load_data(root=ROOT, alignment='central', ipc_ajuste='original'):
     return data, coverage, missing
 
 def _base_figure(data):
-    d=data.reset_index(drop=True)
+    """Construye la animación ordenada por tasa de desocupación.
+
+    Los cálculos y las series del panel inferior mantienen el orden cronológico.
+    Solo el recorrido de la nube de Phillips se ordena por desocupación ascendente.
+    """
+    d=data.sort_values(['desocupacion','fecha'],kind='mergesort').reset_index(drop=True)
+    t=data.sort_values('fecha').reset_index(drop=True)
     sizeref=2*max(float(d.ir_magnitud.max()),1e-9)/(48**2)
     bound=max(float(d.imacec_promedio_anual.abs().max()),.1)
-    dates=d.fecha.dt.strftime('%Y-%m-%d').tolist()
+    dates_time=t.fecha.dt.strftime('%Y-%m-%d').tolist()
+    frame_names=[f'u-{i:03d}' for i in range(len(d))]
+
     def limits(s):
         margin=max(float(s.max()-s.min())*.18,.25)
         return [float(s.min()-margin),float(s.max()+margin)]
-    panel_range=limits(d.imacec_sa)
-    custom=[[r.mes,str(r.Trimestre),float(r.ir_real_anual),str(r.estado_ir),float(r.imacec_promedio_anual),float(r.imacec_sa),r.imacec_inicio_promedio.strftime('%Y-%m'),r.imacec_fin_promedio.strftime('%Y-%m'),r.alineacion_ene] for r in d.itertuples()]
+
+    panel_range=limits(t.imacec_sa)
+    custom=[[r.mes,str(r.Trimestre),float(r.ir_real_anual),str(r.estado_ir),
+             float(r.imacec_promedio_anual),float(r.imacec_sa),
+             r.imacec_inicio_promedio.strftime('%Y-%m'),
+             r.imacec_fin_promedio.strftime('%Y-%m'),r.alineacion_ene]
+            for r in d.itertuples()]
     hover=('<b>%{customdata[0]}</b><br>Desocupación: %{x:.2f}%<br>IPC anual: %{y:.2f}%'
            '<br>IR real anual: %{customdata[2]:+.2f}%<br>IMACEC promedio 3m interanual: %{customdata[4]:+.2f}%'
            '<br>Ventana IMACEC: %{customdata[6]} a %{customdata[7]}<br>IMACEC SA: %{customdata[5]:.1f}'
            '<br>ENE: %{customdata[1]} · alineación %{customdata[8]}<br>Estado IR: %{customdata[3]}<extra></extra>')
+
     def traces(i):
+        active=d.iloc[i]
+        active_date=active.fecha.strftime('%Y-%m-%d')
         return [
-            go.Scatter(x=d.desocupacion.iloc[:i+1].tolist(),y=d.ipc_anual.iloc[:i+1].tolist(),mode='lines+markers',line=dict(color='#a1aab5',width=1.5),marker=dict(size=d.ir_magnitud.iloc[:i+1].tolist(),sizemode='area',sizeref=sizeref,color=d.imacec_promedio_anual.iloc[:i+1].tolist(),coloraxis='coloraxis',opacity=.85,line=dict(color='#64748b',width=.6)),customdata=custom[:i+1],hovertemplate=hover,name='Rastro'),
-            go.Scatter(x=[float(d.desocupacion.iloc[i])],y=[float(d.ipc_anual.iloc[i])],mode='markers',marker=dict(size=[float(d.ir_magnitud.iloc[i])],sizemode='area',sizeref=sizeref,color=[float(d.imacec_promedio_anual.iloc[i])],coloraxis='coloraxis',line=dict(color='#0f172a',width=2.5)),customdata=[custom[i]],hovertemplate=hover,name='Mes actual'),
-            go.Scatter(x=[float(d.desocupacion.iloc[i])],y=[float(d.ipc_anual.iloc[i])],mode='markers',marker=dict(size=4,color='#0f172a'),hoverinfo='skip'),
-            go.Scatter(x=dates,y=d.imacec_sa.tolist(),xaxis='x2',yaxis='y2',mode='lines',line=dict(color='#cbd5e1',width=2),hovertemplate='%{x|%Y-%m}<br>IMACEC SA: %{y:.1f}<extra></extra>',name='Contexto completo'),
-            go.Scatter(x=dates[:i+1],y=d.imacec_sa.iloc[:i+1].tolist(),xaxis='x2',yaxis='y2',mode='lines',line=dict(color='#334155',width=2),hovertemplate='%{x|%Y-%m}<br>IMACEC SA: %{y:.1f}<extra></extra>',name='Recorrido IMACEC'),
-            go.Scatter(x=[dates[i]],y=[float(d.imacec_sa.iloc[i])],xaxis='x2',yaxis='y2',mode='markers',marker=dict(size=10,color=[float(d.imacec_promedio_anual.iloc[i])],coloraxis='coloraxis',line=dict(color='#0f172a',width=1)),hovertemplate='%{x|%Y-%m}<br>IMACEC SA: %{y:.1f}<extra></extra>',name='Mes activo IMACEC',cliponaxis=False),
-            go.Scatter(x=[dates[i],dates[i]],y=panel_range,xaxis='x2',yaxis='y2',mode='lines',line=dict(color='#64748b',width=1,dash='dot'),hoverinfo='skip')]
-    frames=[go.Frame(name=r.mes,data=traces(i),traces=list(range(7)),layout=dict(title=dict(text=f'Chile | inflación, empleo, salarios y actividad<br><sup>{r.mes} · IR real {r.ir_real_anual:+.2f}% · IMACEC promedio 3m {r.imacec_promedio_anual:+.2f}% interanual</sup>'))) for i,r in enumerate(d.itertuples())]
+            go.Scatter(
+                x=d.desocupacion.iloc[:i+1].tolist(),y=d.ipc_anual.iloc[:i+1].tolist(),
+                mode='lines+markers',line=dict(color='#a1aab5',width=1.5),
+                marker=dict(size=d.ir_magnitud.iloc[:i+1].tolist(),sizemode='area',sizeref=sizeref,
+                            color=d.imacec_promedio_anual.iloc[:i+1].tolist(),coloraxis='coloraxis',
+                            opacity=.85,line=dict(color='#64748b',width=.6)),
+                customdata=custom[:i+1],hovertemplate=hover,name='Rastro por desocupación'
+            ),
+            go.Scatter(
+                x=[float(active.desocupacion)],y=[float(active.ipc_anual)],mode='markers',
+                marker=dict(size=[float(active.ir_magnitud)],sizemode='area',sizeref=sizeref,
+                            color=[float(active.imacec_promedio_anual)],coloraxis='coloraxis',
+                            line=dict(color='#0f172a',width=2.5)),
+                customdata=[custom[i]],hovertemplate=hover,name='Observación activa'
+            ),
+            go.Scatter(
+                x=[float(active.desocupacion)],y=[float(active.ipc_anual)],mode='markers',
+                marker=dict(size=4,color='#0f172a'),hoverinfo='skip'
+            ),
+            go.Scatter(
+                x=dates_time,y=t.imacec_sa.tolist(),xaxis='x2',yaxis='y2',mode='lines',
+                line=dict(color='#cbd5e1',width=2),
+                hovertemplate='%{x|%Y-%m}<br>IMACEC SA: %{y:.1f}<extra></extra>',name='Contexto completo'
+            ),
+            go.Scatter(
+                x=dates_time,y=t.imacec_sa.tolist(),xaxis='x2',yaxis='y2',mode='lines',
+                line=dict(color='#334155',width=2),
+                hovertemplate='%{x|%Y-%m}<br>IMACEC SA: %{y:.1f}<extra></extra>',name='IMACEC'
+            ),
+            go.Scatter(
+                x=[active_date],y=[float(active.imacec_sa)],xaxis='x2',yaxis='y2',mode='markers',
+                marker=dict(size=10,color=[float(active.imacec_promedio_anual)],coloraxis='coloraxis',
+                            line=dict(color='#0f172a',width=1)),
+                hovertemplate='%{x|%Y-%m}<br>IMACEC SA: %{y:.1f}<extra></extra>',
+                name='Observación activa IMACEC',cliponaxis=False
+            ),
+            go.Scatter(
+                x=[active_date,active_date],y=panel_range,xaxis='x2',yaxis='y2',mode='lines',
+                line=dict(color='#64748b',width=1,dash='dot'),hoverinfo='skip'
+            )
+        ]
+
+    frames=[
+        go.Frame(
+            name=frame_names[i],
+            data=traces(i),
+            traces=list(range(7)),
+            layout=dict(title=dict(
+                text=('Chile | inflación, empleo, salarios y actividad'
+                      f'<br><sup>Desocupación {r.desocupacion:.2f}% · {r.mes} · '
+                      f'IR real {r.ir_real_anual:+.2f}% · IMACEC promedio 3m '
+                      f'{r.imacec_promedio_anual:+.2f}% interanual</sup>')
+            ))
+        )
+        for i,r in enumerate(d.itertuples())
+    ]
+
     fig=go.Figure(data=traces(0),frames=frames)
     animation=dict(mode='immediate',frame=dict(duration=0,redraw=True),transition=dict(duration=0))
-    fig.update_layout(template='plotly_white',height=1080,font=dict(family='Arial',color='#172b4d',size=13),title=frames[0].layout.title,
-        margin=dict(l=90,r=185,t=125,b=210),showlegend=False,
-        xaxis=dict(domain=[0,1],anchor='y',title='Desocupación (%) · trimestre móvil ENE',range=limits(pd.concat([d.desocupacion,pd.Series(NAIRU_RANGO)])),ticksuffix='%'),
-        yaxis=dict(domain=[.38,1],anchor='x',title='IPC · variación anual (%)',range=limits(pd.concat([d.ipc_anual,pd.Series([META_INFLACION])])),ticksuffix='%'),
-        xaxis2=dict(domain=[0,1],anchor='y2',type='date',range=[dates[0],dates[-1]],tickformat='%Y' if len(d)>72 else '%b %Y',dtick='M24' if len(d)>72 else 'M3',tickangle=0),
+    fig.update_layout(
+        template='plotly_white',height=1080,font=dict(family='Arial',color='#172b4d',size=13),
+        title=frames[0].layout.title,margin=dict(l=90,r=185,t=125,b=210),showlegend=False,
+        xaxis=dict(domain=[0,1],anchor='y',title='Desocupación (%) · trimestre móvil ENE',
+                   range=limits(pd.concat([d.desocupacion,pd.Series(NAIRU_RANGO)])),ticksuffix='%'),
+        yaxis=dict(domain=[.38,1],anchor='x',title='IPC · variación anual (%)',
+                   range=limits(pd.concat([d.ipc_anual,pd.Series([META_INFLACION])])),ticksuffix='%'),
+        xaxis2=dict(domain=[0,1],anchor='y2',type='date',
+                    range=[dates_time[0],dates_time[-1]],
+                    tickformat='%Y' if len(t)>72 else '%b %Y',
+                    dtick='M24' if len(t)>72 else 'M3',tickangle=0),
         yaxis2=dict(domain=[0,.19],anchor='x2',title='Índice 2018=100',range=panel_range),
-        coloraxis=dict(cmin=-bound,cmax=bound,cmid=0,cauto=False,colorscale=ACTIVITY_COLORS,colorbar=dict(title=dict(text='IMACEC promedio 3m<br>Variación interanual'),x=1.035,y=.69,len=.62,thickness=18,ticksuffix='%',tickvals=[-bound,-bound/2,0,bound/2,bound],ticktext=[f'{v:+.1f}%' if v else '0%' for v in [-bound,-bound/2,0,bound/2,bound]])),
-        annotations=[dict(x=0,y=1.07,xref='paper',yref='paper',showarrow=False,xanchor='left',text='Área ∝ |IR real anual| · color: actividad (naranja − / claro 0 / azul +)'),
-                     dict(x=0,y=.235,xref='paper',yref='paper',showarrow=False,xanchor='left',text='IMACEC desestacionalizado · nivel mensual · punto y cursor = mes activo'),
-                     dict(x=0,y=-.225,xref='paper',yref='paper',showarrow=False,xanchor='left',yanchor='top',font=dict(size=11),text='Fuente: INE y BCCh · IMACEC: índices publicados con un decimal; tasas calculadas aproximadas.<br>Color: promedio móvil 3m de serie original, alineado con ENE. Panel: serie desestacionalizada.<br>* NAIRU: punto medio propio del rango 8,0–8,5% para 2024-T3 (dic. 2024); no estimación oficial 2026.')],
-        updatemenus=[dict(type='buttons',direction='left',x=1,y=-.09,xanchor='right',yanchor='top',buttons=[dict(label='▶ Play',method='animate',args=[None,dict(frame=dict(duration=650,redraw=True),transition=dict(duration=0),fromcurrent=True,mode='immediate')]),dict(label='❚❚ Pausa',method='animate',args=[[None],dict(mode='immediate',frame=dict(duration=0,redraw=False),transition=dict(duration=0))]),dict(label='↺ Reiniciar',method='animate',args=[[d.mes.iloc[0]],animation])])],
-        sliders=[dict(active=0,x=0,y=-.09,len=1,currentvalue=dict(prefix='Mes: '),pad=dict(t=10),steps=[dict(label=m,method='animate',args=[[m],animation]) for m in d.mes])])
-    fig.add_shape(type='rect',x0=NAIRU_RANGO[0],x1=NAIRU_RANGO[1],y0=0,y1=1,xref='x',yref='y domain',fillcolor='rgba(124,58,237,0.06)',line_width=0,layer='below')
-    fig.add_shape(type='line',x0=NAIRU_REFERENCIA,x1=NAIRU_REFERENCIA,y0=0,y1=1,xref='x',yref='y domain',line=dict(color='#7c3aed',dash='dashdot',width=2))
-    fig.add_shape(type='line',x0=0,x1=1,y0=META_INFLACION,y1=META_INFLACION,xref='x domain',yref='y',line=dict(color='#2563eb',dash='dash',width=2))
-    fig.add_annotation(x=NAIRU_REFERENCIA,y=.99,xref='x',yref='y domain',text='NAIRU ref. 8,25%*',showarrow=False,xanchor='left',yanchor='top',xshift=8,font=dict(color='#6d28d9',size=12),bgcolor='rgba(255,255,255,.85)')
-    fig.add_annotation(x=1,y=META_INFLACION,xref='x domain',yref='y',text='Meta de inflación: 3%',showarrow=False,xanchor='right',yanchor='bottom',yshift=5,font=dict(color='#1d4ed8',size=12),bgcolor='rgba(255,255,255,.85)')
+        coloraxis=dict(cmin=-bound,cmax=bound,cmid=0,cauto=False,colorscale=ACTIVITY_COLORS,
+                       colorbar=dict(title=dict(text='IMACEC promedio 3m<br>Variación interanual'),
+                                     x=1.035,y=.69,len=.62,thickness=18,ticksuffix='%',
+                                     tickvals=[-bound,-bound/2,0,bound/2,bound],
+                                     ticktext=[f'{v:+.1f}%' if v else '0%' for v in [-bound,-bound/2,0,bound/2,bound]])),
+        annotations=[
+            dict(x=0,y=1.07,xref='paper',yref='paper',showarrow=False,xanchor='left',
+                 text='Animación: desocupación de menor a mayor · área ∝ |IR real anual| · color: actividad'),
+            dict(x=0,y=.235,xref='paper',yref='paper',showarrow=False,xanchor='left',
+                 text='Panel temporal: series completas en orden cronológico · punto y cursor = observación activa'),
+            dict(x=0,y=-.225,xref='paper',yref='paper',showarrow=False,xanchor='left',yanchor='top',
+                 font=dict(size=11),
+                 text=('Fuente: INE y BCCh · IMACEC: índices publicados con un decimal; tasas calculadas aproximadas.<br>'
+                       'La animación ordena únicamente la presentación por desocupación; los cálculos conservan el orden temporal.<br>'
+                       '* NAIRU: punto medio propio del rango 8,0–8,5% para 2024-T3 (dic. 2024); no estimación oficial 2026.'))
+        ],
+        updatemenus=[dict(
+            type='buttons',direction='left',x=1,y=-.09,xanchor='right',yanchor='top',
+            buttons=[
+                dict(label='▶ Play',method='animate',
+                     args=[None,dict(frame=dict(duration=650,redraw=True),transition=dict(duration=0),
+                                    fromcurrent=True,mode='immediate')]),
+                dict(label='❚❚ Pausa',method='animate',
+                     args=[[None],dict(mode='immediate',frame=dict(duration=0,redraw=False),
+                                      transition=dict(duration=0))]),
+                dict(label='↺ Reiniciar',method='animate',args=[[frame_names[0]],animation])
+            ]
+        )],
+        sliders=[dict(
+            active=0,x=0,y=-.09,len=1,currentvalue=dict(prefix='Desocupación: '),pad=dict(t=10),
+            steps=[
+                dict(label=f'{r.desocupacion:.2f}%',method='animate',args=[[frame_names[i]],animation])
+                for i,r in enumerate(d.itertuples())
+            ]
+        )]
+    )
+    fig.add_shape(type='rect',x0=NAIRU_RANGO[0],x1=NAIRU_RANGO[1],y0=0,y1=1,
+                  xref='x',yref='y domain',fillcolor='rgba(124,58,237,0.06)',line_width=0,layer='below')
+    fig.add_shape(type='line',x0=NAIRU_REFERENCIA,x1=NAIRU_REFERENCIA,y0=0,y1=1,
+                  xref='x',yref='y domain',line=dict(color='#7c3aed',dash='dashdot',width=2))
+    fig.add_shape(type='line',x0=0,x1=1,y0=META_INFLACION,y1=META_INFLACION,
+                  xref='x domain',yref='y',line=dict(color='#2563eb',dash='dash',width=2))
+    fig.add_annotation(x=NAIRU_REFERENCIA,y=.99,xref='x',yref='y domain',text='NAIRU ref. 8,25%*',
+                       showarrow=False,xanchor='left',yanchor='top',xshift=8,
+                       font=dict(color='#6d28d9',size=12),bgcolor='rgba(255,255,255,.85)')
+    fig.add_annotation(x=1,y=META_INFLACION,xref='x domain',yref='y',text='Meta de inflación: 3%',
+                       showarrow=False,xanchor='right',yanchor='bottom',yshift=5,
+                       font=dict(color='#1d4ed8',size=12),bgcolor='rgba(255,255,255,.85)')
     fig.update_layout(title=dict(x=.06,y=.98,yanchor='top'))
+    fig.layout.meta={
+        'orden_animacion':'desocupacion_ascendente',
+        'desocupacion_min_pct':float(d.desocupacion.iloc[0]),
+        'desocupacion_max_pct':float(d.desocupacion.iloc[-1])
+    }
     return fig
 
 def build_figure(data):
@@ -193,7 +306,10 @@ def export_results(data, coverage, missing, fig, out=RESULTS_DIR):
     summary=economic_summary(data)
     (out/archivo('resumen_economico.json')).write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
     pd.DataFrame(summary['subperiodos']).to_csv(out/archivo('correlaciones_subperiodos.csv'),index=False,encoding='utf-8-sig')
-    data.to_csv(out/archivo('datos_phillips.csv'),index=False,encoding='utf-8-sig')
+    # La tabla de la animación se exporta en el mismo orden visual: desocupación ascendente.
+    data.sort_values(['desocupacion','fecha'],kind='mergesort').to_csv(
+        out/archivo('datos_phillips.csv'),index=False,encoding='utf-8-sig'
+    )
     coverage.to_csv(out/archivo('cobertura.csv'),index=False,encoding='utf-8-sig')
     missing.to_csv(out/archivo('meses_excluidos.csv'),index=False,encoding='utf-8-sig')
     (out/archivo('phillips_animado.html')).write_text(figure_html(fig),encoding='utf8')
