@@ -21,12 +21,19 @@ class AnalisisDualTests(unittest.TestCase):
     """Valida resultados numéricos clave y la estructura de los informes."""
 
     def test_anual_reproduce_pendiente_nairu(self):
-        # La especificación central replica el cálculo con NAIRU=8,25% y sin constante.
+        # La muestra larga usa 1986–2025 y conserva 2011–2025 como contraste.
         data = cargar_anual(DATA_DIR / "datos_anualizados.csv")
         resultado = analizar_anual(data)
-        self.assertEqual(int(resultado["central"].nobs), 15)
+        self.assertEqual((int(data["anio"].min()), int(data["anio"].max())), (1986, 2025))
+        self.assertEqual(int(resultado["central"].nobs), 39)
         self.assertAlmostEqual(
             float(resultado["central"].params["brecha_desempleo"]),
+            -0.2399284544,
+            places=6,
+        )
+        self.assertEqual(int(resultado["contraste_reciente"].nobs), 15)
+        self.assertAlmostEqual(
+            float(resultado["contraste_reciente"].params["brecha_desempleo"]),
             -0.1263520675,
             places=6,
         )
