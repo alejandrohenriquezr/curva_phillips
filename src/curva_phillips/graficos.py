@@ -62,60 +62,138 @@ def annual_normalization(data):
     return max(float(np.abs(data[['imacec_sa_anual','ipc_anual']].to_numpy()).max()),.1)
 
 def enhance(fig,data):
-    d=data.reset_index(drop=True); dates=d.fecha.dt.strftime('%Y-%m-%d').tolist()
-    limit=annual_normalization(d)
-    vals=np.r_[d.imacec_sa_anual,d.ipc_anual,d.loc[d.fecha.dt.month==12,'imacec_acumulado_anual']]
+    """Completa el gráfico manteniendo cronología en el panel y desempleo en la animación."""
+    d=data.sort_values(['desocupacion','fecha'],kind='mergesort').reset_index(drop=True)
+    t=data.sort_values('fecha').reset_index(drop=True)
+    dates=t.fecha.dt.strftime('%Y-%m-%d').tolist()
+    limit=annual_normalization(t)
+    vals=np.r_[t.imacec_sa_anual,t.ipc_anual,t.loc[t.fecha.dt.month==12,'imacec_acumulado_anual']]
     padding=max((vals.max()-vals.min())*.12,1)
     panel_range=[float(min(vals.min()-padding,0)),float(vals.max()+padding)]
     labels=date_labels(d,fig.layout.xaxis.range,fig.layout.yaxis.range)
     notes=list(fig.layout.annotations)
-    notes[1].text='Variación en 12 meses: IMACEC desestacionalizado (azul) e IPC (rojo) · diciembre: acumulado anual'
+    notes[1].text=('Variación en 12 meses: IMACEC desestacionalizado (azul) e IPC (rojo) · '
+                   'series completas en orden cronológico · punto = observación activa')
     notes[1].y=.30
     notes[2].text=('Fuente: INE y BCCh. IMACEC calculado con índices de un decimal.<br>'
+        'La animación recorre las observaciones por desocupación ascendente, no por fecha.<br>'
         'Diciembre: rombos = crecimiento del promedio anual IMACEC original; cuadrados = IPC dic./dic.<br>'
         'Área y color de esos puntos: tasa a 12 meses normalizada de toda la muestra; cero = área nula.<br>'+
         PANDEMIC_NOTE+'<br>* NAIRU 8,25%: punto medio propio del rango BCCh 2024-T3, no estimación oficial 2026.')
     notes[2].y=-.24
     notes[2].update(x=0,xanchor='left',align='left')
+
+    # Los cierres de diciembre se mantienen completos: con una animación por desempleo,
+    # "hasta el fotograma i" ya no representa una ventana temporal coherente.
+    dec=t.loc[t.fecha.dt.month.eq(12)].copy()
+
     def update_traces(i,old):
         traces=list(old)
+        active=d.iloc[i]
+        active_date=active.fecha.strftime('%Y-%m-%d')
+
         for k in [0,1]:
             records=[list(c) for c in traces[k].customdata]
             ids=range(i+1) if k==0 else [i]
-            for c,j in zip(records,ids):
-                c.extend([bool(d.pandemia.iloc[j]),border_color(d.fecha.iloc[j].year,d.pandemia.iloc[j])])
-            traces[k].marker.line=dict(color=[c[10] for c in records],width=1.5 if k==0 else 2.5)
+            for record,j in zip(records,ids):
+                record.extend([bool(d.pandemia.iloc[j]),border_color(d.fecha.iloc[j].year,d.pandemia.iloc[j])])
+            traces[k].marker.line=dict(color=[record[10] for record in records],width=1.5 if k==0 else 2.5)
             traces[k].customdata=records
+
+        # Panel temporal: siempre en orden cronológico. Solo cambia el punto/cursor activo.
+        traces[3].x=dates
+        traces[3].y=t.imacec_sa_anual.tolist()
+        traces[4].x=dates
+        traces[4].y=t.imacec_sa_anual.tolist()
+        traces[5].x=[active_date]
+        traces[5].y=[float(active.imacec_sa_anual)]
+        traces[6].x=[active_date,active_date]
+        traces[6].y=panel_range
         for k in [3,4,5]:
-            traces[k].y=(d.imacec_sa_anual.tolist() if k==3 else d.imacec_sa_anual.iloc[:i+1].tolist() if k==4 else [float(d.imacec_sa_anual.iloc[i])])
             traces[k].hovertemplate='%{x|%m-%Y}<br>IMACEC SA · 12 meses: %{y:+.2f}%<extra></extra>'
         traces[4].line.color='#2166ac'
-        traces[5].marker=dict(size=6,color='#2166ac');traces[6].y=panel_range
+        traces[5].marker=dict(size=6,color='#2166ac')
+
         traces.extend([
-          go.Scatter(x=dates,y=d.ipc_anual.tolist(),xaxis='x2',yaxis='y2',mode='lines',line=dict(color='#efd4d2',width=1.2),hovertemplate='%{x|%m-%Y}<br>IPC 12 meses: %{y:+.2f}%<extra></extra>',name='IPC contexto'),
-          go.Scatter(x=dates[:i+1],y=d.ipc_anual.iloc[:i+1].tolist(),xaxis='x2',yaxis='y2',mode='lines',line=dict(color='#b33b37',width=2),hovertemplate='%{x|%m-%Y}<br>IPC 12 meses: %{y:+.2f}%<extra></extra>',name='IPC anual')])
-        dec=d.iloc[:i+1].loc[lambda x:x.fecha.dt.month.eq(12)]
-        for annual,rate,symbol,label in [('imacec_acumulado_anual','imacec_sa_anual','diamond','IMACEC promedio anual original'),('ipc_acumulado_diciembre','ipc_anual','square','IPC diciembre/diciembre')]:
+          go.Scatter(
+              x=dates,y=t.ipc_anual.tolist(),xaxis='x2',yaxis='y2',mode='lines',
+              line=dict(color='#efd4d2',width=1.2),
+              hovertemplate='%{x|%m-%Y}<br>IPC 12 meses: %{y:+.2f}%<extra></extra>',
+              name='IPC contexto'
+          ),
+          go.Scatter(
+              x=dates,y=t.ipc_anual.tolist(),xaxis='x2',yaxis='y2',mode='lines',
+              line=dict(color='#b33b37',width=2),
+              hovertemplate='%{x|%m-%Y}<br>IPC 12 meses: %{y:+.2f}%<extra></extra>',
+              name='IPC anual'
+          )
+        ])
+
+        for annual,rate,symbol,label in [
+            ('imacec_acumulado_anual','imacec_sa_anual','diamond','IMACEC promedio anual original'),
+            ('ipc_acumulado_diciembre','ipc_anual','square','IPC diciembre/diciembre')
+        ]:
             normalized=dec[rate]/limit
-            traces.append(go.Scatter(x=dec.fecha.dt.strftime('%Y-%m-%d').tolist(),y=dec[annual].tolist(),xaxis='x2',yaxis='y2',mode='markers',
-                marker=dict(symbol=symbol,size=normalized.abs().tolist(),sizemode='area',sizeref=2/(23**2),color=normalized.tolist(),coloraxis='coloraxis2',line=dict(color='#334155',width=1)),
-                customdata=np.column_stack([dec[rate],normalized]).tolist(),
-                hovertemplate=('%{x|%Y} · '+label+'<br>Acumulado del año: %{y:+.2f}%<br>Tasa 12 meses usada para tamaño/color: %{customdata[0]:+.2f}%<br>Normalizada: %{customdata[1]:+.3f}<extra></extra>'),name=label,cliponaxis=False))
-        for k,t in enumerate(traces): t.showlegend=k in [4,8]
-        traces[4].name='IMACEC · 12 meses';traces[8].name='IPC · 12 meses'
+            traces.append(
+                go.Scatter(
+                    x=dec.fecha.dt.strftime('%Y-%m-%d').tolist(),y=dec[annual].tolist(),
+                    xaxis='x2',yaxis='y2',mode='markers',
+                    marker=dict(
+                        symbol=symbol,size=normalized.abs().tolist(),sizemode='area',
+                        sizeref=2/(23**2),color=normalized.tolist(),coloraxis='coloraxis2',
+                        line=dict(color='#334155',width=1)
+                    ),
+                    customdata=np.column_stack([dec[rate],normalized]).tolist(),
+                    hovertemplate=(
+                        '%{x|%Y} · '+label+
+                        '<br>Acumulado del año: %{y:+.2f}%'
+                        '<br>Tasa 12 meses usada para tamaño/color: %{customdata[0]:+.2f}%'
+                        '<br>Normalizada: %{customdata[1]:+.3f}<extra></extra>'
+                    ),
+                    name=label,cliponaxis=False
+                )
+            )
+
+        for k,trace in enumerate(traces):
+            trace.showlegend=k in [4,8]
+        traces[4].name='IMACEC · 12 meses'
+        traces[8].name='IPC · 12 meses'
         return traces
+
     initial=update_traces(0,fig.data)
-    # Agregar las cuatro trazas nuevas sin perder las originales.
-    for k in range(7):fig.data[k].update(initial[k])
+    for k in range(7):
+        fig.data[k].update(initial[k])
     fig.add_traces(initial[7:])
+
     for i,frame in enumerate(fig.frames):
-        frame.data=update_traces(i,frame.data);frame.traces=list(range(11))
+        frame.data=update_traces(i,frame.data)
+        frame.traces=list(range(11))
         frame.layout.annotations=notes+[dict(a,visible=j<=i) for j,a in labels]
-    fig.update_layout(showlegend=True,legend=dict(orientation='h',x=0,y=.29,xanchor='left',yanchor='top',itemclick=False,itemdoubleclick=False),height=1280,margin=dict(l=90,r=220,t=125,b=320),
-        yaxis=dict(domain=[.43,1]),yaxis2=dict(domain=[0,.255],title='Variación (%)',range=panel_range,ticksuffix='%'),
-        coloraxis2=dict(cmin=-1,cmax=1,cmid=0,cauto=False,colorscale=[[0,'#d97706'],[.5,'#f7f7f2'],[1,'#2166ac']],
-            colorbar=dict(title=dict(text='Puntos diciembre<br>12 meses normalizada'),x=1.04,y=.13,len=.30,thickness=15,tickvals=[-1,0,1],ticktext=['−1','0','+1'])),
-        annotations=notes+[dict(a,visible=j==0) for j,a in labels])
-    fig.layout.coloraxis.colorbar.y=.75;fig.layout.coloraxis.colorbar.len=.5
-    fig.layout.meta={'normalizacion_panel_limite_pct':limit,'pandemia_desde':'2020-03','pandemia_hasta':'2023-08','fechas_etiquetas':[d.mes.iloc[j] for j,a in labels]}
+
+    fig.update_layout(
+        showlegend=True,
+        legend=dict(orientation='h',x=0,y=.29,xanchor='left',yanchor='top',
+                    itemclick=False,itemdoubleclick=False),
+        height=1280,margin=dict(l=90,r=220,t=125,b=320),
+        yaxis=dict(domain=[.43,1]),
+        yaxis2=dict(domain=[0,.255],title='Variación (%)',range=panel_range,ticksuffix='%'),
+        coloraxis2=dict(
+            cmin=-1,cmax=1,cmid=0,cauto=False,
+            colorscale=[[0,'#d97706'],[.5,'#f7f7f2'],[1,'#2166ac']],
+            colorbar=dict(title=dict(text='Puntos diciembre<br>12 meses normalizada'),
+                          x=1.04,y=.13,len=.30,thickness=15,
+                          tickvals=[-1,0,1],ticktext=['−1','0','+1'])
+        ),
+        annotations=notes+[dict(a,visible=j==0) for j,a in labels]
+    )
+    fig.layout.coloraxis.colorbar.y=.75
+    fig.layout.coloraxis.colorbar.len=.5
+    fig.layout.meta={
+        **(fig.layout.meta or {}),
+        'normalizacion_panel_limite_pct':limit,
+        'pandemia_desde':'2020-03',
+        'pandemia_hasta':'2023-08',
+        'fechas_etiquetas':[d.mes.iloc[j] for j,a in labels],
+        'orden_animacion':'desocupacion_ascendente'
+    }
     return fig
