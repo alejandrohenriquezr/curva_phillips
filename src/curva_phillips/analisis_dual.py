@@ -1,7 +1,9 @@
 """Genera dos informes de Curva de Phillips para Chile y un HTML con dos pestañas.
 
-El análisis anual usa la tabla anualizada entregada por el usuario y fija la NAIRU
-referencial en 8,25%. El análisis mensual reutiliza las 186 observaciones comunes
+El análisis anual usa la tabla anualizada entregada por el usuario (1986–2025) y
+fija la NAIRU referencial en 8,25%. La disponibilidad de IR comienza en 2006 y la
+de actividad en 2010, por lo que cada modelo informa su muestra efectiva. El análisis
+mensual reutiliza las 186 observaciones comunes
 del proyecto (ENE, IPC oficial no desestacionalizado, IR real e IMACEC) mediante
 ``phillips.load_data``.
 
@@ -148,25 +150,47 @@ def cargar_anual(ruta: Path | None = None) -> pd.DataFrame:
 # Estimación anual: réplica del cálculo central y modelos de contraste.
 # -----------------------------------------------------------------------------
 def analizar_anual(data: pd.DataFrame) -> dict:
-    """Estima la especificación anual central y cuatro contrastes."""
-    # 2010 se conserva solo para construir el rezago de inflación de 2011.
-    muestra = data.loc[data["anio"].between(2011, 2025)].copy()
+    """Estima la relación anual en la muestra larga y conserva 2011–2025 como contraste.
+
+    La NAIRU de 8,25% se usa como referencia fija del ejercicio. No se interpreta
+    como una NAIRU histórica válida para 1986–2025.
+    """
+    muestra = data.loc[data["anio"].between(1986, 2025)].copy()
+    reciente = muestra.loc[muestra["anio"].between(2011, 2025)].copy()
 
     modelos = {
-        "A1_estatica": ajustar_ols_hac(muestra, "ipc_anual", ["brecha_desempleo"], hac_lags=1),
-        "A2_aceleracion": ajustar_ols_hac(muestra, "delta_ipc", ["brecha_desempleo"], hac_lags=1),
-        "A3_expectativas": ajustar_ols_hac(
+        "A1_estatica_full": ajustar_ols_hac(
+            muestra, "ipc_anual", ["brecha_desempleo"], hac_lags=1
+        ),
+        "A2_aceleracion_full": ajustar_ols_hac(
+            muestra, "delta_ipc", ["brecha_desempleo"], hac_lags=1
+        ),
+        "A3_expectativas_full": ajustar_ols_hac(
             muestra, "ipc_anual", ["ipc_rezago_1", "brecha_desempleo"], hac_lags=1
         ),
-        "A4_expectativas_actividad": ajustar_ols_hac(
+        "A4_expectativas_ir": ajustar_ols_hac(
+            muestra,
+            "ipc_anual",
+            ["ipc_rezago_1", "brecha_desempleo", "ir_real_anual"],
+            hac_lags=1,
+        ),
+        "A5_expectativas_actividad": ajustar_ols_hac(
             muestra,
             "ipc_anual",
             ["ipc_rezago_1", "brecha_desempleo", "actividad_anual"],
             hac_lags=1,
         ),
-        # Modelo central: impone que con u = NAIRU la inflación no acelera.
-        "A5_aceleracion_nairu": ajustar_ols_hac(
+        # Modelo central de muestra larga: intercepto restringido a cero.
+        "A6_aceleracion_nairu_full": ajustar_ols_hac(
             muestra,
+            "delta_ipc",
+            ["brecha_desempleo"],
+            intercepto=False,
+            hac_lags=1,
+        ),
+        # Contraste exactamente comparable con el análisis anterior.
+        "A7_aceleracion_nairu_2011_2025": ajustar_ols_hac(
+            reciente,
             "delta_ipc",
             ["brecha_desempleo"],
             intercepto=False,
@@ -174,37 +198,48 @@ def analizar_anual(data: pd.DataFrame) -> dict:
         ),
     }
 
+    notas = {
+        "A1_estatica_full": "Muestra disponible 1986–2025.",
+        "A2_aceleracion_full": "1987–2025; 1986 se usa para construir el primer rezago.",
+        "A3_expectativas_full": "1987–2025.",
+        "A4_expectativas_ir": "IR disponible desde 2006; la muestra efectiva comienza en 2006.",
+        "A5_expectativas_actividad": "Actividad disponible desde 2010; muestra efectiva 2010–2025.",
+        "A6_aceleracion_nairu_full": "Central: 1987–2025, NAIRU=8,25% e intercepto cero.",
+        "A7_aceleracion_nairu_2011_2025": "Contraste con la ventana anterior 2011–2025.",
+    }
+    dependientes = {
+        "A1_estatica_full": "IPC anual",
+        "A2_aceleracion_full": "Δ IPC anual",
+        "A3_expectativas_full": "IPC anual",
+        "A4_expectativas_ir": "IPC anual",
+        "A5_expectativas_actividad": "IPC anual",
+        "A6_aceleracion_nairu_full": "Δ IPC anual",
+        "A7_aceleracion_nairu_2011_2025": "Δ IPC anual",
+    }
+
     comparacion = pd.DataFrame(
         [
-            fila_modelo("A1_estatica", modelos["A1_estatica"], "IPC anual"),
-            fila_modelo("A2_aceleracion", modelos["A2_aceleracion"], "Δ IPC anual"),
-            fila_modelo("A3_expectativas", modelos["A3_expectativas"], "IPC anual"),
-            fila_modelo(
-                "A4_expectativas_actividad",
-                modelos["A4_expectativas_actividad"],
-                "IPC anual",
-            ),
-            fila_modelo(
-                "A5_aceleracion_nairu",
-                modelos["A5_aceleracion_nairu"],
-                "Δ IPC anual",
-                "Especificación central con NAIRU=8,25% e intercepto restringido a cero.",
-            ),
+            fila_modelo(nombre, res, dependientes[nombre], notas[nombre])
+            for nombre, res in modelos.items()
         ]
     )
     coeficientes = pd.DataFrame(
         [fila for nombre, res in modelos.items() for fila in coeficientes_modelo(nombre, res)]
     )
 
-    central = modelos["A5_aceleracion_nairu"]
+    central = modelos["A6_aceleracion_nairu_full"]
+    contraste = modelos["A7_aceleracion_nairu_2011_2025"]
     beta = float(central.params["brecha_desempleo"])
+    beta_reciente = float(contraste.params["brecha_desempleo"])
     return {
         "data": muestra,
         "modelos": modelos,
         "comparacion": comparacion,
         "coeficientes": coeficientes,
         "central": central,
+        "contraste_reciente": contraste,
         "ecuacion": f"Δπₜ = {beta:+.3f} · (uₜ − {NAIRU:.2f})",
+        "ecuacion_reciente": f"2011–2025: Δπₜ = {beta_reciente:+.3f} · (uₜ − {NAIRU:.2f})",
     }
 
 
@@ -314,32 +349,62 @@ def analizar_mensual(data: pd.DataFrame) -> dict:
 # Figuras: evidencia observada y ecuación de aceleración con NAIRU fija.
 # -----------------------------------------------------------------------------
 def figura_phillips_anual(data: pd.DataFrame) -> go.Figure:
-    """Nube anual de inflación y desempleo con referencias de política."""
+    """Nube anual de inflación y desempleo; distingue años sin dato de actividad."""
     fig = go.Figure()
-    fig.add_trace(
-        go.Scatter(
-            x=data["desocupacion"],
-            y=data["ipc_anual"],
-            mode="markers+text",
-            text=data["anio"].astype(str),
-            textposition="top center",
-            marker=dict(size=11, color=data["actividad_anual"], colorscale="RdBu", colorbar=dict(title="Actividad anual (%)")),
-            customdata=np.column_stack([data["anio"], data["ir_real_anual"], data["actividad_anual"]]),
-            hovertemplate=(
-                "<b>%{customdata[0]}</b><br>Desocupación: %{x:.2f}%<br>IPC: %{y:.2f}%"
-                "<br>IR real: %{customdata[1]:+.2f}%<br>Actividad: %{customdata[2]:+.2f}%<extra></extra>"
-            ),
-            name="Años",
+    con_actividad = data.loc[data["actividad_anual"].notna()].copy()
+    sin_actividad = data.loc[data["actividad_anual"].isna()].copy()
+
+    if not sin_actividad.empty:
+        fig.add_trace(
+            go.Scatter(
+                x=sin_actividad["desocupacion"],
+                y=sin_actividad["ipc_anual"],
+                mode="markers+text",
+                text=sin_actividad["anio"].astype(str),
+                textposition="top center",
+                marker=dict(size=10, color="#a8b0ba", symbol="circle-open", line=dict(width=1.5)),
+                customdata=np.column_stack([sin_actividad["anio"], sin_actividad["ir_real_anual"]]),
+                hovertemplate=(
+                    "<b>%{customdata[0]}</b><br>Desocupación: %{x:.2f}%<br>IPC: %{y:.2f}%"
+                    "<br>IR real: sin dato<br>Actividad: sin dato<extra></extra>"
+                ),
+                name="Sin actividad anual disponible",
+            )
         )
-    )
-    fig.add_vline(x=NAIRU, line_dash="dashdot", annotation_text=f"NAIRU ref. {NAIRU:.2f}%")
+
+    if not con_actividad.empty:
+        fig.add_trace(
+            go.Scatter(
+                x=con_actividad["desocupacion"],
+                y=con_actividad["ipc_anual"],
+                mode="markers+text",
+                text=con_actividad["anio"].astype(str),
+                textposition="top center",
+                marker=dict(
+                    size=11,
+                    color=con_actividad["actividad_anual"],
+                    colorscale="RdBu",
+                    colorbar=dict(title="Actividad anual (%)"),
+                ),
+                customdata=np.column_stack(
+                    [con_actividad["anio"], con_actividad["ir_real_anual"], con_actividad["actividad_anual"]]
+                ),
+                hovertemplate=(
+                    "<b>%{customdata[0]}</b><br>Desocupación: %{x:.2f}%<br>IPC: %{y:.2f}%"
+                    "<br>IR real: %{customdata[1]:+.2f}%<br>Actividad: %{customdata[2]:+.2f}%<extra></extra>"
+                ),
+                name="Con actividad anual disponible",
+            )
+        )
+
+    fig.add_vline(x=NAIRU, line_dash="dashdot", annotation_text=f"Referencia NAIRU {NAIRU:.2f}%")
     fig.add_hline(y=META_INFLACION, line_dash="dash", annotation_text="Meta IPC 3%")
     fig.update_layout(
         template="plotly_white",
-        title="Datos anuales: inflación y desempleo",
+        title="Datos anuales: inflación y desempleo, 1986–2025",
         xaxis_title="Tasa de desocupación (%)",
         yaxis_title="IPC anual (%)",
-        height=560,
+        height=620,
         margin=dict(l=70, r=80, t=80, b=60),
     )
     return fig
@@ -448,14 +513,19 @@ def tabla_html(df: pd.DataFrame, columnas: list[str] | None = None) -> str:
 def interpretacion_anual(resultado: dict) -> str:
     """Texto breve y no causal para el informe anual."""
     r = resultado["central"]
+    rc = resultado["contraste_reciente"]
     b = float(r.params["brecha_desempleo"])
     p = float(r.pvalues["brecha_desempleo"])
+    bc = float(rc.params["brecha_desempleo"])
+    pc = float(rc.pvalues["brecha_desempleo"])
     return (
-        f"La especificación central impone una NAIRU de {NAIRU:.2f}% y estima una pendiente de "
-        f"{b:+.3f}. El signo es compatible con la intuición de Phillips, pero el p-valor HAC es "
-        f"{p:.3f} y el ajuste es muy bajo. Con solo 15 observaciones útiles, el resultado debe "
-        "interpretarse como evidencia descriptiva, no como una estimación causal ni como validación "
-        "de una relación estable."
+        f"Con la muestra larga, la ecuación restringida usa {int(r.nobs)} observaciones "
+        f"(1987–2025) y estima una pendiente de {b:+.3f} (p HAC={p:.3f}). "
+        f"Para mantener comparabilidad con el ejercicio anterior, en 2011–2025 la pendiente es "
+        f"{bc:+.3f} (p HAC={pc:.3f}). En ambas ventanas el signo es compatible con la intuición "
+        "de Phillips, pero la evidencia sigue siendo estadísticamente débil. La referencia de "
+        f"{NAIRU:.2f}% se mantiene fija por decisión del ejercicio y no debe interpretarse como "
+        "una NAIRU histórica constante desde 1986."
     )
 
 
@@ -494,17 +564,19 @@ def contenido_informe_anual(resultado: dict, include_plotly: bool) -> str:
     )
     coef = resultado["coeficientes"]
     comp = resultado["comparacion"]
+    central = resultado["central"]
+    reciente = resultado["contraste_reciente"]
     return f"""
       <section class="bloque">
         <h2>Informe con datos anuales</h2>
-        <p class="bajada">Años completos 2011–2025; 2010 se usa únicamente para construir la inflación rezagada de 2011. NAIRU fija: {NAIRU:.2f}%.</p>
-        <div class="ecuacion">{resultado['ecuacion']}</div>
+        <p class="bajada">Cobertura IPC/desempleo: 1986–2025. La ecuación de aceleración usa 1987–2025; IR está disponible desde 2006 y actividad desde 2010. NAIRU referencial fija: {NAIRU:.2f}%.</p>
+        <div class="ecuacion">{resultado['ecuacion']}<br><small>{resultado['ecuacion_reciente']}</small></div>
         <p>{interpretacion_anual(resultado)}</p>
         <div class="grid-kpi">
-          <div class="kpi"><span>Observaciones</span><strong>{int(resultado['central'].nobs)}</strong></div>
-          <div class="kpi"><span>Pendiente central</span><strong>{resultado['central'].params['brecha_desempleo']:+.3f}</strong></div>
-          <div class="kpi"><span>p-valor HAC</span><strong>{resultado['central'].pvalues['brecha_desempleo']:.3f}</strong></div>
-          <div class="kpi"><span>R²</span><strong>{resultado['central'].rsquared:.3f}</strong></div>
+          <div class="kpi"><span>N modelo central</span><strong>{int(central.nobs)}</strong></div>
+          <div class="kpi"><span>Pendiente 1987–2025</span><strong>{central.params['brecha_desempleo']:+.3f}</strong></div>
+          <div class="kpi"><span>p HAC muestra larga</span><strong>{central.pvalues['brecha_desempleo']:.3f}</strong></div>
+          <div class="kpi"><span>Pendiente 2011–2025</span><strong>{reciente.params['brecha_desempleo']:+.3f}</strong></div>
         </div>
         {fig1}
         {fig2}
@@ -512,7 +584,7 @@ def contenido_informe_anual(resultado: dict, include_plotly: bool) -> str:
         {tabla_html(comp, ['modelo','dependiente','n','r2_ajustado','aic','bic','nota'])}
         <h3>Coeficientes y errores HAC</h3>
         {tabla_html(coef, ['modelo','termino','coeficiente','error_hac','p_valor'])}
-        <p class="nota">AIC/BIC solo son comparables de forma directa entre modelos que usan la misma variable dependiente. En los modelos sin constante, el R² de statsmodels es no centrado.</p>
+        <p class="nota">AIC/BIC solo deben compararse directamente cuando coinciden tanto la variable dependiente como la muestra efectiva. Los modelos con IR y actividad tienen ventanas más cortas por disponibilidad de datos. En los modelos sin constante, el R² de statsmodels es no centrado.</p>
       </section>
     """
 
@@ -638,6 +710,12 @@ def exportar_resultados(anual: dict, mensual: dict, out_dir: Path) -> None:
             "ecuacion_central": anual["ecuacion"],
             "beta_gap": float(anual["central"].params["brecha_desempleo"]),
             "p_hac": float(anual["central"].pvalues["brecha_desempleo"]),
+            "contraste_2011_2025": {
+                "n": int(anual["contraste_reciente"].nobs),
+                "ecuacion": anual["ecuacion_reciente"],
+                "beta_gap": float(anual["contraste_reciente"].params["brecha_desempleo"]),
+                "p_hac": float(anual["contraste_reciente"].pvalues["brecha_desempleo"]),
+            },
         },
         "mensual": {
             "periodo": [mensual["data"]["mes"].iloc[0], mensual["data"]["mes"].iloc[-1]],
