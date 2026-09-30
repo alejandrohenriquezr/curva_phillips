@@ -31,24 +31,34 @@ class PhillipsTests(unittest.TestCase):
     def test_frames_trail_and_signed_sizes(self):
         d,_,_=load_data()
         d=d.iloc[:3].copy()
+        # Fuerza un orden distinto del cronológico para probar que la animación
+        # recorre desempleo ascendente y no fecha ascendente.
+        d['desocupacion']=[8.,6.,7.]
         d['ir_real_anual']=[-2.,0.,4.]
         d['ir_magnitud']=d.ir_real_anual.abs()
         d['imacec_promedio_anual']=[-3.,0.,2.]
         f=build_figure(d)
+
+        esperado=d.sort_values(['desocupacion','fecha'],kind='mergesort').reset_index(drop=True)
         self.assertEqual(len(f.frames),3)
+        self.assertEqual(f.layout.meta['orden_animacion'],'desocupacion_ascendente')
+
         for i,frame in enumerate(f.frames):
             self.assertEqual(len(frame.data[0].x),i+1)
-            self.assertEqual(frame.data[1].x[0],d.desocupacion.iloc[i])
-        self.assertEqual(f.frames[0].data[1].marker.color[0],-3.)
+            self.assertEqual(frame.data[1].x[0],esperado.desocupacion.iloc[i])
+            self.assertEqual(frame.data[1].customdata[0][0],esperado.mes.iloc[i])
+            # El panel inferior conserva la serie temporal completa; solo se mueve el punto activo.
+            self.assertEqual(len(frame.data[4].x),len(d))
+            self.assertEqual(frame.data[5].x[0],esperado.fecha.iloc[i].strftime('%Y-%m-%d'))
+            self.assertEqual(frame.data[5].y[0],esperado.imacec_sa_anual.iloc[i])
+
+        self.assertTrue(np.all(np.diff([frame.data[1].x[0] for frame in f.frames])>=0))
+        self.assertEqual(f.frames[0].data[1].marker.color[0],0.)
         self.assertEqual((f.layout.coloraxis.cmin,f.layout.coloraxis.cmax,f.layout.coloraxis.cmid),(-3.,3.,0))
         self.assertEqual(f.layout.coloraxis.colorscale[1],(.5,'#f7f7f2'))
-        for i,frame in enumerate(f.frames):
-            self.assertEqual(frame.data[5].x[0],d.fecha.iloc[i].strftime('%Y-%m-%d'))
-            self.assertEqual(frame.data[5].y[0],d.imacec_sa_anual.iloc[i])
-            self.assertEqual(len(frame.data[4].x),i+1)
-        self.assertEqual(f.frames[1].data[1].marker.size[0],0)
-        self.assertEqual(f.frames[2].data[1].marker.size[0]/f.frames[0].data[1].marker.size[0],2)
+        self.assertEqual(f.frames[0].data[1].marker.size[0],0)
         self.assertEqual(f.frames[2].data[1].marker.sizemode,'area')
+
     def test_macro_references_and_distances(self):
         d,f=self.complete_figure()
         shapes=f.layout.shapes
@@ -96,7 +106,7 @@ class PhillipsTests(unittest.TestCase):
         np.testing.assert_allclose(final.data[9].marker.size,dec.imacec_sa_anual.abs()/limit)
         np.testing.assert_allclose(final.data[10].marker.color,dec.ipc_anual/limit)
         labels={a.text for a in final.layout.annotations}
-        march=f.frames[list(d.mes).index('2020-03')]
+        march=next(frame for frame in f.frames if frame.data[1].customdata[0][0]=='2020-03')
         visible={a.text for a in march.layout.annotations if a.visible is not False}
         self.assertNotIn('01-2026',visible)
         self.assertIn('03-2020',visible)
