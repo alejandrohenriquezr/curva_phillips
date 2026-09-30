@@ -6,7 +6,7 @@ Proyecto reproducible para estudiar la relación entre inflación, desempleo, re
 
 ```text
 curva_phillips/
-├─ datos/                  Fuentes CSV/XLSX versionadas y metadatos
+├─ datos/                  Fuentes CSV versionadas y metadatos
 ├─ scripts/                Entradas ejecutables 00_...py a 08_...py
 ├─ src/curva_phillips/     Código reutilizable
 ├─ tests/                  Pruebas automáticas
@@ -78,3 +78,7 @@ La publicación usa una copia HTML del notebook porque un archivo `.ipynb` no se
 ## Validación automática
 
 El workflow `Validar y generar productos` instala las dependencias, ejecuta las pruebas, genera el cuaderno, los informes y el sitio, y conserva todos los productos como artefacto descargable.
+
+## Orden de la animación
+
+El gráfico animado recorre las observaciones mensuales por **tasa de desocupación ascendente**, no por fecha. El panel inferior conserva IPC e IMACEC en orden cronológico y marca la fecha correspondiente a la observación activa. `resultados/datos_phillips.csv` se exporta en el mismo orden que la animación.
