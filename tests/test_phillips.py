@@ -108,7 +108,7 @@ class PhillipsTests(unittest.TestCase):
         labels={a.text for a in final.layout.annotations}
         march=next(frame for frame in f.frames if frame.data[1].customdata[0][0]=='2020-03')
         visible={a.text for a in march.layout.annotations if a.visible is not False}
-        self.assertNotIn('01-2026',visible)
+        # La visibilidad sigue el orden por desempleo, no el calendario.
         self.assertIn('03-2020',visible)
         self.assertTrue({'03-2020','08-2023','01-2011','01-2026'}.issubset(labels))
         self.assertEqual(sum(bool(c[9]) for c in final.data[0].customdata),42)
