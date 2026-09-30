@@ -40,3 +40,7 @@ git switch estructura_ordenada
 git pull origin estructura_ordenada
 .\INSTALAR.bat
 ```
+
+## Si el cuaderno muestra `ModuleNotFoundError: curva_phillips`
+
+Regenera el cuaderno con `EJECUTAR_TODO.bat` o `python scripts/03_generar_cuaderno.py`. La primera celda localiza automáticamente la raíz del repositorio y agrega `src/` a `sys.path`, por lo que funciona tanto si Jupyter se abrió desde la raíz como desde `cuadernos_jupyter/`.
