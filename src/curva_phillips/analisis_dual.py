@@ -349,26 +349,45 @@ def analizar_mensual(data: pd.DataFrame) -> dict:
 # Figuras: evidencia observada y ecuación de aceleración con NAIRU fija.
 # -----------------------------------------------------------------------------
 def figura_phillips_anual(data: pd.DataFrame) -> go.Figure:
-    """Nube anual de inflación y desempleo; distingue años sin dato de actividad."""
+    """Nube anual de inflación y desempleo; distingue disponibilidad de covariables."""
     fig = go.Figure()
+    sin_ir = data.loc[data["ir_real_anual"].isna()].copy()
+    solo_ir = data.loc[data["ir_real_anual"].notna() & data["actividad_anual"].isna()].copy()
     con_actividad = data.loc[data["actividad_anual"].notna()].copy()
-    sin_actividad = data.loc[data["actividad_anual"].isna()].copy()
 
-    if not sin_actividad.empty:
+    if not sin_ir.empty:
         fig.add_trace(
             go.Scatter(
-                x=sin_actividad["desocupacion"],
-                y=sin_actividad["ipc_anual"],
+                x=sin_ir["desocupacion"],
+                y=sin_ir["ipc_anual"],
                 mode="markers+text",
-                text=sin_actividad["anio"].astype(str),
+                text=sin_ir["anio"].astype(str),
                 textposition="top center",
                 marker=dict(size=10, color="#a8b0ba", symbol="circle-open", line=dict(width=1.5)),
-                customdata=np.column_stack([sin_actividad["anio"], sin_actividad["ir_real_anual"]]),
+                customdata=np.column_stack([sin_ir["anio"]]),
                 hovertemplate=(
                     "<b>%{customdata[0]}</b><br>Desocupación: %{x:.2f}%<br>IPC: %{y:.2f}%"
                     "<br>IR real: sin dato<br>Actividad: sin dato<extra></extra>"
                 ),
-                name="Sin actividad anual disponible",
+                name="Sin IR ni actividad anual",
+            )
+        )
+
+    if not solo_ir.empty:
+        fig.add_trace(
+            go.Scatter(
+                x=solo_ir["desocupacion"],
+                y=solo_ir["ipc_anual"],
+                mode="markers+text",
+                text=solo_ir["anio"].astype(str),
+                textposition="top center",
+                marker=dict(size=10, color="#6f7c8a", symbol="diamond-open", line=dict(width=1.5)),
+                customdata=np.column_stack([solo_ir["anio"], solo_ir["ir_real_anual"]]),
+                hovertemplate=(
+                    "<b>%{customdata[0]}</b><br>Desocupación: %{x:.2f}%<br>IPC: %{y:.2f}%"
+                    "<br>IR real: %{customdata[1]:+.2f}%<br>Actividad: sin dato<extra></extra>"
+                ),
+                name="IR disponible; actividad sin dato",
             )
         )
 
@@ -393,7 +412,7 @@ def figura_phillips_anual(data: pd.DataFrame) -> go.Figure:
                     "<b>%{customdata[0]}</b><br>Desocupación: %{x:.2f}%<br>IPC: %{y:.2f}%"
                     "<br>IR real: %{customdata[1]:+.2f}%<br>Actividad: %{customdata[2]:+.2f}%<extra></extra>"
                 ),
-                name="Con actividad anual disponible",
+                name="IR y actividad disponibles",
             )
         )
 
