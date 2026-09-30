@@ -43,4 +43,4 @@ git pull origin estructura_ordenada
 
 ## Si el cuaderno muestra `ModuleNotFoundError: curva_phillips`
 
-Regenera el cuaderno con `EJECUTAR_TODO.bat` o `python scripts/03_generar_cuaderno.py`. La primera celda localiza automáticamente la raíz del repositorio y agrega `src/` a `sys.path`, por lo que funciona tanto si Jupyter se abrió desde la raíz como desde `cuadernos_jupyter/`.
+Regenera el cuaderno con `EJECUTAR_TODO.bat` o `python scripts/03_generar_cuaderno.py`. La primera celda localiza automáticamente la raíz del repositorio y agrega `src/` a `sys.path`. Además, `ABRIR_JUPYTER.bat` define `PYTHONPATH` con `src/`, por lo que también puede abrir correctamente cuadernos anteriores desde `cuadernos_jupyter/`.
