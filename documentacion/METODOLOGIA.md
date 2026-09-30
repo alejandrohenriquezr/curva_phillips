@@ -46,7 +46,7 @@ $$\rho_{u,\pi}=\frac{\sum_t(u_t-\bar u)(\pi_t-\bar\pi)}{\sqrt{\sum_t(u_t-\bar u)
 
 Series BCCh: `F032.IMC.IND.Z.Z.EP18.Z.Z.0.M` (original) y `F032.IMC.IND.Z.Z.EP18.Z.Z.1.M` (desestacionalizada). [Descripción oficial del IMACEC](https://www.bcentral.cl/areas/estadisticas/imacec).
 
-Para actualizar voluntariamente: `python scripts/01_actualizar_imacec.py`, luego `python scripts/08_ejecutar_todo.py` y `python scripts/04_verificar_cuaderno.py`. La actualización de INE sigue en `python main.py`. Revisar el Word si cambia el corte; el análisis narrativo corresponde a enero de 2011–junio de 2026.
+Para actualizar voluntariamente: `python scripts/01_actualizar_imacec.py`, luego `python scripts/08_ejecutar_todo.py` y `python scripts/04_verificar_cuaderno.py`. La actualización de INE se ejecuta con `python scripts/00_actualizar_datos_ine.py`. Revisar el Word si cambia el corte; el análisis narrativo corresponde a enero de 2011–junio de 2026.
 
 El borde distingue el año fuera de la ventana de pandemia; dentro se conserva el borde gris segmentado. El relleno sigue codificando IMACEC. Las salidas comparten la fecha y hora local de inicio AAAAMMDD_HH_MM.
 
@@ -61,3 +61,8 @@ Para índice ajustado A_t: mensual = 100(A_t/A_{t-1}−1); anual = 100(A_t/A_{t-
 La estimación no es oficial del INE. Se vuelve a estimar al cambiar los datos, especificación o ejecutable. Utiliza información de toda la muestra y sus extremos están sujetos a revisión; no es una estimación en tiempo real. Los diagnósticos se guardan sin ocultar advertencias ni sustituir fallos por otro método. La ejecución actual detecta un pico de días de negociación en residuos; debe evaluarse calendario chileno y estabilidad antes de un uso oficial. Desestacionalizar el IPC no transforma la ENE o el IR y no elimina los problemas causales de una curva de Phillips descriptiva.
 
 Fuente del software y documentación: [U.S. Census Bureau](https://www.census.gov/data/software/x13as.X-13ARIMA-SEATS.html). [Manual de referencia](https://www2.census.gov/software/x-13arima-seats/x13as/unix-linux/documentation/docx13as.pdf).
+
+
+## Datos anualizados de largo plazo
+
+El informe anual usa la tabla `datos/datos_anualizados.xlsx` y su copia reproducible `datos/datos_anualizados.csv`. La cobertura de IPC y desempleo es 1986–2025. La serie anual de IR comienza en 2006 y la de actividad económica en 2010. Por ello, los modelos que incluyen esas covariables utilizan muestras más cortas y sus AIC/BIC no se comparan directamente con modelos estimados sobre 1986–2025. La ecuación restringida de aceleración usa 1987–2025 porque necesita el IPC del año anterior. Se conserva además 2011–2025 como contraste con la versión previa del ejercicio.
