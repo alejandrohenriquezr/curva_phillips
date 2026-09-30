@@ -14,7 +14,7 @@ El panel inferior muestra las tasas en 12 meses del IMACEC desestacionalizado y 
 
 $$a_t=100(S_t/S_{t-12}-1),\qquad \pi_t=100(IPC_t/IPC_{t-12}-1).$$
 
-La inflación se toma de la tasa oficial publicada. La variación mensual del IMACEC se conserva en los datos como $m_t=100(S_t/S_{t-1}-1)$, pero no es la serie del panel. El cursor y la línea oscura siguen el mes seleccionado; el resto es contexto retrospectivo.
+La inflación se toma de la tasa oficial publicada. La variación mensual del IMACEC se conserva en los datos como $m_t=100(S_t/S_{t-1}-1)$, pero no es la serie del panel. La animación principal ordena las observaciones por desocupación ascendente; el panel inferior mantiene las series completas en orden cronológico y el cursor salta a la fecha asociada al punto activo.
 
 En cada diciembre, un rombo marca el crecimiento del **promedio anual del IMACEC original**:
 
@@ -65,4 +65,9 @@ Fuente del software y documentación: [U.S. Census Bureau](https://www.census.go
 
 ## Datos anualizados de largo plazo
 
-El informe anual usa la tabla `datos/datos_anualizados.xlsx` y su copia reproducible `datos/datos_anualizados.csv`. La cobertura de IPC y desempleo es 1986–2025. La serie anual de IR comienza en 2006 y la de actividad económica en 2010. Por ello, los modelos que incluyen esas covariables utilizan muestras más cortas y sus AIC/BIC no se comparan directamente con modelos estimados sobre 1986–2025. La ecuación restringida de aceleración usa 1987–2025 porque necesita el IPC del año anterior. Se conserva además 2011–2025 como contraste con la versión previa del ejercicio.
+El informe anual usa `datos/datos_anualizados.csv` como fuente reproducible canónica. La cobertura de IPC y desempleo es 1986–2025. La serie anual de IR comienza en 2006 y la de actividad económica en 2010. Por ello, los modelos que incluyen esas covariables utilizan muestras más cortas y sus AIC/BIC no se comparan directamente con modelos estimados sobre 1986–2025. La ecuación restringida de aceleración usa 1987–2025 porque necesita el IPC del año anterior. Se conserva además 2011–2025 como contraste con la versión previa del ejercicio.
+
+
+## Orden de presentación del gráfico animado
+
+Para facilitar la lectura visual de la relación inflación-desempleo, la animación no sigue el calendario. Antes de construir los fotogramas, las observaciones comunes se ordenan por `desocupacion` ascendente y, en caso de empate, por fecha. Los cálculos de rezagos, variaciones interanuales, promedios móviles y estadísticas económicas se realizan antes y conservan el orden cronológico. La tabla exportada `datos_phillips.csv` replica el orden de presentación del gráfico.
