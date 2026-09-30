@@ -1,12 +1,12 @@
 # Curva de Phillips de Chile
 
-Proyecto reproducible para estudiar la relación entre inflación, desempleo, remuneraciones reales y actividad económica en Chile. Genera el análisis histórico mensual, el análisis anual con NAIRU referencial de 8,25%, informes HTML/Word, resultados tabulares, un cuaderno Jupyter ejecutado y un sitio estático listo para GitHub Pages.
+Proyecto reproducible para estudiar la relación entre inflación, desempleo, remuneraciones reales y actividad económica en Chile. Genera el análisis histórico mensual, el análisis anual 1986–2025 con NAIRU referencial de 8,25%, informes HTML/Word, resultados tabulares, un cuaderno Jupyter ejecutado y un sitio estático listo para GitHub Pages.
 
 ## Estructura
 
 ```text
 curva_phillips/
-├─ datos/                  Fuentes CSV versionadas y metadatos
+├─ datos/                  Fuentes CSV/XLSX versionadas y metadatos
 ├─ scripts/                Entradas ejecutables 00_...py a 08_...py
 ├─ src/curva_phillips/     Código reutilizable
 ├─ tests/                  Pruebas automáticas
