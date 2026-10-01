@@ -1,88 +1,49 @@
-# Curva de Phillips de Chile
+# Curva de Phillips anual en Chile
 
-Proyecto reproducible para estudiar la Curva de Phillips en Chile con dos frecuencias. El análisis anual usa desempleo, IPC y PIB para 1997–2025; el análisis mensual usa ENE, IPC, IR real e IMACEC para enero de 2011–junio de 2026. Ambos mantienen una NAIRU referencial de 8,25% y generan informes HTML/Word, resultados tabulares, un cuaderno Jupyter ejecutado y un sitio estático listo para GitHub Pages.
+Variante independiente `analisis_exclusivamente_anual`, basada en `estructura_ordenada`.
+La rama de origen se conserva. El Excel `datos/datos_anualizados2.xlsx` es la fuente canónica
+y contiene 30 observaciones (1997–2026) de desempleo, IPC y PIB.
 
-## Estructura
+**2026 es julio 2026 respecto de julio 2025, no un año calendario completo.** Se conserva
+exactamente como fue entregado. La historia hasta 2025 y la sensibilidad con 2026 se
+identifican en cada modelo. No se sustituyen valores por fuentes externas.
 
-```text
-curva_phillips/
-├─ datos/                  Fuentes CSV versionadas y metadatos
-├─ scripts/                Entradas ejecutables 00_...py a 08_...py
-├─ src/curva_phillips/     Código reutilizable
-├─ tests/                  Pruebas automáticas
-├─ documentacion/          Metodología, referencias y manuales
-├─ cuadernos_jupyter/      Cuadernos generados (no versionados)
-├─ informes/               HTML, Word y Markdown generados (no versionados)
-├─ resultados/             CSV, JSON, PNG y HTML técnicos (no versionados)
-├─ site/                   Sitio estático generado para publicación
-├─ INSTALAR.bat
-├─ EJECUTAR_TODO.bat
-└─ ABRIR_JUPYTER.bat
-```
-
-Los directorios de salida permanecen vacíos en Git mediante `.gitkeep`. Cada ejecución los vuelve a poblar. Así se evitan notebooks, gráficos e informes históricos duplicados dentro del repositorio.
-
-## Instalación en Windows
+## Ejecutar en Windows
 
 ```powershell
-git clone -b estructura_ordenada https://github.com/alejandrohenriquezr/curva_phillips.git
-cd curva_phillips
+git fetch origin
+git switch --track origin/analisis_exclusivamente_anual
 .\INSTALAR.bat
-```
-
-El instalador crea `.venv`, instala las dependencias, instala el paquete local en modo editable, verifica Jupyter, registra el kernel `Python (curva_phillips)`, intenta instalar X-13ARIMA-SEATS y ejecuta las pruebas.
-
-## Ejecución completa
-
-```powershell
 .\EJECUTAR_TODO.bat
-```
-
-Por defecto usa el IPC oficial original. Para la variante experimental desestacionalizada:
-
-```powershell
-.\EJECUTAR_TODO.bat --ipc sa
-```
-
-Para actualizar antes las fuentes INE y BCCh:
-
-```powershell
-.\EJECUTAR_TODO.bat --actualizar-datos
-```
-
-Al finalizar se genera `site/index.html`, que reúne los informes y la versión HTML del cuaderno.
-
-## Jupyter
-
-```powershell
 .\ABRIR_JUPYTER.bat
 ```
 
-El cuaderno ejecutado queda en `cuadernos_jupyter/`. El proceso también lo convierte a HTML mediante nbconvert para poder verlo sin Jupyter.
+Si la rama ya existe localmente, use `git switch analisis_exclusivamente_anual` y
+`git pull --ff-only`. Conserve sus cambios locales antes de cambiar de rama.
 
-## Publicación del cuaderno
+## Ejecutar en Linux o macOS
 
-El workflow `.github/workflows/pages.yml` reconstruye el proyecto, convierte el notebook a HTML y publica `site/` con GitHub Pages. La primera vez se debe habilitar **Settings > Pages > Source: GitHub Actions** y luego ejecutar manualmente el workflow **Publicar informes y cuaderno**.
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m pip install -e .
+python scripts/08_ejecutar_todo.py
+```
 
-La publicación usa una copia HTML del notebook porque un archivo `.ipynb` no se renderiza como página web autónoma. El `.ipynb` original también se copia al sitio como descarga.
+Después de instalar dependencias, el procesamiento no necesita conexión a fuentes de datos.
+Abra `site/index.html` para ver el informe, animación y cuaderno ejecutado, o descargar el Word.
+La animación y `resultados/datos_phillips.csv` recorren desempleo de menor a mayor; los cálculos
+y `datos_anuales_cronologicos.csv` mantienen el orden de los años.
 
-## Documentación
+## Productos y metodología
 
-- [Instalación y uso](documentacion/INSTALACION_Y_USO.md)
-- [Estructura técnica](documentacion/ESTRUCTURA.md)
-- [Metodología](documentacion/METODOLOGIA.md)
-- [Análisis anual y mensual](documentacion/ANALISIS_ANUAL_MENSUAL.md)
-- [Despliegue del cuaderno](documentacion/DESPLIEGUE_CUADERNO.md)
-- [Referencias](documentacion/REFERENCIAS.md)
+El pipeline valida el Excel, ejecuta las pruebas, estima modelos, ejecuta el cuaderno,
+genera el artículo Word/Markdown y construye el sitio. Deja `resultados/ejecucion_anual.json`.
+Los productos se regeneran y se publican como artefactos de CI; no se versionan.
+Los modelos incorporan PIB, persistencia, intervalos HAC y sensibilidades de muestra.
+Consulte [metodología](documentacion/METODOLOGIA.md),
+[instalación](documentacion/INSTALACION_Y_USO.md) y [estructura](documentacion/ESTRUCTURA.md).
 
-## Validación automática
-
-El workflow `Validar y generar productos` instala las dependencias, ejecuta las pruebas, genera el cuaderno, los informes y el sitio, y conserva todos los productos como artefacto descargable.
-
-## Orden de la animación
-
-El gráfico animado recorre las observaciones mensuales por **tasa de desocupación ascendente**, no por fecha. El panel inferior conserva IPC e IMACEC en orden cronológico y marca la fecha correspondiente a la observación activa. `resultados/datos_phillips.csv` se exporta en el mismo orden que la animación.
-
-## Tabla anual vigente
-
-`datos/datos_anualizados.csv` reproduce la nueva tabla entregada para el proyecto: **1997–2025**, con `Año`, `Tasa desocupación`, `IPC` y `PIB volumen a precios del año anterior encadenado`. El análisis anual ya no utiliza IR. El IR permanece únicamente en el componente mensual porque proviene de una fuente mensual independiente.
+GitHub Actions valida el pipeline en Linux y Windows. GitHub Pages se publica únicamente
+mediante ejecución manual del workflow, seleccionando esta rama; no se publica al hacer push.

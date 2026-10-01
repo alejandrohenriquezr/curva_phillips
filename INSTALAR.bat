@@ -40,13 +40,8 @@ if errorlevel 1 (
   if errorlevel 1 exit /b 1
 )
 
-"%VPY%" -m ipykernel install --user --name curva-phillips --display-name "Python (curva_phillips)" >nul 2>nul
-
-if not exist "herramientas\x13\x13as_ascii.exe" (
-  echo Instalando X-13ARIMA-SEATS...
-  "%VPY%" scripts\02_instalar_x13.py
-  if errorlevel 1 echo ADVERTENCIA: X-13 no pudo instalarse. El modo IPC original sigue disponible.
-)
+"%VPY%" -m ipykernel install --prefix "%CD%\.venv" --name python3 --display-name "Python (Phillips anual)"
+if errorlevel 1 exit /b 1
 
 echo.
 echo Ejecutando pruebas...

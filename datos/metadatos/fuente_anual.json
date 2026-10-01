@@ -1,0 +1,12 @@
+{
+  "archivo": "datos_anualizados2.xlsx",
+  "sha256": "103a7ab1ddcf1fc1e94f964e3860c4c6a642e95b83eb0f5bf285c86ad0918a99",
+  "filas": 30,
+  "periodo": [
+    1997,
+    2026
+  ],
+  "nota_2026": "2026 corresponde al corte julio 2026 respecto de julio 2025 entregado por el usuario; no es un año calendario completo. Sus valores se conservan sin sustituciones.",
+  "transformacion": "Sin reemplazar, reescalar ni corregir valores; orden cronológico para cálculos",
+  "pib": "Variable de la tabla del usuario; se interpreta como variación según su indicación, no como brecha de producto"
+}

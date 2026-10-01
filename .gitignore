@@ -1,12 +1,12 @@
-# Entorno Python
 .venv/
 __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
 .ipynb_checkpoints/
-
-# Salidas generadas: se publican como artefactos/Pages, no se versionan
+.runtime/
+.jupyter/
+.ipython/
 resultados/*
 !resultados/.gitkeep
 informes/*
@@ -14,13 +14,6 @@ informes/*
 cuadernos_jupyter/*
 !cuadernos_jupyter/.gitkeep
 site/
-
-# Cachés y herramientas descargadas
-.cache_x13/
-herramientas/x13/
-
-# Temporales
-*.tmp.csv
 *.log
 .DS_Store
 Thumbs.db

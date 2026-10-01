@@ -28,8 +28,8 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -e .
 
-      - name: Ejecutar análisis y construir sitio
-        run: python scripts/08_ejecutar_todo.py --ipc original
+      - name: Ejecutar anÃ¡lisis y construir sitio
+        run: python scripts/08_ejecutar_todo.py
 
       - uses: actions/configure-pages@v5
 

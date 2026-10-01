@@ -1,39 +1,31 @@
-name: Validar y generar productos
-
+name: Validar variante anual
 on:
   push:
   pull_request:
   workflow_dispatch:
-
+permissions:
+  contents: read
 jobs:
   validar:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-
-      - name: Instalar dependencias
+      - name: Instalar
         run: |
-          python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install -e .
-
-      - name: Instalar X-13
-        run: python scripts/02_instalar_x13.py
-
-      - name: Ejecutar pruebas
-        run: python -m unittest discover -s tests -v
-
-      - name: Generar análisis completo
-        run: python scripts/08_ejecutar_todo.py --ipc original
-
+      - name: Pipeline anual completo
+        run: python scripts/08_ejecutar_todo.py
       - name: Guardar productos
         uses: actions/upload-artifact@v4
         with:
-          name: curva-phillips-productos
+          name: phillips-anual-${{ matrix.os }}
           path: |
             cuadernos_jupyter/**
             informes/**
