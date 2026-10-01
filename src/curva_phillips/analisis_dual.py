@@ -1,9 +1,8 @@
 """Genera dos informes de Curva de Phillips para Chile y un HTML con dos pestañas.
 
-El análisis anual usa la tabla anualizada entregada por el usuario (1986–2025) y
-fija la NAIRU referencial en 8,25%. La disponibilidad de IR comienza en 2006 y la
-de actividad en 2010, por lo que cada modelo informa su muestra efectiva. El análisis
-mensual reutiliza las 186 observaciones comunes
+El análisis anual usa la nueva tabla anualizada entregada por el usuario (1997–2025),
+que contiene desempleo, IPC y PIB y ya no contiene IR. La NAIRU referencial se fija
+en 8,25%. El análisis mensual reutiliza las 186 observaciones comunes
 del proyecto (ENE, IPC oficial no desestacionalizado, IR real e IMACEC) mediante
 ``phillips.load_data``.
 
@@ -107,17 +106,14 @@ def coeficientes_modelo(nombre: str, resultado) -> list[dict]:
 # Carga y preparación de los datos anuales.
 # -----------------------------------------------------------------------------
 def cargar_anual(ruta: Path | None = None) -> pd.DataFrame:
-    """Carga la tabla anualizada desde XLSX si existe; si no, usa el CSV del repo."""
+    """Carga la tabla anualizada y normaliza desempleo, IPC y PIB."""
     if ruta is None:
-        xlsx = DATA_DIR / "datos_anualizados.xlsx"
-        csv = DATA_DIR / "datos_anualizados.csv"
-        ruta = xlsx if xlsx.exists() else csv
+        ruta = DATA_DIR / "datos_anualizados.csv"
 
     ruta = Path(ruta)
     if not ruta.exists():
         raise FileNotFoundError(f"No existe el archivo anual: {ruta}")
 
-    # Se admite el XLSX original del usuario o el CSV reproducible incluido en la rama.
     if ruta.suffix.lower() in {".xlsx", ".xls"}:
         data = pd.read_excel(ruta)
     else:
@@ -127,19 +123,21 @@ def cargar_anual(ruta: Path | None = None) -> pd.DataFrame:
         "Año": "anio",
         "Tasa desocupación": "desocupacion",
         "IPC": "ipc_anual",
-        "IR": "ir_real_anual",
-        "Actividad Económica": "actividad_anual",
+        "PIB volumen a precios del año anterior encadenado": "pib_anual",
     }
-    faltan = [c for c in ren if c not in data.columns]
+    faltan = [col for col in ren if col not in data.columns]
     if faltan:
         raise ValueError(f"Faltan columnas en los datos anuales: {faltan}")
 
     data = data.rename(columns=ren)[list(ren.values())].copy()
     data["anio"] = pd.to_numeric(data["anio"], errors="raise").astype(int)
-    for c in ["desocupacion", "ipc_anual", "ir_real_anual", "actividad_anual"]:
-        data[c] = pd.to_numeric(data[c], errors="coerce")
+    for col in ["desocupacion", "ipc_anual", "pib_anual"]:
+        data[col] = pd.to_numeric(data[col], errors="coerce")
 
     data = data.sort_values("anio").drop_duplicates("anio").reset_index(drop=True)
+    if data[["desocupacion", "ipc_anual", "pib_anual"]].isna().any().any():
+        raise ValueError("La tabla anual contiene valores faltantes en desempleo, IPC o PIB")
+
     data["brecha_desempleo"] = data["desocupacion"] - NAIRU
     data["ipc_rezago_1"] = data["ipc_anual"].shift(1)
     data["delta_ipc"] = data["ipc_anual"] - data["ipc_rezago_1"]
@@ -150,12 +148,12 @@ def cargar_anual(ruta: Path | None = None) -> pd.DataFrame:
 # Estimación anual: réplica del cálculo central y modelos de contraste.
 # -----------------------------------------------------------------------------
 def analizar_anual(data: pd.DataFrame) -> dict:
-    """Estima la relación anual en la muestra larga y conserva 2011–2025 como contraste.
+    """Estima la relación anual 1997–2025 e incorpora PIB como covariable.
 
-    La NAIRU de 8,25% se usa como referencia fija del ejercicio. No se interpreta
-    como una NAIRU histórica válida para 1986–2025.
+    La referencia de 8,25% se mantiene fija por decisión del ejercicio y no se
+    interpreta como una NAIRU histórica constante para todo el período.
     """
-    muestra = data.loc[data["anio"].between(1986, 2025)].copy()
+    muestra = data.loc[data["anio"].between(1997, 2025)].copy()
     reciente = muestra.loc[muestra["anio"].between(2011, 2025)].copy()
 
     modelos = {
@@ -168,19 +166,18 @@ def analizar_anual(data: pd.DataFrame) -> dict:
         "A3_expectativas_full": ajustar_ols_hac(
             muestra, "ipc_anual", ["ipc_rezago_1", "brecha_desempleo"], hac_lags=1
         ),
-        "A4_expectativas_ir": ajustar_ols_hac(
+        "A4_expectativas_pib": ajustar_ols_hac(
             muestra,
             "ipc_anual",
-            ["ipc_rezago_1", "brecha_desempleo", "ir_real_anual"],
+            ["ipc_rezago_1", "brecha_desempleo", "pib_anual"],
             hac_lags=1,
         ),
-        "A5_expectativas_actividad": ajustar_ols_hac(
+        "A5_aceleracion_pib": ajustar_ols_hac(
             muestra,
-            "ipc_anual",
-            ["ipc_rezago_1", "brecha_desempleo", "actividad_anual"],
+            "delta_ipc",
+            ["brecha_desempleo", "pib_anual"],
             hac_lags=1,
         ),
-        # Modelo central de muestra larga: intercepto restringido a cero.
         "A6_aceleracion_nairu_full": ajustar_ols_hac(
             muestra,
             "delta_ipc",
@@ -188,7 +185,6 @@ def analizar_anual(data: pd.DataFrame) -> dict:
             intercepto=False,
             hac_lags=1,
         ),
-        # Contraste exactamente comparable con el análisis anterior.
         "A7_aceleracion_nairu_2011_2025": ajustar_ols_hac(
             reciente,
             "delta_ipc",
@@ -199,29 +195,26 @@ def analizar_anual(data: pd.DataFrame) -> dict:
     }
 
     notas = {
-        "A1_estatica_full": "Muestra disponible 1986–2025.",
-        "A2_aceleracion_full": "1987–2025; 1986 se usa para construir el primer rezago.",
-        "A3_expectativas_full": "1987–2025.",
-        "A4_expectativas_ir": "IR disponible desde 2006; la muestra efectiva comienza en 2006.",
-        "A5_expectativas_actividad": "Actividad disponible desde 2010; muestra efectiva 2010–2025.",
-        "A6_aceleracion_nairu_full": "Central: 1987–2025, NAIRU=8,25% e intercepto cero.",
-        "A7_aceleracion_nairu_2011_2025": "Contraste con la ventana anterior 2011–2025.",
+        "A1_estatica_full": "Muestra disponible 1997–2025.",
+        "A2_aceleracion_full": "1998–2025; 1997 se usa para construir el primer rezago.",
+        "A3_expectativas_full": "1998–2025.",
+        "A4_expectativas_pib": "1998–2025; agrega PIB anual de la tabla entregada.",
+        "A5_aceleracion_pib": "1998–2025; aceleración de IPC explicada por brecha y PIB.",
+        "A6_aceleracion_nairu_full": "Central: 1998–2025, NAIRU=8,25% e intercepto cero.",
+        "A7_aceleracion_nairu_2011_2025": "Contraste con la ventana 2011–2025.",
     }
     dependientes = {
         "A1_estatica_full": "IPC anual",
         "A2_aceleracion_full": "Δ IPC anual",
         "A3_expectativas_full": "IPC anual",
-        "A4_expectativas_ir": "IPC anual",
-        "A5_expectativas_actividad": "IPC anual",
+        "A4_expectativas_pib": "IPC anual",
+        "A5_aceleracion_pib": "Δ IPC anual",
         "A6_aceleracion_nairu_full": "Δ IPC anual",
         "A7_aceleracion_nairu_2011_2025": "Δ IPC anual",
     }
 
     comparacion = pd.DataFrame(
-        [
-            fila_modelo(nombre, res, dependientes[nombre], notas[nombre])
-            for nombre, res in modelos.items()
-        ]
+        [fila_modelo(nombre, res, dependientes[nombre], notas[nombre]) for nombre, res in modelos.items()]
     )
     coeficientes = pd.DataFrame(
         [fila for nombre, res in modelos.items() for fila in coeficientes_modelo(nombre, res)]
@@ -349,82 +342,43 @@ def analizar_mensual(data: pd.DataFrame) -> dict:
 # Figuras: evidencia observada y ecuación de aceleración con NAIRU fija.
 # -----------------------------------------------------------------------------
 def figura_phillips_anual(data: pd.DataFrame) -> go.Figure:
-    """Nube anual de inflación y desempleo; distingue disponibilidad de covariables."""
+    """Nube anual inflación-desempleo coloreada por PIB."""
     fig = go.Figure()
-    sin_ir = data.loc[data["ir_real_anual"].isna()].copy()
-    solo_ir = data.loc[data["ir_real_anual"].notna() & data["actividad_anual"].isna()].copy()
-    con_actividad = data.loc[data["actividad_anual"].notna()].copy()
-
-    if not sin_ir.empty:
-        fig.add_trace(
-            go.Scatter(
-                x=sin_ir["desocupacion"],
-                y=sin_ir["ipc_anual"],
-                mode="markers+text",
-                text=sin_ir["anio"].astype(str),
-                textposition="top center",
-                marker=dict(size=10, color="#a8b0ba", symbol="circle-open", line=dict(width=1.5)),
-                customdata=np.column_stack([sin_ir["anio"]]),
-                hovertemplate=(
-                    "<b>%{customdata[0]}</b><br>Desocupación: %{x:.2f}%<br>IPC: %{y:.2f}%"
-                    "<br>IR real: sin dato<br>Actividad: sin dato<extra></extra>"
-                ),
-                name="Sin IR ni actividad anual",
-            )
+    bound = max(float(data["pib_anual"].abs().max()), 0.1)
+    fig.add_trace(
+        go.Scatter(
+            x=data["desocupacion"],
+            y=data["ipc_anual"],
+            mode="markers+text",
+            text=data["anio"].astype(str),
+            textposition="top center",
+            marker=dict(
+                size=11,
+                color=data["pib_anual"],
+                colorscale="RdBu",
+                cmin=-bound,
+                cmax=bound,
+                cmid=0,
+                colorbar=dict(title="PIB anual<br>(tabla entregada)"),
+                line=dict(width=0.7),
+            ),
+            customdata=np.column_stack([data["anio"], data["pib_anual"]]),
+            hovertemplate=(
+                "<b>%{customdata[0]}</b><br>Desocupación: %{x:.2f}%<br>IPC: %{y:.2f}%"
+                "<br>PIB anual: %{customdata[1]:+.2f}<extra></extra>"
+            ),
+            name="Años",
         )
-
-    if not solo_ir.empty:
-        fig.add_trace(
-            go.Scatter(
-                x=solo_ir["desocupacion"],
-                y=solo_ir["ipc_anual"],
-                mode="markers+text",
-                text=solo_ir["anio"].astype(str),
-                textposition="top center",
-                marker=dict(size=10, color="#6f7c8a", symbol="diamond-open", line=dict(width=1.5)),
-                customdata=np.column_stack([solo_ir["anio"], solo_ir["ir_real_anual"]]),
-                hovertemplate=(
-                    "<b>%{customdata[0]}</b><br>Desocupación: %{x:.2f}%<br>IPC: %{y:.2f}%"
-                    "<br>IR real: %{customdata[1]:+.2f}%<br>Actividad: sin dato<extra></extra>"
-                ),
-                name="IR disponible; actividad sin dato",
-            )
-        )
-
-    if not con_actividad.empty:
-        fig.add_trace(
-            go.Scatter(
-                x=con_actividad["desocupacion"],
-                y=con_actividad["ipc_anual"],
-                mode="markers+text",
-                text=con_actividad["anio"].astype(str),
-                textposition="top center",
-                marker=dict(
-                    size=11,
-                    color=con_actividad["actividad_anual"],
-                    colorscale="RdBu",
-                    colorbar=dict(title="Actividad anual (%)"),
-                ),
-                customdata=np.column_stack(
-                    [con_actividad["anio"], con_actividad["ir_real_anual"], con_actividad["actividad_anual"]]
-                ),
-                hovertemplate=(
-                    "<b>%{customdata[0]}</b><br>Desocupación: %{x:.2f}%<br>IPC: %{y:.2f}%"
-                    "<br>IR real: %{customdata[1]:+.2f}%<br>Actividad: %{customdata[2]:+.2f}%<extra></extra>"
-                ),
-                name="IR y actividad disponibles",
-            )
-        )
-
+    )
     fig.add_vline(x=NAIRU, line_dash="dashdot", annotation_text=f"Referencia NAIRU {NAIRU:.2f}%")
     fig.add_hline(y=META_INFLACION, line_dash="dash", annotation_text="Meta IPC 3%")
     fig.update_layout(
         template="plotly_white",
-        title="Datos anuales: inflación y desempleo, 1986–2025",
+        title="Datos anuales: inflación, desempleo y PIB, 1997–2025",
         xaxis_title="Tasa de desocupación (%)",
         yaxis_title="IPC anual (%)",
         height=620,
-        margin=dict(l=70, r=80, t=80, b=60),
+        margin=dict(l=70, r=90, t=80, b=60),
     )
     return fig
 
@@ -533,18 +487,21 @@ def interpretacion_anual(resultado: dict) -> str:
     """Texto breve y no causal para el informe anual."""
     r = resultado["central"]
     rc = resultado["contraste_reciente"]
+    pib = resultado["modelos"]["A4_expectativas_pib"]
     b = float(r.params["brecha_desempleo"])
     p = float(r.pvalues["brecha_desempleo"])
     bc = float(rc.params["brecha_desempleo"])
     pc = float(rc.pvalues["brecha_desempleo"])
+    bpib = float(pib.params["pib_anual"])
+    ppib = float(pib.pvalues["pib_anual"])
     return (
-        f"Con la muestra larga, la ecuación restringida usa {int(r.nobs)} observaciones "
-        f"(1987–2025) y estima una pendiente de {b:+.3f} (p HAC={p:.3f}). "
-        f"Para mantener comparabilidad con el ejercicio anterior, en 2011–2025 la pendiente es "
-        f"{bc:+.3f} (p HAC={pc:.3f}). En ambas ventanas el signo es compatible con la intuición "
-        "de Phillips, pero la evidencia sigue siendo estadísticamente débil. La referencia de "
-        f"{NAIRU:.2f}% se mantiene fija por decisión del ejercicio y no debe interpretarse como "
-        "una NAIRU histórica constante desde 1986."
+        f"Con la nueva muestra anual, la ecuación restringida usa {int(r.nobs)} observaciones "
+        f"(1998–2025) y estima una pendiente de {b:+.3f} (p HAC={p:.3f}). "
+        f"En 2011–2025 la pendiente es {bc:+.3f} (p HAC={pc:.3f}). "
+        f"Al agregar PIB a la especificación con inflación rezagada, su coeficiente es "
+        f"{bpib:+.3f} (p HAC={ppib:.3f}). Los resultados son descriptivos y sensibles "
+        "a la especificación. La referencia de 8,25% se mantiene fija por decisión del ejercicio "
+        "y no debe interpretarse como una NAIRU histórica constante."
     )
 
 
@@ -584,18 +541,18 @@ def contenido_informe_anual(resultado: dict, include_plotly: bool) -> str:
     coef = resultado["coeficientes"]
     comp = resultado["comparacion"]
     central = resultado["central"]
-    reciente = resultado["contraste_reciente"]
+    pib = resultado["modelos"]["A4_expectativas_pib"]
     return f"""
       <section class="bloque">
         <h2>Informe con datos anuales</h2>
-        <p class="bajada">Cobertura IPC/desempleo: 1986–2025. La ecuación de aceleración usa 1987–2025; IR está disponible desde 2006 y actividad desde 2010. NAIRU referencial fija: {NAIRU:.2f}%.</p>
+        <p class="bajada">Cobertura: 1997–2025 para desempleo, IPC y PIB. La ecuación de aceleración usa 1998–2025. La nueva tabla anual no contiene IR. NAIRU referencial fija: {NAIRU:.2f}%.</p>
         <div class="ecuacion">{resultado['ecuacion']}<br><small>{resultado['ecuacion_reciente']}</small></div>
         <p>{interpretacion_anual(resultado)}</p>
         <div class="grid-kpi">
           <div class="kpi"><span>N modelo central</span><strong>{int(central.nobs)}</strong></div>
-          <div class="kpi"><span>Pendiente 1987–2025</span><strong>{central.params['brecha_desempleo']:+.3f}</strong></div>
+          <div class="kpi"><span>Pendiente 1998–2025</span><strong>{central.params['brecha_desempleo']:+.3f}</strong></div>
           <div class="kpi"><span>p HAC muestra larga</span><strong>{central.pvalues['brecha_desempleo']:.3f}</strong></div>
-          <div class="kpi"><span>Pendiente 2011–2025</span><strong>{reciente.params['brecha_desempleo']:+.3f}</strong></div>
+          <div class="kpi"><span>Coef. PIB A4</span><strong>{pib.params['pib_anual']:+.3f}</strong></div>
         </div>
         {fig1}
         {fig2}
@@ -603,7 +560,7 @@ def contenido_informe_anual(resultado: dict, include_plotly: bool) -> str:
         {tabla_html(comp, ['modelo','dependiente','n','r2_ajustado','aic','bic','nota'])}
         <h3>Coeficientes y errores HAC</h3>
         {tabla_html(coef, ['modelo','termino','coeficiente','error_hac','p_valor'])}
-        <p class="nota">AIC/BIC solo deben compararse directamente cuando coinciden tanto la variable dependiente como la muestra efectiva. Los modelos con IR y actividad tienen ventanas más cortas por disponibilidad de datos. En los modelos sin constante, el R² de statsmodels es no centrado.</p>
+        <p class="nota">AIC/BIC deben compararse solo entre especificaciones con la misma variable dependiente y muestra efectiva. En la nueva tabla, PIB está disponible en todos los años 1997–2025 y el IR ya no forma parte del análisis anual. En los modelos sin constante, el R² de statsmodels es no centrado.</p>
       </section>
     """
 
@@ -754,7 +711,7 @@ def exportar_resultados(anual: dict, mensual: dict, out_dir: Path) -> None:
 def main() -> int:
     """Ejecuta ambos análisis y genera todos los informes."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--anual", type=Path, default=None, help="Ruta opcional a datos_anualizados.xlsx/csv")
+    parser.add_argument("--anual", type=Path, default=None, help="Ruta opcional a la tabla anual XLSX/CSV con Año, desocupación, IPC y PIB")
     parser.add_argument("--resultados", type=Path, default=RESULTS_DIR, help="Directorio de resultados tabulares")
     parser.add_argument("--informes", type=Path, default=REPORTS_DIR, help="Directorio de informes HTML")
     args = parser.parse_args()
