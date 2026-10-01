@@ -63,9 +63,11 @@ La estimación no es oficial del INE. Se vuelve a estimar al cambiar los datos, 
 Fuente del software y documentación: [U.S. Census Bureau](https://www.census.gov/data/software/x13as.X-13ARIMA-SEATS.html). [Manual de referencia](https://www2.census.gov/software/x-13arima-seats/x13as/unix-linux/documentation/docx13as.pdf).
 
 
-## Datos anualizados de largo plazo
+## Datos anualizados
 
-El informe anual usa `datos/datos_anualizados.csv` como fuente reproducible canónica. La cobertura de IPC y desempleo es 1986–2025. La serie anual de IR comienza en 2006 y la de actividad económica en 2010. Por ello, los modelos que incluyen esas covariables utilizan muestras más cortas y sus AIC/BIC no se comparan directamente con modelos estimados sobre 1986–2025. La ecuación restringida de aceleración usa 1987–2025 porque necesita el IPC del año anterior. Se conserva además 2011–2025 como contraste con la versión previa del ejercicio.
+El informe anual usa `datos/datos_anualizados.csv` como fuente reproducible canónica. La nueva tabla contiene **Año, Tasa desocupación, IPC y PIB volumen a precios del año anterior encadenado** para 1997–2025. El IR ya no forma parte de esta tabla ni del análisis anual. La ecuación restringida de aceleración usa 1998–2025 porque necesita el IPC del año anterior. Se conserva 2011–2025 como contraste con la versión previa del ejercicio.
+
+El PIB se incorpora sin transformación adicional bajo el nombre interno `pib_anual`. Se estiman, entre otras, una especificación en niveles `IPC ~ IPC rezagado + brecha de desempleo + PIB` y una de aceleración `ΔIPC ~ brecha de desempleo + PIB`. AIC/BIC se comparan solo entre modelos con la misma variable dependiente y muestra efectiva.
 
 
 ## Orden de presentación del gráfico animado
