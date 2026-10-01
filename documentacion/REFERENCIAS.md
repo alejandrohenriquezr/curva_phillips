@@ -27,3 +27,10 @@ Se incorporan las series originales y desestacionalizadas empalmadas del BCCh, b
 ## IPC histórico empalmado
 
 Archivo INE: serie histórica empalmada diciembre de 2009 a la fecha, hoja `Serie_empalmada`, base 2023. Columnas: Año, Mes, Índice, Variación Mensual (%) y Variación 12 Meses (%). El extractor añade `Glosa = IPC General`. Se preservan las tasas anuales oficiales y los faltantes originales. El corte actual permite 186 meses comunes, enero de 2011 a junio de 2026. URL completa en `src/curva_phillips/extractors/ipc_extractor.py`; versión del CSV identificada por SHA-256 en resultados.
+
+
+## Tabla anual de desempleo, IPC y PIB
+
+El componente anual usa la tabla proporcionada para este proyecto y reproducida en `datos/datos_anualizados.csv`. Su cobertura es 1997–2025 y contiene exactamente cuatro columnas: `Año`, `Tasa desocupación`, `IPC` y `PIB volumen a precios del año anterior encadenado`. El IR no forma parte de esta versión de la tabla anual.
+
+Los valores del PIB se utilizan tal como fueron entregados: el proyecto no los sustituye, corrige ni empalma con otra serie externa. Para cualquier revisión de procedencia o definición estadística del PIB anual debe consultarse la fuente original de la tabla proporcionada.
