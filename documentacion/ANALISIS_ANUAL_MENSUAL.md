@@ -2,7 +2,7 @@
 
 Esta extensión del proyecto `curva_phillips` genera dos análisis econométricos y tres HTML:
 
-- `informes/informe_phillips_anual.html`: datos anuales 1986–2025; la ecuación de aceleración comienza en 1987. IR está disponible desde 2006 y actividad desde 2010.
+- `informes/informe_phillips_anual.html`: datos anuales 1997–2025 con desempleo, IPC y PIB; la ecuación de aceleración comienza en 1998. El análisis anual ya no contiene IR.
 - `informes/informe_phillips_mensual.html`: 186 meses comunes, enero de 2011 a junio de 2026.
 - `informes/informe_phillips_dual.html`: las dos versiones anteriores reunidas en dos pestañas: **Datos anuales** y **Datos mensuales**.
 
@@ -18,10 +18,10 @@ La especificación central impone que la inflación no acelera cuando el desempl
 Δπ_t = β (u_t - 8,25) + ε_t
 ```
 
-Con la tabla anualizada actualizada, la muestra larga reproduce aproximadamente:
+Con la nueva tabla anualizada, la muestra larga reproduce aproximadamente:
 
 ```text
-1987–2025: Δπ_t = -0,240 (u_t - 8,25)
+1998–2025: Δπ_t = -0,363 (u_t - 8,25)
 ```
 
 Como contraste de comparabilidad, la ventana utilizada anteriormente se conserva:
@@ -30,7 +30,7 @@ Como contraste de comparabilidad, la ventana utilizada anteriormente se conserva
 2011–2025: Δπ_t = -0,126 (u_t - 8,25)
 ```
 
-El script también estima una curva estática, una versión de aceleración con constante, una versión con inflación rezagada, una especificación con IR y otra con actividad económica. Debido a la disponibilidad desigual de IR y actividad, cada modelo informa su tamaño muestral efectivo. Los errores estándar son HAC/Newey-West con un rezago.
+El script también estima una curva estática, una versión de aceleración con constante, una versión con inflación rezagada, una especificación en niveles que agrega PIB y otra de aceleración que agrega PIB. Como el PIB está disponible en toda la tabla 1997–2025, las comparaciones entre modelos con igual dependiente pueden hacerse sobre la misma ventana efectiva. Los errores estándar son HAC/Newey-West con un rezago.
 
 ### Informe mensual
 
@@ -95,7 +95,7 @@ py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-Las pruebas verifican la muestra anual 1986–2025, la pendiente central 1987–2025, el contraste 2011–2025, la cobertura mensual de 186 meses, el modelo mensual seleccionado por BIC y la presencia de las dos pestañas en el HTML combinado.
+Las pruebas verifican la muestra anual 1997–2025, la ausencia de IR, la presencia de PIB, la pendiente central 1998–2025, el contraste 2011–2025, la cobertura mensual de 186 meses, el modelo mensual seleccionado por BIC y la presencia de las dos pestañas en el HTML combinado.
 
 ## Archivos de resultados
 
@@ -115,8 +115,12 @@ Los modelos son descriptivos. La NAIRU de 8,25% se mantiene fija por decisión d
 
 ## Advertencia sobre la NAIRU en la muestra larga
 
-La referencia de 8,25% se mantiene fija por decisión del ejercicio. No debe interpretarse como una estimación histórica de la NAIRU válida para todo 1986–2025. La ampliación de la muestra sirve para evaluar estabilidad y sensibilidad de la relación de Phillips, no para atribuir a 8,25% el carácter de tasa natural constante durante cuatro décadas.
+La referencia de 8,25% se mantiene fija por decisión del ejercicio. No debe interpretarse como una estimación histórica de la NAIRU válida para todo 1997–2025. La muestra sirve para evaluar estabilidad y sensibilidad de la relación de Phillips, no para atribuir a 8,25% el carácter de tasa natural constante durante todo el período.
 
 ## Animación mensual
 
 La visualización interactiva ordena las observaciones por tasa de desocupación de menor a mayor. El orden es exclusivamente de presentación: los modelos y transformaciones mensuales siguen usando la serie cronológica. El panel inferior conserva la cronología completa y mueve únicamente el marcador de la observación activa.
+
+## PIB en el análisis anual
+
+La nueva covariable se conserva con el nombre interno `pib_anual` y proviene directamente de la columna `PIB volumen a precios del año anterior encadenado` de la tabla entregada. No se reestima, reescala ni reemplaza por otra serie externa. Los resultados deben interpretarse con la definición y los valores contenidos en esa tabla.
