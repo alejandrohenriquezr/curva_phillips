@@ -40,11 +40,11 @@ Si las expectativas se aproximan mediante la inflación pasada, puede escribirse
 \Delta\pi_t = -\beta(u_t-u^*)+\varepsilon_t.
 \]
 
-En este proyecto se utiliza **8,25% como referencia fija** para \(u^*\), correspondiente al punto medio de un rango histórico del Banco Central para 2024-T3. No se interpreta como una NAIRU constante para 1986–2025 ni como una estimación oficial para 2026.
+En este proyecto se utiliza **8,25% como referencia fija** para \(u^*\), correspondiente al punto medio de un rango histórico del Banco Central para 2024-T3. No se interpreta como una NAIRU constante para 1997–2025 ni como una estimación oficial para 2026.
 
 El informe se organiza en dos grandes capítulos:
 
-1. **Datos anuales:** 1986–2025, con ecuación de aceleración desde 1987.
+1. **Datos anuales:** 1997–2025, con desempleo, IPC y PIB; la ecuación de aceleración comienza en 1998.
 2. **Datos mensuales:** enero de 2011 a junio de 2026, con 186 observaciones comunes.
 
 Las estimaciones son descriptivas. Los errores HAC/Newey-West corrigen parte de la dependencia temporal, pero no convierten las asociaciones en efectos causales.
@@ -86,7 +86,7 @@ print('Proyecto:', PROJECT)
 ''')
 md(r'''# Capítulo I. Evidencia con datos anuales
 
-La tabla anual cubre **1986–2025** para IPC y desempleo. El IR anual está disponible desde 2006 y la actividad económica desde 2010, por lo que las especificaciones con covariables adicionales usan muestras efectivas distintas.
+La nueva tabla anual cubre **1997–2025** y contiene tres variables sustantivas: tasa de desocupación, IPC y PIB en volumen a precios del año anterior encadenado. El IR ya no forma parte de esta tabla ni del análisis anual.
 
 La ecuación central mantiene fija la referencia de 8,25%:
 
@@ -94,7 +94,7 @@ La ecuación central mantiene fija la referencia de 8,25%:
 \Delta\pi_t=\beta(u_t-8,25)+\varepsilon_t.
 \]
 
-Se estima sobre 1987–2025 porque requiere la inflación del año anterior. También se conserva 2011–2025 como contraste con la versión previa del estudio.
+Se estima sobre 1998–2025 porque requiere la inflación del año anterior. También se conserva 2011–2025 como contraste con la versión previa del estudio. Además se estima una especificación con inflación rezagada, brecha de desempleo y PIB.
 ''')
 code('''anual_df = cargar_anual()
 anual = analizar_anual(anual_df)
@@ -103,13 +103,13 @@ print('Ecuación central:', anual['ecuacion'])
 print('Contraste:', anual['ecuacion_reciente'])
 display(anual['comparacion'][['modelo','dependiente','n','r2_ajustado','aic','bic','nota']].round(4))
 display(anual['coeficientes'][['modelo','termino','coeficiente','error_hac','p_valor']].round(4))
-display(anual_df[['anio','desocupacion','ipc_anual','ir_real_anual','actividad_anual']].tail(15).round(3))
+display(anual_df[['anio','desocupacion','ipc_anual','pib_anual']].tail(15).round(3))
 ''')
 md(r'''### Lectura económica de la serie anual
 
-La comparación entre 1987–2025 y 2011–2025 permite evaluar estabilidad. Un signo negativo no basta para validar una relación estructural: importan la incertidumbre, el cambio de magnitud entre ventanas y la persistencia de la inflación.
+La comparación entre 1998–2025 y 2011–2025 permite evaluar estabilidad. Un signo negativo no basta para validar una relación estructural: importan la incertidumbre, el cambio de magnitud entre ventanas y la persistencia de la inflación.
 
-La referencia de 8,25% se mantiene fija por decisión del ejercicio; no debe leerse como una NAIRU histórica constante durante cuatro décadas.
+El PIB entra como covariable anual en especificaciones comparables con la misma muestra efectiva. La referencia de 8,25% se mantiene fija por decisión del ejercicio; no debe leerse como una NAIRU histórica constante durante todo 1997–2025.
 ''')
 md(r'''# Capítulo II. Evidencia con datos mensuales
 
