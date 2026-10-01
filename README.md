@@ -1,6 +1,6 @@
 # Curva de Phillips de Chile
 
-Proyecto reproducible para estudiar la relación entre inflación, desempleo, remuneraciones reales y actividad económica en Chile. Genera el análisis histórico mensual, el análisis anual 1986–2025 con NAIRU referencial de 8,25%, informes HTML/Word, resultados tabulares, un cuaderno Jupyter ejecutado y un sitio estático listo para GitHub Pages.
+Proyecto reproducible para estudiar la Curva de Phillips en Chile con dos frecuencias. El análisis anual usa desempleo, IPC y PIB para 1997–2025; el análisis mensual usa ENE, IPC, IR real e IMACEC para enero de 2011–junio de 2026. Ambos mantienen una NAIRU referencial de 8,25% y generan informes HTML/Word, resultados tabulares, un cuaderno Jupyter ejecutado y un sitio estático listo para GitHub Pages.
 
 ## Estructura
 
@@ -82,3 +82,7 @@ El workflow `Validar y generar productos` instala las dependencias, ejecuta las 
 ## Orden de la animación
 
 El gráfico animado recorre las observaciones mensuales por **tasa de desocupación ascendente**, no por fecha. El panel inferior conserva IPC e IMACEC en orden cronológico y marca la fecha correspondiente a la observación activa. `resultados/datos_phillips.csv` se exporta en el mismo orden que la animación.
+
+## Tabla anual vigente
+
+`datos/datos_anualizados.csv` reproduce la nueva tabla entregada para el proyecto: **1997–2025**, con `Año`, `Tasa desocupación`, `IPC` y `PIB volumen a precios del año anterior encadenado`. El análisis anual ya no utiliza IR. El IR permanece únicamente en el componente mensual porque proviene de una fuente mensual independiente.
