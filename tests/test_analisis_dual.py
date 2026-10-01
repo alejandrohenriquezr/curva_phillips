@@ -21,14 +21,16 @@ class AnalisisDualTests(unittest.TestCase):
     """Valida resultados numéricos clave y la estructura de los informes."""
 
     def test_anual_reproduce_pendiente_nairu(self):
-        # La muestra larga usa 1986–2025 y conserva 2011–2025 como contraste.
+        # La nueva tabla anual cubre 1997–2025, incorpora PIB y ya no contiene IR.
         data = cargar_anual(DATA_DIR / "datos_anualizados.csv")
         resultado = analizar_anual(data)
-        self.assertEqual((int(data["anio"].min()), int(data["anio"].max())), (1986, 2025))
-        self.assertEqual(int(resultado["central"].nobs), 39)
+        self.assertEqual((int(data["anio"].min()), int(data["anio"].max())), (1997, 2025))
+        self.assertIn("pib_anual", data.columns)
+        self.assertNotIn("ir_real_anual", data.columns)
+        self.assertEqual(int(resultado["central"].nobs), 28)
         self.assertAlmostEqual(
             float(resultado["central"].params["brecha_desempleo"]),
-            -0.2399284544,
+            -0.3628394815,
             places=6,
         )
         self.assertEqual(int(resultado["contraste_reciente"].nobs), 15)
@@ -37,6 +39,7 @@ class AnalisisDualTests(unittest.TestCase):
             -0.1263520675,
             places=6,
         )
+        self.assertIn("A4_expectativas_pib", resultado["modelos"])
 
     def test_mensual_cobertura_y_modelo_bic(self):
         # La intersección histórica validada del proyecto debe conservar 186 meses.
