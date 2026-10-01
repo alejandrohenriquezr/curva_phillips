@@ -36,28 +36,30 @@ def figura_anual(data, animada=False):
     bound = max(data.pib_anual.abs().max(), 0.1)
     def puntos(d):
         return go.Scatter(x=d.desocupacion, y=d.ipc_anual, mode="markers+text",
-            text=[f"{year}{'*' if year == 2026 else ''}" for year in d.anio], textposition="top center",
+            text=[f"{year}{'*' if year == 2026 else ''}" if (animada and i == len(d)-1) or year == 2026 else ''
+                  for i, year in enumerate(d.anio)], textposition="top center",
             marker={"size": 13, "color": d.pib_anual, "colorscale": "RdBu", "cmin": -bound, "cmax": bound,
                     "symbol": ["diamond" if year == 2026 else "circle" for year in d.anio],
-                    "colorbar": {"title": "PIB (%)"}},
+                    "colorbar": {"title": "PIB (%)"}, "line": {"width": 1, "color": "#697580"}},
             customdata=d[["anio", "pib_anual", "corte"]].to_numpy(),
             hovertemplate="Año %{customdata[0]}<br>Desempleo %{x:.3f}%<br>IPC %{y:.2f}%<br>PIB %{customdata[1]:.2f}%<br>%{customdata[2]}<extra></extra>")
     fig = go.Figure(puntos(data.iloc[:1] if animada else data))
-    fig.update_layout(template="plotly_white", height=600, showlegend=False,
+    fig.update_layout(template="plotly_white", height=680 if animada else 600, showlegend=False,
         title="Inflación y desempleo anual · *2026: corte julio–julio",
         xaxis={"title": "Tasa de desocupación (%)", "range": [data.desocupacion.min()-.6, data.desocupacion.max()+.6]},
         yaxis={"title": "IPC (%)", "range": [data.ipc_anual.min()-1, data.ipc_anual.max()+2]},
-        margin={"t": 80, "b": 140 if animada else 60})
+        margin={"t": 80, "b": 200 if animada else 60})
     fig.add_vline(x=NAIRU, line_dash="dot", annotation_text="Referencia 8,25%")
     if animada:
         fig.frames = [go.Frame(name=str(i), data=[puntos(data.iloc[:i+1])]) for i in range(len(data))]
         opts = {"mode": "immediate", "frame": {"duration": 0, "redraw": True}, "transition": {"duration": 0}}
-        fig.update_layout(updatemenus=[{"type": "buttons", "y": -.17, "x": 0,
+        fig.update_layout(updatemenus=[{"type": "buttons", "y": -.38, "x": 0,
+            "xanchor": "left", "yanchor": "top", "direction": "right",
             "buttons": [
                 {"label": "Reproducir", "method": "animate", "args": [None, {"fromcurrent": True, "frame": {"duration": 500, "redraw": True}, "transition": {"duration": 0}}]},
                 {"label": "Pausa", "method": "animate", "args": [[None], opts]},
                 {"label": "Reiniciar", "method": "animate", "args": [["0"], opts]}]}],
-            sliders=[{"currentvalue": {"prefix": "Desocupación (%) · año: "}, "pad": {"t": 45},
+            sliders=[{"currentvalue": {"prefix": "Desocupación (%) · año: "}, "y": -.16, "pad": {"t": 0},
                 "steps": [{"label": f"{row.desocupacion:.2f} · {row.anio}", "method": "animate", "args": [[str(i)], opts]}
                           for i, row in data.iterrows()]}])
     return fig
@@ -82,10 +84,10 @@ def generar_informe(r=None):
     r = r or analizar_anual(cargar_anual())
     exportar_resultados(r)
     animada = figura_anual(r["data"], True)
-    animada.write_html(RESULTS_DIR / "phillips_anual_animado.html", include_plotlyjs=True)
+    animada.write_html(RESULTS_DIR / "phillips_anual_animado.html", include_plotlyjs=True, auto_play=False)
     cuerpo = texto_html(r) + f"<script>{get_plotlyjs()}</script>"
     for fig in [figura_anual(r["data"]), animada, figura_aceleracion(r)]:
-        cuerpo += fig.to_html(full_html=False, include_plotlyjs=False)
+        cuerpo += fig.to_html(full_html=False, include_plotlyjs=False, auto_play=False)
     for key, title in [("descriptivos", "Promedios por períodos"), ("comparacion", "Modelos y muestras efectivas"),
                        ("coeficientes", "Coeficientes e intervalos HAC"), ("estabilidad", "Ventanas de sensibilidad"),
                        ("robustez", "Referencia de desempleo y rezagos HAC"), ("influencia", "Exclusión de un año por vez")]:
@@ -114,7 +116,7 @@ display(datos)'''),
         code("display(HTML(texto_html(resultado)))"),
         md("## Modelos comparables\nTodos los modelos históricos usan 1998–2025; la extensión a 2026 es una sensibilidad. No comparar AIC/BIC entre distintas dependientes o muestras."),
         code("display(resultado['comparacion'])\ndisplay(resultado['coeficientes'])"),
-        code("display(HTML(figura_anual(datos, animada=True).to_html(full_html=False, include_plotlyjs=True)))"),
+        code("display(HTML(figura_anual(datos, animada=True).to_html(full_html=False, include_plotlyjs=True, auto_play=False)))"),
         code("display(HTML(figura_aceleracion(resultado).to_html(full_html=False, include_plotlyjs=True)))"),
         md("## Estabilidad y límites\nLas exclusiones preservan los rezagos calculados en la cronología original. Estos contrastes exploratorios no identifican causalidad ni prueban cambios estructurales."),
         code("display(resultado['estabilidad'])\ndisplay(resultado['robustez'])\ndisplay(resultado['influencia'])\nexportar_resultados(resultado)"),
