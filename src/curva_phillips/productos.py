@@ -136,6 +136,8 @@ def verificar_cuaderno():
 def generar_articulo(r=None):
     from docx import Document
     from docx.shared import Cm, Pt, RGBColor
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
     r = r or analizar_anual(cargar_anual())
     contenido = secciones(r)
     doc = Document()
@@ -149,7 +151,26 @@ def generar_articulo(r=None):
     doc.styles["Normal"].font.size = Pt(11)
     doc.styles["Normal"].paragraph_format.space_after = Pt(8)
     doc.styles["Normal"].paragraph_format.line_spacing = 1.12
+    # La plantilla de Word puede heredar un borde bajo Title.
+    for style in doc.styles:
+        for border in list(style.element.iter(qn('w:pBdr'))):
+            border.getparent().remove(border)
     for kind, text in contenido:
+        if kind == 'h' and text == 'Referencias':
+            doc.add_paragraph('Resultados centrales del análisis anual', style='Heading 1')
+            table = doc.add_table(rows=1, cols=4)
+            table.style = 'Light Shading Accent 1'
+            headers = ['Muestra', 'n', 'Pendiente', 'p HAC']
+            for cell, value in zip(table.rows[0].cells, headers):
+                cell.text = value
+            for scenario, label in [('historica', '1998–2025'), ('sensibilidad_2026', '1998–2026*')]:
+                fit = r['modelos'][scenario+'_nairu_restringida']
+                values = [label, str(int(fit.nobs)), f'{fit.params.iloc[0]:.3f}', f'{fit.pvalues.iloc[0]:.3f}']
+                for cell, value in zip(table.add_row().cells, values):
+                    cell.text = value.replace('.', ',')
+            for row in table.rows:
+                row._tr.get_or_add_trPr().append(OxmlElement('w:cantSplit'))
+            doc.add_paragraph('*2026: corte julio–julio. Pendiente de la ecuación sin constante; HAC(1) con corrección de muestra y referencia t.')
         doc.add_paragraph(text, style={"title": "Title", "subtitle": "Subtitle", "h": "Heading 1", "p": "Normal"}[kind])
     doc.save(REPORTS_DIR / "Articulo_LinkedIn_Phillips_anual.docx")
     (REPORTS_DIR / "Articulo_LinkedIn_Phillips_anual.md").write_text("\n\n".join(
