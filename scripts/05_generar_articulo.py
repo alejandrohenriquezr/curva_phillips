@@ -32,22 +32,23 @@ anual=analizar_anual(cargar_anual())
 mensual_modelos=analizar_mensual(preparar_mensual())
 a_central=anual['central']
 a_reciente=anual['contraste_reciente']
+a_pib=anual['modelos']['A4_expectativas_pib']
 m_central=mensual_modelos['central']
 m_mejor=mensual_modelos['modelos'][mensual_modelos['mejor_nivel']]
 
 sections=[
 ('title','Curva de Phillips en Chile: evidencia anual y mensual'),
-('subtitle','Datos anuales 1986–2025 y mensuales enero 2011–junio 2026 | Análisis para LinkedIn'),
+('subtitle','Datos anuales 1997–2025 y mensuales enero 2011–junio 2026 | Análisis para LinkedIn'),
 ('h','La curva de Phillips: concepto y marco teórico'),
 ('p','La curva de Phillips relaciona la holgura del mercado laboral con la dinámica de salarios o precios. En su versión simple, una menor tasa de desempleo se asocia con mayor presión inflacionaria. Una representación básica es πₜ = α − βuₜ + εₜ, con β > 0. Esta ecuación describe una asociación; por sí sola no identifica causalidad.'),
 ('p','La formulación moderna incorpora expectativas y otros determinantes: πₜ = α + ρπₜ₋₁ − β(uₜ − u*) + γzₜ + εₜ. Aquí u* representa una referencia de desempleo compatible con inflación estable y zₜ resume factores como actividad, shocks de oferta, precios externos o tipo de cambio. Si las expectativas se aproximan por la inflación pasada, puede expresarse también como Δπₜ = −β(uₜ − u*) + εₜ.'),
-('p','En este ejercicio se mantiene u* = 8,25% como referencia fija, correspondiente al punto medio de un rango histórico para 2024-T3 citado por el Banco Central. No debe interpretarse como una NAIRU constante para 1986–2025 ni como una estimación oficial de 2026.'),
+('p','En este ejercicio se mantiene u* = 8,25% como referencia fija, correspondiente al punto medio de un rango histórico para 2024-T3 citado por el Banco Central. No debe interpretarse como una NAIRU constante para 1997–2025 ni como una estimación oficial de 2026.'),
 ('break',''),
-('h','Capítulo I. Evidencia con datos anuales: 1986–2025'),
-('p',f"La tabla anual amplía la perspectiva histórica. IPC y desempleo están disponibles entre 1986 y 2025; el IR anual comienza en 2006 y la actividad económica en 2010. Por ello, los modelos con covariables adicionales utilizan muestras efectivas más cortas."),
-('p',f"La especificación central restringida estima Δπₜ = {f(float(a_central.params['brecha_desempleo']),3)} × (uₜ − 8,25), con {int(a_central.nobs)} observaciones entre 1987 y 2025 y p-valor HAC de {f(float(a_central.pvalues['brecha_desempleo']),3)}. El signo es el previsto por Phillips, pero la incertidumbre estadística sigue siendo elevada."),
+('h','Capítulo I. Evidencia con datos anuales: 1997–2025'),
+('p',"La nueva tabla anual contiene tasa de desocupación, IPC y PIB en volumen a precios del año anterior encadenado para 1997–2025. El IR ya no forma parte del análisis anual. Esto permite incorporar PIB en toda la ventana anual, sin reducir la muestra por falta de esa covariable."),
+('p',f"La especificación central restringida estima Δπₜ = {f(float(a_central.params['brecha_desempleo']),3)} × (uₜ − 8,25), con {int(a_central.nobs)} observaciones entre 1998 y 2025 y p-valor HAC de {f(float(a_central.pvalues['brecha_desempleo']),3)}. El signo es el previsto por Phillips, pero la incertidumbre estadística sigue siendo elevada."),
 ('p',f"Como contraste, para 2011–2025 la pendiente es {f(float(a_reciente.params['brecha_desempleo']),3)}, con p-valor HAC de {f(float(a_reciente.pvalues['brecha_desempleo']),3)}. La diferencia entre ambas ventanas muestra que la magnitud estimada depende del horizonte elegido; por eso no conviene tratar la pendiente como un parámetro estructural estable."),
-('p',f"En la especificación anual con inflación rezagada, la persistencia inflacionaria gana importancia frente a la brecha de desempleo. El resultado es coherente con una lectura moderna de la curva de Phillips: la holgura laboral es una pieza del mecanismo, no una explicación suficiente por sí sola."),
+('p',f"Al agregar PIB a la especificación anual con inflación rezagada y brecha de desempleo, el coeficiente del PIB es {f(float(a_pib.params['pib_anual']),3)} con p-valor HAC de {f(float(a_pib.pvalues['pib_anual']),3)}. El resultado debe leerse como asociación condicional y no como efecto causal. La persistencia inflacionaria y la holgura laboral siguen siendo parte del diagnóstico conjunto."),
 ('break',''),
 ('h','Capítulo II. Evidencia con datos mensuales: enero 2011–junio 2026'),
 ('p',f"En los {n} meses comunes, la correlación contemporánea entre inflación y desocupación es {f(summary['correlacion'],3)}, una asociación positiva débil. En 2024–2026 era prácticamente nula. La comparación por períodos muestra que este promedio no describe una relación estable ni permite inferir causalidad."),
@@ -74,7 +75,7 @@ sections=[
 ('h','Qué muestra el último punto'),
 ('p',f"En {last['mes']}, el promedio móvil del IMACEC varía {f(last['imacec_promedio_anual'])}% interanual, mientras su nivel desestacionalizado es {f(last['imacec_sa'],1)} y su cambio mensual {f(last['imacec_sa_mensual'])}%. La actividad trimestral móvil ligeramente inferior a la de un año antes coexiste con inflación de {f(last['ipc_anual'],1)}%, desocupación de {f(last['desocupacion'])}% y crecimiento del IR real de {f(last['ir_real_anual'])}%. Frecuencias distintas pueden dar señales diferentes; esta combinación no identifica automáticamente un shock ni prescribe una tasa de interés."),
 ('h','Qué concluyen juntas ambas frecuencias'),
-('p',f"Los datos anuales y mensuales apuntan en la misma dirección metodológica: al imponer la estructura de aceleración con u* = 8,25%, la pendiente es negativa, pero imprecisa. En la frecuencia mensual, la inflación rezagada y la actividad explican una parte sustantiva de la dinámica; en la anual, la pendiente cambia al ampliar la ventana histórica."),
+('p',f"Los datos anuales y mensuales apuntan en la misma dirección metodológica: al imponer la estructura de aceleración con u* = 8,25%, la pendiente es negativa, pero imprecisa. En la frecuencia anual, el PIB puede incorporarse explícitamente junto con la inflación rezagada y la brecha de desempleo; en la mensual, la persistencia de la inflación y el IMACEC aportan información adicional."),
 ('p','La evidencia no elimina el contenido económico de la curva de Phillips, pero sí desaconseja una lectura mecánica de un intercambio fijo entre inflación y desempleo. Para Chile, una especificación útil debe considerar persistencia inflacionaria, actividad, shocks de oferta y cambios de régimen, además de la holgura laboral.'),
 ('p','La pregunta para discusión es entonces: ¿cuánto de la inflación chilena puede atribuirse realmente a la holgura laboral una vez que se incorporan expectativas, persistencia, actividad y shocks de oferta?'),
 ('break',''),
@@ -111,8 +112,8 @@ sections += [('source',
   'y F032.IMC.IND.Z.Z.EP18.Z.Z.1.M. Actualización BDE 1 de septiembre de 2026; descarga 23 de septiembre de 2026. '
   'https://www.bcentral.cl/areas/estadisticas/imacec'),
  ('source',
-  'Cálculos propios con los CSV locales del INE y del BCCh. IPC histórico empalmado incorporado en septiembre de 2026; fechas, cobertura y '
-  'hashes en resultados. Código y datos: https://github.com/alejandrohenriquezr/curva_phillips')]
+  'Datos anuales: tabla proporcionada para este análisis, 1997–2025, con desempleo, IPC y PIB; sin IR. Datos mensuales: CSV locales del INE y del BCCh. '
+  'Fechas, cobertura y hashes en resultados. Código y datos reproducibles: https://github.com/alejandrohenriquezr/curva_phillips')]
 
 
 # Página específica para las nuevas convenciones y su interpretación.
