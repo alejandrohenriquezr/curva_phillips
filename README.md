@@ -110,3 +110,9 @@ Para crear los PR con GITHUB_TOKEN, habilita Settings → Actions → General �
 
 Las pruebas admiten nuevos cortes y el informe deriva sus cifras y descripciones de la muestra disponible. El workflow propone los cambios para revisar las revisiones de las fuentes antes de integrarlos. La ejecución local descarga directamente las publicaciones oficiales sin esperar a ese PR. Los PR creados con GITHUB_TOKEN no activan automáticamente otros workflows de pull_request; ejecuta manualmente la validación sobre la rama de datos antes de integrarla. La validación CI usa `--sin-actualizar-datos` para probar exactamente los CSV de esa rama.
 
+
+## Python compatible en Windows
+
+`INSTALAR.bat` selecciona Python de 64 bits 3.13, 3.12 o 3.11. Evita Python 3.15 para estas dependencias. Reutiliza un entorno `venv` compatible; si no lo es, lo conserva como `venv_incompatible_...` y crea uno nuevo. Busca primero `PHILLIPS_PYTHON` y `.venv`, después el lanzador `py` y `python`.
+
+La instalación usa paquetes binarios y comprueba las dependencias con `pip check`; no requiere compilar pandas ni instalar Visual Studio. Para elegir un intérprete explícito, define `$env:PHILLIPS_PYTHON` con su ruta antes de ejecutar `INSTALAR.bat`.

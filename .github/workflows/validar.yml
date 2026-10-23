@@ -16,3 +16,25 @@ jobs:
       - run: python orquestar.py --sin-actualizar-datos --ipc original
       - run: python orquestar.py --sin-actualizar-datos --ipc sa
 
+  windows-install:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        id: python
+        with:
+          python-version: '3.13'
+      - name: Instalar con PowerShell de Windows
+        shell: powershell
+        env:
+          PHILLIPS_PYTHON: ${{ steps.python.outputs.python-path }}
+        run: .\instalar_entorno.ps1
+      - name: Comprobar reutilizacion del entorno
+        shell: powershell
+        run: .\instalar_entorno.ps1 -SoloPreparar
+      - name: Probar analisis y actualizacion
+        shell: powershell
+        env:
+          PYTHONUTF8: '1'
+        run: .\venv\Scripts\python.exe -m unittest test_phillips test_actualizar_datos test_ipc_x13 -v

@@ -13,3 +13,4 @@ venv/
 
 .cache_x13/
 herramientas/x13/
+venv_incompatible_*/
