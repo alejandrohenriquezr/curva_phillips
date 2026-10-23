@@ -53,7 +53,8 @@ def main():
                   ('Pruebas X-13',[sys.executable,'-m','unittest','test_ipc_x13','-v']),
                   ('Crear cuaderno',[sys.executable,'crear_cuaderno.py']),
                   ('Ejecutar cuaderno y exportar gráficos',[sys.executable,'verificar_cuaderno.py']),
-                  ('Generar Word y Markdown',[args.python_documento,'crear_articulo.py'])])
+                  ('Generar Word y Markdown',[args.python_documento,'crear_articulo.py']),
+                  ('Preparar sitio para GitHub Pages',[sys.executable,'crear_site.py'])])
     try:
         for label,command in steps:
             print(f'\n{label}',flush=True); start=time.monotonic()
@@ -62,7 +63,7 @@ def main():
             if result.returncode:raise RuntimeError(f'Falló {label}; revisar el mensaje anterior. No se marca esta edición como completa.')
             if label=='Actualizar y validar fuentes oficiales':
                 log['actualizacion_fuentes']=json.loads((ROOT/'fuentes'/'actualizacion.json').read_text(encoding='utf-8'))
-        outputs=[ROOT/f'{prefix}_Curva_de_Phillips.ipynb',ROOT/'resultados'/f'{prefix}_phillips_animado.html',ROOT/'informe'/f'{prefix}_Articulo_LinkedIn_Curva_Phillips.docx',ROOT/'informe'/f'{prefix}_articulo_linkedin.md']
+        outputs=[ROOT/f'{prefix}_Curva_de_Phillips.ipynb',ROOT/'resultados'/f'{prefix}_phillips_animado.html',ROOT/'informe'/f'{prefix}_Articulo_LinkedIn_Curva_Phillips.docx',ROOT/'informe'/f'{prefix}_articulo_linkedin.md', ROOT/'site_pages'/'index.html', ROOT/'site_pages'/'articulo.html', ROOT/'site_pages'/'articulo_linkedin.docx']
         for path in outputs:
             if not path.is_file() or not path.stat().st_size:raise RuntimeError(f'Falta resultado: {path}')
         log['estado']='correcto';log['archivos']=[str(x) for x in outputs]

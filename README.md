@@ -116,3 +116,12 @@ Las pruebas admiten nuevos cortes y el informe deriva sus cifras y descripciones
 `INSTALAR.bat` selecciona Python de 64 bits 3.13, 3.12 o 3.11. Evita Python 3.15 para estas dependencias. Reutiliza un entorno `venv` compatible; si no lo es, lo conserva como `venv_incompatible_...` y crea uno nuevo. Busca primero `PHILLIPS_PYTHON` y `.venv`, después el lanzador `py` y `python`.
 
 La instalación usa paquetes binarios y comprueba las dependencias con `pip check`; no requiere compilar pandas ni instalar Visual Studio. Para elegir un intérprete explícito, define `$env:PHILLIPS_PYTHON` con su ruta antes de ejecutar `INSTALAR.bat`.
+
+
+## Autoría y GitHub Pages
+
+Autor del análisis, cálculos y visualización: **Alejandro Henríquez R.** La firma se configura en `autor.json`; se incorpora al HTML, al artículo Markdown y al texto y propiedades del Word. Las fuentes oficiales se identifican por separado.
+
+`python orquestar.py` genera también `site_pages/index.html`: gráfico interactivo, artículo y descargas del Word y del cuaderno. `.github/workflows/pages.yml` descarga las fuentes oficiales y publica esta edición en GitHub Pages al actualizar main o la rama del PR, o mediante ejecución manual. La programación semanal se activa cuando el workflow está en la rama predeterminada.
+
+En Settings → Pages selecciona Source → GitHub Actions. Si el entorno github-pages tiene reglas de ramas, debe permitir main y codex/actualizacion-automatica-datos mientras se use el PR. URL prevista: https://alejandrohenriquezr.github.io/curva_phillips/ . La URL se confirma con el despliegue, no solo con la generación del HTML.

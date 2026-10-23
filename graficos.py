@@ -1,4 +1,6 @@
 """Presentación del gráfico: fechas, panel anual y bordes segmentados SVG."""
+import html
+from autoria import NOMBRE, credito_html
 import numpy as np
 import plotly.graph_objects as go
 
@@ -32,8 +34,13 @@ DASH_SCRIPT=r'''
 '''
 
 def figure_html(fig,full_html=True):
-    return fig.to_html(full_html=full_html,include_plotlyjs=True,auto_play=False,
+    rendered=fig.to_html(full_html=full_html,include_plotlyjs=True,auto_play=False,
                        post_script=DASH_SCRIPT,config={'responsive':True,'displaylogo':False})
+    credit='<header style="font:15px/1.5 system-ui;padding:16px 24px;color:#172b4d">'+credito_html()+'</header>'
+    if full_html:
+        rendered=rendered.replace('<head>', '<head><meta name="author" content="'+html.escape(NOMBRE,quote=True)+'">',1)
+        return rendered.replace('<body>', '<body>'+credit,1)
+    return credit+rendered
 
 def date_labels(data,xrange,yrange,width=1000,height=450):
     """Posiciones de etiquetas fijas para la muestra completa, con separación en píxeles."""

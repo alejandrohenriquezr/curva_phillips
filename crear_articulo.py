@@ -1,5 +1,6 @@
 from salidas import archivo, FECHA
 from pathlib import Path
+from autoria import NOMBRE, FIRMA, AUTOR
 import json
 from docx import Document
 from docx.shared import Cm, Pt, RGBColor
@@ -23,6 +24,8 @@ source_dates=json.loads((ROOT/'fuentes'/'imacec_metadata.json').read_text(encodi
 sections=[
 ('title',f"Inflación, empleo y actividad en Chile: {summary['desde']} a {summary['hasta']}"),
 ('subtitle',f"{n} meses comunes | Edición {FECHA} | IPC {ipc_mode}"),
+('p',FIRMA),
+('p',AUTOR['nota']),
 ('p',f"La correlación contemporánea entre inflación anual y desocupación es {f(summary['correlacion'],3)} en el período {summary['desde']} a {summary['hasta']}. Es una asociación descriptiva: no identifica causalidad ni permite recomendar una tasa de política monetaria."),
 ('p','El eje horizontal representa la desocupación ENE y el vertical la inflación anual. El área de las burbujas es proporcional al valor absoluto de la variación anual del IR real. El color muestra la variación interanual del promedio móvil de tres niveles originales del IMACEC: naranja para tasas negativas, claro para cero y azul para positivas. Las escalas son fijas dentro de cada edición.'),
 ('image',''),
@@ -121,7 +124,8 @@ for tree in (doc.element, doc.styles.element):
         border.getparent().remove(border)
 doc.core_properties.title=sections[0][1]
 doc.core_properties.subject='Análisis descriptivo de inflación, desocupación y remuneraciones reales en Chile'
-doc.core_properties.author=''
+doc.core_properties.author=NOMBRE
+doc.core_properties.last_modified_by=NOMBRE
 doc.save(out/archivo('Articulo_LinkedIn_Curva_Phillips.docx'))
 (out/archivo('articulo_linkedin.md')).write_text('\n\n'.join(md)+'\n',encoding='utf8')
 print('Artículo creado')
