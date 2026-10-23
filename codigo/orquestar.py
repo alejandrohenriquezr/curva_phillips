@@ -27,7 +27,7 @@ def main():
     args=p.parse_args()
     try: args.fecha=normalizar_fecha(args.fecha)
     except ValueError: p.error('--fecha debe ser AAAAMMDD_HH_MM, por ejemplo 20260924_07_32')
-    modules=['pandas','numpy','plotly','matplotlib','nbformat','nbclient','ipykernel','notebook','requests','openpyxl','markdown']
+    modules=['pandas','numpy','plotly','matplotlib','nbformat','nbclient','ipykernel','notebook','requests','openpyxl','markdown','holidays']
     if args.python_documento==sys.executable: modules.append('docx')
     missing=[m for m in modules if importlib.util.find_spec(m) is None]
     print('Python del proceso:',sys.executable,flush=True)

@@ -159,7 +159,7 @@ def build_figure(data):
     if data.ipc_ajuste.iloc[0]=='sa':
         label='IPC SA experimental'
         fig.layout.yaxis.title.text=label+' · variación anual (%)'
-        fig.layout.annotations[2].text += '<br>IPC SA: estimación propia X-13/SEATS, revisable; advertencia de posible efecto calendario.'
+        fig.layout.annotations[2].text += '<br>IPC SA: estimación propia X-13/SEATS, revisable; calendario chileno evaluado por AICC; consultar diagnósticos.'
         fig.update_layout(height=1310,margin=dict(b=350))
         for traces in [fig.data,*[f.data for f in fig.frames]]:
             traces[8].name=label+' · 12 meses'

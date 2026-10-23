@@ -8,6 +8,8 @@ import hashlib, json, os, re, shutil, subprocess
 import numpy as np
 import pandas as pd
 from salidas import archivo
+from calendario_chile import calendario
+import holidays
 ROOT=Path(__file__).resolve().parents[1]
 
 
@@ -35,14 +37,28 @@ def read_ipc(root=ROOT):
 
 def specification(d):
     start=d.fecha.iloc[0]
+    cal,_=calendario(d.fecha)
+    regresores='\n'.join(f'{v:.12g}' for v in cal.feriados_centrados)
     values='\n'.join(f'{v:.12g}' for v in d.ipc_indice_original)
     return f'''series {{ title="IPC Chile experimental" start={start.year}.{start.month} period=12 data=(
 {values}
 ) }}
 transform {{ function=log }}
+regression {{
+ variables=(td1nolpyear)
+ user=(feriados_chile)
+ usertype=holiday
+ start={start.year}.{start.month}
+ data=(
+{regresores}
+ )
+ aictest=(td1nolpyear user)
+ print=(aictest)
+}}
 automdl {{ }}
 outlier {{ types=(ao ls tc) }}
 forecast {{ maxlead=36 }}
+estimate {{ save=(mdl) }}
 check {{ }}
 seats {{ save=(s10 s11 s12 s13) }}
 '''
@@ -59,23 +75,28 @@ def ajustar_ipc(root=ROOT):
     root=Path(root);d=read_ipc(root);exe=executable();spec=specification(d)
     source_hash=hashlib.sha256((root/'datos/ine_ipc_chile.csv').read_bytes()).hexdigest()
     exe_hash=hashlib.sha256(exe.read_bytes()).hexdigest()
-    key=hashlib.sha256((source_hash+exe_hash+spec).encode()).hexdigest()
+    key=hashlib.sha256((source_hash+exe_hash+spec+holidays.__version__+"calendario-v2-diagnosticos").encode()).hexdigest()
     cache=root/'.cache_x13'/key;cache.mkdir(parents=True,exist_ok=True)
     if not (cache/'completo.json').exists():
         (cache/'ipc.spc').write_text(spec,encoding='ascii')
-        process=subprocess.run([str(exe),'ipc'],cwd=cache,capture_output=True,text=True,encoding='utf8',errors='replace',timeout=120)
+        cal,eventos=calendario(d.fecha)
+        cal.to_csv(cache/'calendario_mensual.csv',index=False)
+        eventos.to_csv(cache/'feriados_chile.csv',index=False)
+        process=subprocess.run([str(exe),'ipc','-s'],cwd=cache,capture_output=True,text=True,encoding='utf8',errors='replace',timeout=120)
         (cache/'ipc.stdout.txt').write_text(process.stdout+'\n'+process.stderr,encoding='utf8')
         errors=(cache/'ipc.err').read_text(errors='replace') if (cache/'ipc.err').exists() else ''
         if process.returncode or re.search(r'\bERROR:',errors) or not (cache/'ipc.s11').is_file():
             raise RuntimeError(f'Falló X-13; revisar {cache}/ipc.err. '+errors[-2000:])
         report=(cache/'ipc.out').read_text(errors='replace')
         model=re.search(r'Final automatic model choice\s*:\s*([^\n]+)',report)
+        diagnosticos=dict(line.split(':',1) for line in (cache/'ipc.udg').read_text().splitlines() if ':' in line)
+        seleccion={nombre:diagnosticos.get(clave,'no disponible').strip() for nombre,clave in [('dias_semana','aictest.td'),('feriados_chile','aictest.u')]}
         meta={'metodo':'X-13ARIMA-SEATS / SEATS','version':'1.1 build 62 (instalador del proyecto; verificar cabecera de ipc.out si se usa otro ejecutable)',
               'fuente_sha256':source_hash,'ejecutable_sha256':exe_hash,'spec_sha256':hashlib.sha256(spec.encode()).hexdigest(),
               'modelo_regarima':model.group(1).strip() if model else 'Consultar ipc.out',
               'desde':d.fecha.iloc[0].strftime('%Y-%m'),'hasta':d.fecha.iloc[-1].strftime('%Y-%m'),'n':len(d),
-              'transformacion':'log','atipicos':'AO LS TC automáticos','calendario':'Sin regresores de días hábiles ni feriados chilenos',
-              'advertencias':errors.strip(),'experimental':True,
+              'transformacion':'log','atipicos':'AO LS TC automáticos','calendario':'Composición lunes-viernes frente a fin de semana (td1nolpyear) y feriados nacionales chilenos en lunes-viernes, centrados por mes; selección AICC de X-13', 'holidays_version':holidays.__version__, 'seleccion_calendario':seleccion, 'pruebas_aicc':{k:v.strip() for k,v in diagnosticos.items() if k.startswith('aictest')}, 'calendario_alcance':'Feriados PUBLIC nacionales; excluye regionales y bancarios. Extensión de 36 meses según reglas de la versión fijada, sin anticipar nuevas leyes. Centrado mensual con medias de la muestra observada.', 'calendario_sha256':hashlib.sha256((cache/'calendario_mensual.csv').read_bytes()).hexdigest(),
+              'diagnostico_calendario': 'Consultar selección AICC, coeficientes, errores estándar y espectros en ipc.out; no se impone significancia ni eliminación del pico', 'advertencias':errors.strip(),'experimental':True,
               'nota':'Estimación retrospectiva de muestra completa; revisable al añadir datos. No es una serie oficial del INE.'}
         # Escribir el marcador solo si la serie final es válida.
         sa=read_component(cache/'ipc.s11').reindex(d.fecha)

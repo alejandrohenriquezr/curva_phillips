@@ -120,7 +120,7 @@ Para instalar el ejecutable oficial de Census y generar la variante ajustada:
 .\lanzadores/01_ejecutar_todo.bat --ipc sa --instalar-x13
 ```
 
-Después basta `--ipc sa`. El modo predeterminado es `--ipc original`. El ajuste X-13/SEATS es experimental, revisable y no oficial del INE. Conserva la especificación, las advertencias, las tablas y los hashes en los resultados de la edición. No ajusta ENE ni IR ni incorpora un calendario chileno específico. Las dos variantes utilizan nombres distintos y pueden coexistir.
+Después basta `--ipc sa`. El modo predeterminado es `--ipc original`. El ajuste X-13/SEATS es experimental, revisable y no oficial del INE. Conserva la especificación, las advertencias, las tablas y los hashes en los resultados de la edición. No ajusta ENE ni IR. Evalúa el calendario chileno mediante selección AICC. Las dos variantes utilizan nombres distintos y pueden coexistir.
 
 ## Publicar el sitio en GitHub Pages
 
@@ -154,3 +154,5 @@ Al publicar manualmente, la opción **Generar imágenes para revisar el Word** p
 - `informe/`, `resultados/` y `site_pages/`: salidas regenerables.
 
 Los comandos se ejecutan desde la raíz. El comando habitual es `python scripts/06_ejecutar_todo.py`; no es necesario ejecutar cada etapa por separado.
+
+El modo X-13 evalúa composición semanal y feriados nacionales de Chile mediante AICC; no impone su retención. Consulta la sección de calendario en [la metodología](documentos/METODOLOGIA.md). Las fechas, conteos, selección y diagnósticos quedan en la carpeta X-13 de cada edición.
