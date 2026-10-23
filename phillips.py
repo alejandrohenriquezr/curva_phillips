@@ -175,7 +175,7 @@ def economic_summary(data):
     def row(r):
         return {'mes':r.mes,**{c:float(r[c]) for c in columns}}
     periods=[]
-    for label,start,end in [('2011–2019','2011-01','2019-12'),('2020–2023','2020-01','2023-12'),('2024–2026','2024-01','2026-06')]:
+    for label,start,end in [('2011–2019','2011-01','2019-12'),('2020–2023','2020-01','2023-12'),(f'2024–{data.fecha.iloc[-1].year}','2024-01',data.mes.iloc[-1])]:
         part=data[data.mes.between(start,end)]
         if len(part)>1:
             periods.append({'periodo':label,'desde':part.mes.iloc[0],'hasta':part.mes.iloc[-1],'n':len(part),'correlacion':float(part.desocupacion.corr(part.ipc_anual))})
@@ -200,6 +200,9 @@ def export_results(data, coverage, missing, fig, out=ROOT/'resultados'):
     (out/archivo('referencias_macro.json')).write_text(json.dumps(REFERENCIAS,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     manifest={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in [*ROOT.glob('ine_*_chile.csv'),ROOT/'bcch_imacec_chile.csv']}
     (out/archivo('fuentes_sha256.json')).write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+    provenance=ROOT/'fuentes'/'actualizacion.json'
+    if provenance.exists():
+        (out/archivo('actualizacion_fuentes.json')).write_bytes(provenance.read_bytes())
 
 def static_chart(d, out=ROOT/'resultados'/archivo('phillips_estatico.png')):
     import matplotlib
@@ -242,6 +245,13 @@ def static_chart(d, out=ROOT/'resultados'/archivo('phillips_estatico.png')):
     fig.savefig(out,dpi=180,bbox_inches='tight');plt.close(fig)
 
 if __name__=='__main__':
+    import argparse
+    parser=argparse.ArgumentParser(description='Actualizar fuentes oficiales y analizar el último período común')
+    parser.add_argument('--sin-actualizar-datos',action='store_true')
+    args=parser.parse_args()
+    if not args.sin_actualizar_datos:
+        from actualizar_datos import actualizar
+        actualizar()
     data,coverage,missing=load_data(ipc_ajuste=os.environ.get('PHILLIPS_IPC','original'))
     fig=build_figure(data)
     export_results(data,coverage,missing,fig)
@@ -249,5 +259,6 @@ if __name__=='__main__':
     print(coverage.to_string(index=False))
     print(data[['mes','desocupacion','ipc_anual','ir_real_anual']].to_string(index=False))
     print('Correlación descriptiva:',data.desocupacion.corr(data.ipc_anual))
+
 
 

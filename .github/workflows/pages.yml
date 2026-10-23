@@ -1,0 +1,50 @@
+name: Publicar análisis en GitHub Pages
+on:
+  workflow_dispatch:
+
+env:
+  TZ: America/Santiago
+  PYTHONUTF8: '1'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Exigir publicación desde main
+        if: github.ref != 'refs/heads/main'
+        run: echo 'Publica únicamente desde main' && exit 1
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: |
+            requirements-notebook.txt
+            requirements-document.txt
+      - run: python -m pip install -r requirements-completo.txt
+      - name: Descargar fuentes oficiales y generar análisis firmado
+        run: python orquestar.py
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site_pages
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4

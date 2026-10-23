@@ -1,6 +1,6 @@
 # Curva de Phillips de Chile
 
-Salidas con fecha y hora **AAAAMMDD_HH_MM**, con 186 meses comunes de enero de 2011 a junio de 2026. Datos locales del INE y del Banco Central de Chile. El análisis es descriptivo: no estima causalidad, NAIRU propia ni una recomendación monetaria.
+Salidas con fecha y hora **AAAAMMDD_HH_MM**, con el período común calculado desde las últimas publicaciones oficiales del INE y del Banco Central de Chile. El análisis es descriptivo: no estima causalidad, NAIRU propia ni una recomendación monetaria.
 
 ## Ejecutar todo en VS Code
 
@@ -37,21 +37,21 @@ Las versiones anteriores permanecen en la carpeta. Para trabajar con esta edici�
 
 Phillips: eje X = desocupación ENE; eje Y = IPC anual; área proporcional a la magnitud del IR real anual; color divergente centrado en cero = crecimiento interanual del promedio móvil 3m del IMACEC original. Etiquetas MM-AAAA en enero, marzo de 2020 y agosto de 2023. El borde tiene un color distinto por año, excepto durante pandemia. Círculos con borde segmentado: ventana de pandemia Covid-19 en Chile definida para el gráfico, marzo de 2020–agosto de 2023.
 
-Panel inferior: IMACEC desestacionalizado e IPC en variación de 12 meses. En diciembre, rombos para el crecimiento del promedio anual del IMACEC original y cuadrados para inflación diciembre/diciembre. La posición vertical muestra el acumulado. Tamaño y color codifican la tasa a 12 meses normalizada con un máximo absoluto común a ambas series y fijo en toda la muestra. El tooltip explica ambas cifras; no se suman tasas. No hay punto de cierre para 2026, que es parcial.
+Panel inferior: IMACEC desestacionalizado e IPC en variación de 12 meses. En diciembre, rombos para el crecimiento del promedio anual del IMACEC original y cuadrados para inflación diciembre/diciembre. La posición vertical muestra el acumulado. Tamaño y color codifican la tasa a 12 meses normalizada con un máximo absoluto común a ambas series y fijo en toda la muestra. El tooltip explica ambas cifras; no se suman tasas. Solo se representan cierres de diciembre incluidos en la muestra; el último año puede ser parcial.
 
 La NAIRU de referencia, 8,25%, es el punto medio propio del rango BCCh 8,0–8,5% para 2024-T3, publicado en diciembre de 2024; no es una estimación oficial para cada año del gráfico. La horizontal es la meta de inflación del 3% a horizonte de dos años. Véanse [fórmulas y metodología](METODOLOGIA.md) y [fuentes](fuentes/REFERENCIAS.md).
 
-## Datos y actualización voluntaria
+## Datos oficiales actualizados en cada ejecución
 
-La ejecución normal usa los cuatro CSV locales y no necesita internet. El IPC histórico empalmado tiene niveles desde diciembre de 2009, pero sus tasas anuales publicadas y el IR anual disponibles comienzan en enero de 2011. El extractor incorpora `Glosa = IPC General`. ENE se asigna al mes central: junio corresponde a mayo–julio. Es una comparación retrospectiva.
+La ejecución normal descarga IPC, ENE, IR real e IMACEC desde las fuentes oficiales y requiere internet. El comando `python orquestar.py` (también `EJECUTAR_TODO.bat` y la tarea de VS Code) actualiza, valida y después genera el análisis, el cuaderno y el informe. `python phillips.py` actualiza y genera solo gráficos y tablas. El cuaderno generado también actualiza al ejecutar todas sus celdas; el orquestador reutiliza una sola descarga para todas sus etapas. El IPC histórico empalmado tiene niveles desde diciembre de 2009, pero sus tasas anuales publicadas y el IR anual disponibles comienzan en enero de 2011. El extractor incorpora `Glosa = IPC General`. ENE se asigna al mes central: junio corresponde a mayo–julio. Es una comparación retrospectiva.
 
-Para descargar fuentes nuevas antes de ejecutar:
+La actualización es predeterminada; el parámetro anterior se conserva por compatibilidad:
 
 ```powershell
 .\venv\Scripts\python.exe orquestar.py --actualizar-datos
 ```
 
-Guarda una copia de los CSV si quieres conservar el corte: esta opción los sustituye. Si cambia la cobertura, el informe exige revisar el análisis histórico antes de regenerarse. Cambiar solo `--fecha` cambia los nombres, no actualiza datos ni reescribe conclusiones. El Word debe revisarse visualmente antes de publicar.
+Para reproducir expresamente los archivos locales sin conexión: `python orquestar.py --sin-actualizar-datos` o `python phillips.py --sin-actualizar-datos`. En el cuaderno, selecciona `ACTUALIZAR_DATOS = False`. No se usa automáticamente el corte anterior si falla la red. Las cuatro fuentes se descargan en una carpeta temporal, se validan juntas y solo entonces sustituyen los archivos locales; se rechaza cualquier pérdida de cobertura. `fuentes/actualizacion.json` registra fecha UTC, cobertura y hashes; el registro de ejecución distingue descarga oficial de corte local. Guarda una copia de los CSV para reproducir una edición anterior. El informe y las ventanas estadísticas se calculan con el nuevo corte y no conservan conclusiones del corte de 2026. El Word debe revisarse visualmente antes de publicar.
 
 Los scripts principales son `orquestar.py`, `phillips.py` (cálculos y exportación), `graficos.py` (presentación y bordes SVG), `salidas.py` (prefijo), `crear_cuaderno.py`, `verificar_cuaderno.py` y `crear_articulo.py`. Los bordes segmentados se incorporan tanto al HTML independiente como al HTML del notebook mediante un script local de Plotly. No requieren extensiones adicionales.
 
@@ -99,3 +99,22 @@ El código de ajuste está en [ipc_x13.py](ipc_x13.py). Para generar solo la com
 La tabla `ipc_comparacion.csv` incluye índices original y ajustado, variaciones mensuales y anuales, tendencia, factor estacional e irregular. Se conservan las tasas oficiales y se añade la variación anual calculada desde niveles originales para distinguir el redondeo del efecto estacional. El directorio fechado `x13` guarda la especificación `.spc`, el informe `.out`, las advertencias `.err` y las tablas SEATS `s10`–`s13`; los metadatos incluyen hashes del CSV, ejecutable y especificación. Se reutiliza la caché solo cuando esos tres insumos coinciden.
 
 El ajuste es **experimental del proyecto, no oficial del INE**. Usa toda la historia mensual disponible, transformación logarítmica, selección ARIMA y detección de atípicos. No ajusta la ENE ni el IR. No incluye regresores de calendario chileno: la ejecución actual advierte un posible efecto calendario en residuos. Los datos ajustados pueden revisarse y usan información posterior a cada observación histórica. Consulte [METODOLOGIA.md](METODOLOGIA.md) y los diagnósticos antes de interpretar el resultado.
+
+## Python compatible en Windows
+
+`INSTALAR.bat` selecciona Python de 64 bits 3.13, 3.12 o 3.11. Evita Python 3.15 para estas dependencias. Reutiliza un entorno `venv` compatible; si no lo es, lo conserva como `venv_incompatible_...` y crea uno nuevo. Busca primero `PHILLIPS_PYTHON` y `.venv`, después el lanzador `py` y `python`.
+
+La instalación usa paquetes binarios y comprueba las dependencias con `pip check`; no requiere compilar pandas ni instalar Visual Studio. Para elegir un intérprete explícito, define `$env:PHILLIPS_PYTHON` con su ruta antes de ejecutar `INSTALAR.bat`.
+
+
+## Autoría y GitHub Pages
+
+Autor del análisis, cálculos y visualización: **Alejandro Henríquez R.** La firma se configura en `autor.json` y aparece en el HTML, Markdown y Word.
+
+El repositorio mantiene una sola rama de trabajo, `main`, y un único workflow: **Publicar análisis en GitHub Pages**. Se ejecuta únicamente cuando lo solicitas en Actions → Publicar análisis en GitHub Pages → Run workflow → main. No hay ejecuciones por cada push o PR, programaciones periódicas ni PR automáticos de datos. El workflow tiene un límite de 25 minutos para generar el análisis.
+
+Cada publicación descarga las cuatro fuentes oficiales, valida y genera una sola edición del análisis y publica `site_pages`. URL: https://alejandrohenriquezr.github.io/curva_phillips/ . La página permite leer el artículo y usar el gráfico. El documento Word para LinkedIn se genera en la carpeta local `informe` y no se publica ni se enlaza desde Pages.
+
+Para preparar el documento en tu equipo, ejecuta `EJECUTAR_TODO.bat`. El Word y el Markdown con tu firma quedan en `informe`, y los gráficos y tablas en `resultados`. Estas salidas y los cuadernos fechados no se versionan. El cuaderno base y los CSV de referencia se conservan para reproducibilidad.
+
+Las variantes anteriores y el historial se respaldaron antes de consolidar main. Los cambios de la actualización se integran en un solo commit mediante squash; no se reescribe el historial publicado.

@@ -13,3 +13,17 @@ venv/
 
 .cache_x13/
 herramientas/x13/
+venv_incompatible_*/
+site_pages/
+
+# Salidas generadas y variantes locales anteriores
+20*_Curva_de_Phillips.ipynb
+resultados/*
+!resultados/.gitkeep
+informe/*
+!informe/.gitkeep
+.ipython/
+cuadernos_jupyter/
+informes/
+site/
+src/

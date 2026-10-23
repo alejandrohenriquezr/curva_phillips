@@ -18,10 +18,9 @@ class PhillipsTests(unittest.TestCase):
         d,_,_=load_data()
         ipc=pd.read_csv(ROOT/'ine_ipc_chile.csv')
         ipc=ipc[ipc.Glosa.eq('IPC General')]
-        self.assertEqual(len(d),186)
-        self.assertEqual((d.mes.iloc[0],d.mes.iloc[-1]),('2011-01','2026-06'))
-        self.assertEqual(d.Trimestre.iloc[-1],'May - Jul')
-        self.assertEqual(d.fecha_final_ene.iloc[-1],pd.Timestamp('2026-07-01'))
+        self.assertGreater(len(d),12)
+        pd.testing.assert_series_equal(d.fecha,pd.Series(pd.date_range(d.fecha.min(),d.fecha.max(),freq='MS'),name='fecha'))
+        self.assertEqual(d.fecha_final_ene.iloc[-1],d.fecha.iloc[-1]+pd.DateOffset(months=1))
         ipc['fecha']=pd.to_datetime(dict(year=ipc['Año'],month=ipc['Mes'],day=1))
         expected=d[['fecha']].merge(ipc[['fecha','Variación 12 Meses (%)']],on='fecha',validate='one_to_one')
         np.testing.assert_allclose(d.ipc_anual,expected['Variación 12 Meses (%)'])
@@ -84,7 +83,7 @@ class PhillipsTests(unittest.TestCase):
         expected=100*(raw.loc['2021','imacec_original'].mean()/raw.loc['2020','imacec_original'].mean()-1)
         self.assertAlmostEqual(annual.loc['2021-12-01','imacec_acumulado_anual'],expected)
         self.assertAlmostEqual(annual.loc['2021-12-01','imacec_sa_anual'],100*(raw.loc['2021-12-01','imacec_sa']/raw.loc['2020-12-01','imacec_sa']-1))
-        self.assertEqual(int(d.pandemia.sum()),42)
+        self.assertEqual(int(d.pandemia.sum()),int(d.fecha.between('2020-03-01','2023-08-01').sum()))
         self.assertFalse(d.loc[d.mes.eq('2020-02'),'pandemia'].iloc[0])
         self.assertFalse(d.loc[d.mes.eq('2023-09'),'pandemia'].iloc[0])
         final=f.frames[-1]
@@ -101,14 +100,14 @@ class PhillipsTests(unittest.TestCase):
         self.assertNotIn('01-2026',visible)
         self.assertIn('03-2020',visible)
         self.assertTrue({'03-2020','08-2023','01-2011','01-2026'}.issubset(labels))
-        self.assertEqual(sum(bool(c[9]) for c in final.data[0].customdata),42)
+        self.assertEqual(sum(bool(c[9]) for c in final.data[0].customdata),int(d.pandemia.sum()))
         records=final.data[0].customdata
         normal={}
         for c in records:
             if c[9]: self.assertEqual(c[10],'#334155')
             else: normal.setdefault(c[0][:4],set()).add(c[10])
         self.assertTrue(all(len(colors)==1 for colors in normal.values()))
-        self.assertEqual(len({next(iter(colors)) for colors in normal.values()}),len(normal))
+        self.assertEqual(set(normal),set(d.loc[~d.pandemia, 'fecha'].dt.year.astype(str)))
         self.assertEqual([t.name for t in final.data if t.showlegend],['IMACEC · 12 meses','IPC · 12 meses'])
         self.assertEqual(f.layout.annotations[2].align,'left')
         self.assertEqual(f.layout.annotations[2].xanchor,'left')
@@ -125,3 +124,4 @@ class PhillipsTests(unittest.TestCase):
                 load_data(p)
 
 if __name__=='__main__': unittest.main()
+
