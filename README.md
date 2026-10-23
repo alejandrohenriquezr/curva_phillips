@@ -1,6 +1,6 @@
 # Curva de Phillips de Chile
 
-Salidas con fecha y hora **AAAAMMDD_HH_MM**, con 186 meses comunes de enero de 2011 a junio de 2026. Datos locales del INE y del Banco Central de Chile. El análisis es descriptivo: no estima causalidad, NAIRU propia ni una recomendación monetaria.
+Salidas con fecha y hora **AAAAMMDD_HH_MM**, con el período común calculado desde las últimas publicaciones oficiales del INE y del Banco Central de Chile. El análisis es descriptivo: no estima causalidad, NAIRU propia ni una recomendación monetaria.
 
 ## Ejecutar todo en VS Code
 
@@ -37,21 +37,21 @@ Las versiones anteriores permanecen en la carpeta. Para trabajar con esta edici�
 
 Phillips: eje X = desocupación ENE; eje Y = IPC anual; área proporcional a la magnitud del IR real anual; color divergente centrado en cero = crecimiento interanual del promedio móvil 3m del IMACEC original. Etiquetas MM-AAAA en enero, marzo de 2020 y agosto de 2023. El borde tiene un color distinto por año, excepto durante pandemia. Círculos con borde segmentado: ventana de pandemia Covid-19 en Chile definida para el gráfico, marzo de 2020–agosto de 2023.
 
-Panel inferior: IMACEC desestacionalizado e IPC en variación de 12 meses. En diciembre, rombos para el crecimiento del promedio anual del IMACEC original y cuadrados para inflación diciembre/diciembre. La posición vertical muestra el acumulado. Tamaño y color codifican la tasa a 12 meses normalizada con un máximo absoluto común a ambas series y fijo en toda la muestra. El tooltip explica ambas cifras; no se suman tasas. No hay punto de cierre para 2026, que es parcial.
+Panel inferior: IMACEC desestacionalizado e IPC en variación de 12 meses. En diciembre, rombos para el crecimiento del promedio anual del IMACEC original y cuadrados para inflación diciembre/diciembre. La posición vertical muestra el acumulado. Tamaño y color codifican la tasa a 12 meses normalizada con un máximo absoluto común a ambas series y fijo en toda la muestra. El tooltip explica ambas cifras; no se suman tasas. Solo se representan cierres de diciembre incluidos en la muestra; el último año puede ser parcial.
 
 La NAIRU de referencia, 8,25%, es el punto medio propio del rango BCCh 8,0–8,5% para 2024-T3, publicado en diciembre de 2024; no es una estimación oficial para cada año del gráfico. La horizontal es la meta de inflación del 3% a horizonte de dos años. Véanse [fórmulas y metodología](METODOLOGIA.md) y [fuentes](fuentes/REFERENCIAS.md).
 
-## Datos y actualización voluntaria
+## Datos oficiales actualizados en cada ejecución
 
-La ejecución normal usa los cuatro CSV locales y no necesita internet. El IPC histórico empalmado tiene niveles desde diciembre de 2009, pero sus tasas anuales publicadas y el IR anual disponibles comienzan en enero de 2011. El extractor incorpora `Glosa = IPC General`. ENE se asigna al mes central: junio corresponde a mayo–julio. Es una comparación retrospectiva.
+La ejecución normal descarga IPC, ENE, IR real e IMACEC desde las fuentes oficiales y requiere internet. El comando `python orquestar.py` (también `EJECUTAR_TODO.bat` y la tarea de VS Code) actualiza, valida y después genera el análisis, el cuaderno y el informe. `python phillips.py` actualiza y genera solo gráficos y tablas. El cuaderno generado también actualiza al ejecutar todas sus celdas; el orquestador reutiliza una sola descarga para todas sus etapas. El IPC histórico empalmado tiene niveles desde diciembre de 2009, pero sus tasas anuales publicadas y el IR anual disponibles comienzan en enero de 2011. El extractor incorpora `Glosa = IPC General`. ENE se asigna al mes central: junio corresponde a mayo–julio. Es una comparación retrospectiva.
 
-Para descargar fuentes nuevas antes de ejecutar:
+La actualización es predeterminada; el parámetro anterior se conserva por compatibilidad:
 
 ```powershell
 .\venv\Scripts\python.exe orquestar.py --actualizar-datos
 ```
 
-Guarda una copia de los CSV si quieres conservar el corte: esta opción los sustituye. Si cambia la cobertura, el informe exige revisar el análisis histórico antes de regenerarse. Cambiar solo `--fecha` cambia los nombres, no actualiza datos ni reescribe conclusiones. El Word debe revisarse visualmente antes de publicar.
+Para reproducir expresamente los archivos locales sin conexión: `python orquestar.py --sin-actualizar-datos` o `python phillips.py --sin-actualizar-datos`. En el cuaderno, selecciona `ACTUALIZAR_DATOS = False`. No se usa automáticamente el corte anterior si falla la red. Las cuatro fuentes se descargan en una carpeta temporal, se validan juntas y solo entonces sustituyen los archivos locales; se rechaza cualquier pérdida de cobertura. `fuentes/actualizacion.json` registra fecha UTC, cobertura y hashes; el registro de ejecución distingue descarga oficial de corte local. Guarda una copia de los CSV para reproducir una edición anterior. El informe y las ventanas estadísticas se calculan con el nuevo corte y no conservan conclusiones del corte de 2026. El Word debe revisarse visualmente antes de publicar.
 
 Los scripts principales son `orquestar.py`, `phillips.py` (cálculos y exportación), `graficos.py` (presentación y bordes SVG), `salidas.py` (prefijo), `crear_cuaderno.py`, `verificar_cuaderno.py` y `crear_articulo.py`. Los bordes segmentados se incorporan tanto al HTML independiente como al HTML del notebook mediante un script local de Plotly. No requieren extensiones adicionales.
 
@@ -108,4 +108,5 @@ Valida el cruce con `phillips.load_data()`, rechaza pérdidas de cobertura y gua
 
 Para crear los PR con GITHUB_TOKEN, habilita Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests. Si la política del repositorio impide crearlos, el paso falla y los archivos quedan disponibles en el artefacto. El workflow debe estar en la rama predeterminada para ejecutarse por horario.
 
-Las pruebas existentes fijan 186 meses hasta junio de 2026 y el informe exige revisión al cambiar la cobertura. Por eso la actualización se propone para revisión: no integra automáticamente ni reescribe las conclusiones. Los PR creados con GITHUB_TOKEN no activan automáticamente otros workflows de pull_request; ejecuta manualmente la validación tras revisar y adaptar el nuevo corte.
+Las pruebas admiten nuevos cortes y el informe deriva sus cifras y descripciones de la muestra disponible. El workflow propone los cambios para revisar las revisiones de las fuentes antes de integrarlos. La ejecución local descarga directamente las publicaciones oficiales sin esperar a ese PR. Los PR creados con GITHUB_TOKEN no activan automáticamente otros workflows de pull_request; ejecuta manualmente la validación sobre la rama de datos antes de integrarla. La validación CI usa `--sin-actualizar-datos` para probar exactamente los CSV de esa rama.
+

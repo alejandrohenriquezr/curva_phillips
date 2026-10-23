@@ -42,8 +42,7 @@ jobs:
           PY
       - name: Descargar IPC, ENE, IR e IMACEC
         run: |
-          python main.py
-          python actualizar_imacec.py
+          python actualizar_datos.py
       - name: Validar fuentes y cobertura del análisis
         run: |
           python - <<'PY'
@@ -77,6 +76,7 @@ jobs:
             ine_*_chile.csv
             bcch_imacec_chile.csv
             fuentes/imacec_metadata.json
+            fuentes/actualizacion.json
             actualizacion/
       - name: Proponer actualización de los datos
         uses: peter-evans/create-pull-request@v7
@@ -91,11 +91,13 @@ jobs:
             El diagnóstico y los datos combinados están en el artefacto fuentes-actualizadas de la ejecución.
 
             Antes de integrar, revisar las revisiones históricas y el nuevo período común.
-            Las pruebas actuales fijan el corte de junio de 2026 y el informe contiene conclusiones históricas:
-            deben revisarse cuando aumente la cobertura. Este workflow no regenera ni publica el informe.
+            El análisis y el informe se adaptan al período disponible.
+            Este workflow actualiza las fuentes; para generar gráficos e informe ejecuta python orquestar.py.
           add-paths: |
             ine_ipc_chile.csv
             ine_ene_chile.csv
             ine_ir_chile.csv
             bcch_imacec_chile.csv
             fuentes/imacec_metadata.json
+            fuentes/actualizacion.json
+

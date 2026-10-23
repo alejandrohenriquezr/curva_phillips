@@ -9,20 +9,29 @@ def md(text):
         text=text.replace(name,archivo(name))
     cells.append(dict(cell_type='markdown',metadata={},source=text.splitlines(True)))
 def code(text): cells.append(dict(cell_type='code',execution_count=None,metadata={},outputs=[],source=text.splitlines(True)))
-md('''# Curva de Phillips de Chile\n## Inflación, desocupación y remuneraciones reales\n\nLa muestra histórica común abarca enero de 2011 a junio de 2026 (186 meses). El IPC empalmado tiene niveles desde diciembre de 2009, pero sus tasas anuales publicadas y el IR anual comienzan en enero de 2011.\n\nEste cuaderno usa los cuatro CSV del INE y del Banco Central incluidos en la carpeta. **No necesitas descargar datos para ejecutarlo.**\n\n**Primera vez:** abre `ABRIR_JUPYTER.bat`, espera a que aparezca el navegador y selecciona **Run → Run All Cells** (Ejecutar todas las celdas). También puedes ejecutar cada celda con **Shift + Enter**. El asterisco `[*]` significa que Python está trabajando.\n\nEl gráfico al final incluye **Play**, pausa, reinicio y un selector mensual. Cada fotograma mantiene el rastro de los meses anteriores. El borde distingue el año fuera de pandemia; durante pandemia conserva el gris segmentado. El panel inferior incluye una leyenda para IMACEC e IPC. La versión HTML guardada en `resultados` funciona sin Jupyter y sin conexión.\n''')
+md('''# Curva de Phillips de Chile\n## Inflación, desocupación y remuneraciones reales\n\nLa muestra común se calcula con la última publicación disponible de cada fuente oficial. El IPC empalmado tiene niveles desde diciembre de 2009, pero sus tasas anuales publicadas y el IR anual comienzan en enero de 2011.\n\nAl ejecutar todas las celdas, se descargan y validan las cuatro fuentes oficiales antes de calcular el período común. Requiere internet. Para reproducir el corte local, cambia ACTUALIZAR_DATOS a False en la primera celda.\n\n**Primera vez:** abre `ABRIR_JUPYTER.bat`, espera a que aparezca el navegador y selecciona **Run → Run All Cells** (Ejecutar todas las celdas). También puedes ejecutar cada celda con **Shift + Enter**. El asterisco `[*]` significa que Python está trabajando.\n\nEl gráfico al final incluye **Play**, pausa, reinicio y un selector mensual. Cada fotograma mantiene el rastro de los meses anteriores. El borde distingue el año fuera de pandemia; durante pandemia conserva el gris segmentado. El panel inferior incluye una leyenda para IMACEC e IPC. La versión HTML guardada en `resultados` funciona sin Jupyter y sin conexión.\n''')
 code(f'''from pathlib import Path
 import sys
 import pandas as pd
 from IPython.display import display, HTML
 import importlib
 import os
-os.environ['PHILLIPS_FECHA'] = '{FECHA}'
+from datetime import datetime
+if os.environ.get('PHILLIPS_SIN_ACTUALIZAR') != '1':
+    os.environ['PHILLIPS_FECHA'] = datetime.now().strftime('%Y%m%d_%H_%M')
 # Cambia a 'original' o 'sa' y vuelve a ejecutar todas las celdas.
 IPC_AJUSTE = '{os.environ.get('PHILLIPS_IPC','original')}'
 os.environ['PHILLIPS_IPC'] = IPC_AJUSTE
 import salidas, graficos
 importlib.reload(salidas)
 importlib.reload(graficos)
+# El orquestador descarga una vez; al abrir el cuaderno manualmente se actualiza.
+ACTUALIZAR_DATOS = os.environ.get('PHILLIPS_SIN_ACTUALIZAR') != '1'
+if ACTUALIZAR_DATOS:
+    from actualizar_datos import actualizar
+    actualizar()
+else:
+    print('Corte local: no se descargaron fuentes en esta celda')
 import phillips
 importlib.reload(phillips)
 from phillips import load_data, build_figure, export_results, static_chart, economic_summary, figure_html
@@ -74,9 +83,10 @@ display(datos[['mes','distancia_meta_ipc_pp','distancia_referencia_nairu_pp']].t
 display(datos.groupby(datos.fecha.dt.year)[['desocupacion','ipc_anual','ir_real_anual','imacec_promedio_anual','imacec_sa']].mean().round(3))
 print('Advertencia: el último año puede ser parcial; no comparar promedios como años completos.')
 ''')
-md('''## Archivos de salida y actualización\n\n- `resultados/phillips_animado.html`: gráfico interactivo independiente.\n- `resultados/phillips_estatico.png`: imagen para el artículo.\n- `resultados/datos_phillips.csv`: datos de cada burbuja.\n- `resultados/cobertura.csv` y `meses_excluidos.csv`: auditoría de cobertura.\n\nPara volver a trabajar, abre el mismo `.bat`. Para actualizar las fuentes, revisa primero los extractores y ejecuta `python main.py` desde el entorno del proyecto. Esto sustituye los CSV locales con la descarga vigente. Guarda una copia antes si quieres conservar el corte original y luego ejecuta todas las celdas. El informe Word es una fotografía del corte analizado y debe revisarse si cambian los datos.\n\n## Fuentes y referencias\n\n- [INE — Ocupación y desocupación](https://www.ine.gob.cl/estadisticas-por-tema/mercado-laboral/ocupacion-y-desocupacion).\n- [INE — IPC](https://www.ine.gob.cl/estadisticas-por-tema/precios-e-inflacion/indice-de-precios-al-consumidor).\n- [INE — Remuneraciones y costos laborales](https://www.ine.gob.cl/estadisticas-por-tema/mercado-laboral/remuneraciones-y-costos-laborales).\n- [Banco Central de Chile — IPoM junio de 2016, evidencia de la curva de Phillips](https://www.bcentral.cl/documents/33528/133297/bcch_archivo_164644_es.pdf/5c004bf3-b159-1ff4-78aa-b286738295b6).\n\nLas URL exactas de los tabulados están en los extractores originales del proyecto.\n''')
+md('''## Archivos de salida y actualización\n\n- `resultados/phillips_animado.html`: gráfico interactivo independiente.\n- `resultados/phillips_estatico.png`: imagen para el artículo.\n- `resultados/datos_phillips.csv`: datos de cada burbuja.\n- `resultados/cobertura.csv` y `meses_excluidos.csv`: auditoría de cobertura.\n\nPara volver a trabajar, abre el mismo `.bat`. Ejecuta todas las celdas para descargar las cuatro fuentes, validarlas y recalcular el análisis. El comando `python orquestar.py` genera también el informe. Usa `--sin-actualizar-datos` solamente para reproducir un corte local. Una descarga fallida detiene la ejecución; no se sustituyen las cuatro fuentes por un conjunto parcial.\n\n## Fuentes y referencias\n\n- [INE — Ocupación y desocupación](https://www.ine.gob.cl/estadisticas-por-tema/mercado-laboral/ocupacion-y-desocupacion).\n- [INE — IPC](https://www.ine.gob.cl/estadisticas-por-tema/precios-e-inflacion/indice-de-precios-al-consumidor).\n- [INE — Remuneraciones y costos laborales](https://www.ine.gob.cl/estadisticas-por-tema/mercado-laboral/remuneraciones-y-costos-laborales).\n- [Banco Central de Chile — IPoM junio de 2016, evidencia de la curva de Phillips](https://www.bcentral.cl/documents/33528/133297/bcch_archivo_164644_es.pdf/5c004bf3-b159-1ff4-78aa-b286738295b6).\n\nLas URL exactas de los tabulados están en los extractores originales del proyecto.\n''')
 nb=dict(cells=cells,metadata=dict(kernelspec=dict(display_name='Python 3 (ipykernel)',language='python',name='python3'),language_info=dict(name='python',version='3.13')),nbformat=4,nbformat_minor=5)
 for i,c in enumerate(cells): c['id']=f'phillips-{i:02}'
 (root/archivo('Curva_de_Phillips.ipynb')).write_text(json.dumps(nb,ensure_ascii=False,indent=1),encoding='utf8')
 print('Cuaderno creado')
+
 
