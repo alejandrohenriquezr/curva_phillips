@@ -1,5 +1,5 @@
 {
-  "descargado_utc": "2026-10-23T00:37:01.246814+00:00",
+  "descargado_utc": "2026-10-23T02:40:51.218699+00:00",
   "periodo_comun": {
     "desde": "2011-01",
     "hasta": "2026-07",
@@ -54,6 +54,6 @@
     "ine_ene_chile.csv": "9bcc3cadb1e3db13635a09c990be983a261e4ac90a6f877c02f89469befaab52",
     "ine_ir_chile.csv": "56c0be8e9c520bce46c3755a980ecfd94221709e562f371decb3b6bc45c55855",
     "bcch_imacec_chile.csv": "d2420408e63d2034ef9ba1782ac842835dc38dc980def7f044df80d75f7e7bde",
-    "fuentes/imacec_metadata.json": "5be3807c05fc6107dd4c45103ba42f8bdb4dfd93a19833529000be4315e313d6"
+    "fuentes/imacec_metadata.json": "d9dea29b597c35f5ec6ed610e6fe7917a392f3f1bf47b32b88d8df6591b42190"
   }
 }
