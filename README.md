@@ -99,3 +99,13 @@ El código de ajuste está en [ipc_x13.py](ipc_x13.py). Para generar solo la com
 La tabla `ipc_comparacion.csv` incluye índices original y ajustado, variaciones mensuales y anuales, tendencia, factor estacional e irregular. Se conservan las tasas oficiales y se añade la variación anual calculada desde niveles originales para distinguir el redondeo del efecto estacional. El directorio fechado `x13` guarda la especificación `.spc`, el informe `.out`, las advertencias `.err` y las tablas SEATS `s10`–`s13`; los metadatos incluyen hashes del CSV, ejecutable y especificación. Se reutiliza la caché solo cuando esos tres insumos coinciden.
 
 El ajuste es **experimental del proyecto, no oficial del INE**. Usa toda la historia mensual disponible, transformación logarítmica, selección ARIMA y detección de atípicos. No ajusta la ENE ni el IR. No incluye regresores de calendario chileno: la ejecución actual advierte un posible efecto calendario en residuos. Los datos ajustados pueden revisarse y usan información posterior a cada observación histórica. Consulte [METODOLOGIA.md](METODOLOGIA.md) y los diagnósticos antes de interpretar el resultado.
+
+## Actualización automática de fuentes
+
+El workflow `.github/workflows/actualizar-datos.yml` descarga las cuatro fuentes cada lunes a las 12:23 UTC y permite ejecución manual desde Actions → Actualizar fuentes INE y BCCh → Run workflow. No requiere credenciales del INE ni del BCCh.
+
+Valida el cruce con `phillips.load_data()`, rechaza pérdidas de cobertura y guarda un artefacto con fuentes, cobertura y meses excluidos durante 30 días. Si cambian los CSV o los metadatos BCCh, crea o actualiza el PR de la rama `automation/actualizar-datos`; los CSV de main se actualizan al integrar ese PR. Una descarga o validación fallida impide publicar cambios parciales.
+
+Para crear los PR con GITHUB_TOKEN, habilita Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests. Si la política del repositorio impide crearlos, el paso falla y los archivos quedan disponibles en el artefacto. El workflow debe estar en la rama predeterminada para ejecutarse por horario.
+
+Las pruebas existentes fijan 186 meses hasta junio de 2026 y el informe exige revisión al cambiar la cobertura. Por eso la actualización se propone para revisión: no integra automáticamente ni reescribe las conclusiones. Los PR creados con GITHUB_TOKEN no activan automáticamente otros workflows de pull_request; ejecuta manualmente la validación tras revisar y adaptar el nuevo corte.
