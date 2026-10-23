@@ -18,7 +18,8 @@ def construir():
     summary=json.loads((ROOT/'resultados'/archivo('resumen_economico.json')).read_text(encoding='utf-8'))
     for name in ('phillips_animado.html','phillips_estatico.png','datos_phillips.csv','cobertura.csv','meses_excluidos.csv','fuentes_sha256.json'):
         shutil.copy2(ROOT/'resultados'/archivo(name),site/'resultados'/archivo(name))
-    shutil.copy2(ROOT/'informe'/archivo('Articulo_LinkedIn_Curva_Phillips.docx'),site/'articulo_linkedin.docx')
+    # El documento de LinkedIn se conserva localmente, fuera del sitio público.
+    (site/'articulo_linkedin.docx').unlink(missing_ok=True)
     shutil.copy2(ROOT/'informe'/archivo('articulo_linkedin.md'),site/'articulo_linkedin.md')
     shutil.copy2(ROOT/archivo('Curva_de_Phillips.ipynb'),site/'Curva_de_Phillips.ipynb')
     (site/'.nojekyll').write_text('',encoding='utf-8')
@@ -33,7 +34,7 @@ def construir():
     body=(f'<h1>Curva de Phillips de Chile</h1>{credito_html()}'
           f'<p class="meta">{summary["desde"]} a {summary["hasta"]} · {summary["n"]} meses comunes · Edición {FECHA}</p>'
           '<p>Inflación, desocupación, remuneraciones reales y actividad. Análisis descriptivo con las últimas fuentes oficiales disponibles; la muestra termina en el último mes común completo.</p>'
-          '<nav aria-label="Documentos"><a href="articulo.html">Leer el artículo</a><a href="articulo_linkedin.docx" download>Descargar Word para LinkedIn</a>'
+          '<nav aria-label="Documentos"><a href="articulo.html">Leer el artículo</a>'
           '<a href="articulo_linkedin.md" download>Texto Markdown</a><a href="Curva_de_Phillips.ipynb" download>Cuaderno ejecutado</a>'
           f'<a href="{plot}">Abrir gráfico completo</a></nav>'
           f'<iframe src="{plot}" title="Gráfico interactivo de Phillips por {html.escape(NOMBRE)}" loading="lazy"></iframe>'
@@ -64,7 +65,7 @@ def validar(site):
             dest=(site/unquote(url.path)).resolve()
             if not dest.is_relative_to(site.resolve()) or not dest.is_file():
                 raise ValueError(f'Enlace local inválido en {name}: {link}')
-    doc=Document(site/'articulo_linkedin.docx')
+    doc=Document(ROOT/'informe'/archivo('Articulo_LinkedIn_Curva_Phillips.docx'))
     if doc.core_properties.author != NOMBRE or not any(NOMBRE in p.text for p in doc.paragraphs):
         raise ValueError('El Word no conserva la firma visible y sus metadatos')
 

@@ -100,17 +100,6 @@ La tabla `ipc_comparacion.csv` incluye índices original y ajustado, variaciones
 
 El ajuste es **experimental del proyecto, no oficial del INE**. Usa toda la historia mensual disponible, transformación logarítmica, selección ARIMA y detección de atípicos. No ajusta la ENE ni el IR. No incluye regresores de calendario chileno: la ejecución actual advierte un posible efecto calendario en residuos. Los datos ajustados pueden revisarse y usan información posterior a cada observación histórica. Consulte [METODOLOGIA.md](METODOLOGIA.md) y los diagnósticos antes de interpretar el resultado.
 
-## Actualización automática de fuentes
-
-El workflow `.github/workflows/actualizar-datos.yml` descarga las cuatro fuentes cada lunes a las 12:23 UTC y permite ejecución manual desde Actions → Actualizar fuentes INE y BCCh → Run workflow. No requiere credenciales del INE ni del BCCh.
-
-Valida el cruce con `phillips.load_data()`, rechaza pérdidas de cobertura y guarda un artefacto con fuentes, cobertura y meses excluidos durante 30 días. Si cambian los CSV o los metadatos BCCh, crea o actualiza el PR de la rama `automation/actualizar-datos`; los CSV de main se actualizan al integrar ese PR. Una descarga o validación fallida impide publicar cambios parciales.
-
-Para crear los PR con GITHUB_TOKEN, habilita Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests. Si la política del repositorio impide crearlos, el paso falla y los archivos quedan disponibles en el artefacto. El workflow debe estar en la rama predeterminada para ejecutarse por horario.
-
-Las pruebas admiten nuevos cortes y el informe deriva sus cifras y descripciones de la muestra disponible. El workflow propone los cambios para revisar las revisiones de las fuentes antes de integrarlos. La ejecución local descarga directamente las publicaciones oficiales sin esperar a ese PR. Los PR creados con GITHUB_TOKEN no activan automáticamente otros workflows de pull_request; ejecuta manualmente la validación sobre la rama de datos antes de integrarla. La validación CI usa `--sin-actualizar-datos` para probar exactamente los CSV de esa rama.
-
-
 ## Python compatible en Windows
 
 `INSTALAR.bat` selecciona Python de 64 bits 3.13, 3.12 o 3.11. Evita Python 3.15 para estas dependencias. Reutiliza un entorno `venv` compatible; si no lo es, lo conserva como `venv_incompatible_...` y crea uno nuevo. Busca primero `PHILLIPS_PYTHON` y `.venv`, después el lanzador `py` y `python`.
@@ -120,8 +109,12 @@ La instalación usa paquetes binarios y comprueba las dependencias con `pip chec
 
 ## Autoría y GitHub Pages
 
-Autor del análisis, cálculos y visualización: **Alejandro Henríquez R.** La firma se configura en `autor.json`; se incorpora al HTML, al artículo Markdown y al texto y propiedades del Word. Las fuentes oficiales se identifican por separado.
+Autor del análisis, cálculos y visualización: **Alejandro Henríquez R.** La firma se configura en `autor.json` y aparece en el HTML, Markdown y Word.
 
-`python orquestar.py` genera también `site_pages/index.html`: gráfico interactivo, artículo y descargas del Word y del cuaderno. `.github/workflows/pages.yml` descarga las fuentes oficiales y publica esta edición en GitHub Pages al actualizar main o la rama del PR, o mediante ejecución manual. La programación semanal se activa cuando el workflow está en la rama predeterminada.
+El repositorio mantiene una sola rama de trabajo, `main`, y un único workflow: **Publicar análisis en GitHub Pages**. Se ejecuta únicamente cuando lo solicitas en Actions → Publicar análisis en GitHub Pages → Run workflow → main. No hay ejecuciones por cada push o PR, programaciones periódicas ni PR automáticos de datos. El workflow tiene un límite de 25 minutos para generar el análisis.
 
-En Settings → Pages selecciona Source → GitHub Actions. Si el entorno github-pages tiene reglas de ramas, debe permitir main y codex/actualizacion-automatica-datos mientras se use el PR. URL prevista: https://alejandrohenriquezr.github.io/curva_phillips/ . La URL se confirma con el despliegue, no solo con la generación del HTML.
+Cada publicación descarga las cuatro fuentes oficiales, valida y genera una sola edición del análisis y publica `site_pages`. URL: https://alejandrohenriquezr.github.io/curva_phillips/ . La página permite leer el artículo y usar el gráfico. El documento Word para LinkedIn se genera en la carpeta local `informe` y no se publica ni se enlaza desde Pages.
+
+Para preparar el documento en tu equipo, ejecuta `EJECUTAR_TODO.bat`. El Word y el Markdown con tu firma quedan en `informe`, y los gráficos y tablas en `resultados`. Estas salidas y los cuadernos fechados no se versionan. El cuaderno base y los CSV de referencia se conservan para reproducibilidad.
+
+Las variantes anteriores y el historial se respaldaron antes de consolidar main. Los cambios de la actualización se integran en un solo commit mediante squash; no se reescribe el historial publicado.

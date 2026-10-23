@@ -1,10 +1,6 @@
 name: Publicar análisis en GitHub Pages
 on:
-  push:
-    branches: [main, codex/actualizacion-automatica-datos]
   workflow_dispatch:
-  schedule:
-    - cron: '37 13 * * 1'
 
 env:
   TZ: America/Santiago
@@ -17,17 +13,24 @@ permissions:
 
 concurrency:
   group: github-pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Exigir publicación desde main
+        if: github.ref != 'refs/heads/main'
+        run: echo 'Publica únicamente desde main' && exit 1
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.13'
+          cache: pip
+          cache-dependency-path: |
+            requirements-notebook.txt
+            requirements-document.txt
       - run: python -m pip install -r requirements-completo.txt
       - name: Descargar fuentes oficiales y generar análisis firmado
         run: python orquestar.py

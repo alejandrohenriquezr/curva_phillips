@@ -63,7 +63,7 @@ def main():
             if result.returncode:raise RuntimeError(f'Falló {label}; revisar el mensaje anterior. No se marca esta edición como completa.')
             if label=='Actualizar y validar fuentes oficiales':
                 log['actualizacion_fuentes']=json.loads((ROOT/'fuentes'/'actualizacion.json').read_text(encoding='utf-8'))
-        outputs=[ROOT/f'{prefix}_Curva_de_Phillips.ipynb',ROOT/'resultados'/f'{prefix}_phillips_animado.html',ROOT/'informe'/f'{prefix}_Articulo_LinkedIn_Curva_Phillips.docx',ROOT/'informe'/f'{prefix}_articulo_linkedin.md', ROOT/'site_pages'/'index.html', ROOT/'site_pages'/'articulo.html', ROOT/'site_pages'/'articulo_linkedin.docx']
+        outputs=[ROOT/f'{prefix}_Curva_de_Phillips.ipynb',ROOT/'resultados'/f'{prefix}_phillips_animado.html',ROOT/'informe'/f'{prefix}_Articulo_LinkedIn_Curva_Phillips.docx',ROOT/'informe'/f'{prefix}_articulo_linkedin.md', ROOT/'site_pages'/'index.html', ROOT/'site_pages'/'articulo.html']
         for path in outputs:
             if not path.is_file() or not path.stat().st_size:raise RuntimeError(f'Falta resultado: {path}')
         log['estado']='correcto';log['archivos']=[str(x) for x in outputs]
