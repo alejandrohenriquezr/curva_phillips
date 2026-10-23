@@ -87,8 +87,8 @@ display(pd.DataFrame([dict(etapa=e['etapa'], desde=e['desde'], hasta=e['hasta'],
     for e in etapas]).round(3))
 from analisis_evolucion import secciones_evolucion
 for tipo, texto in secciones_evolucion(estadisticas):
-    if tipo == 'h': print('\n'+texto)
-    else: print(texto+'\n')
+    print()
+    print(texto)
 
 display(datos[['mes','distancia_meta_ipc_pp','distancia_referencia_nairu_pp']].tail(1).round(3))
 display(datos.groupby(datos.fecha.dt.year)[['desocupacion','ipc_anual','ir_real_anual','imacec_promedio_anual','imacec_sa']].mean().round(3))
@@ -99,5 +99,3 @@ nb=dict(cells=cells,metadata=dict(kernelspec=dict(display_name='Python 3 (ipyker
 for i,c in enumerate(cells): c['id']=f'phillips-{i:02}'
 (root/archivo('Curva_de_Phillips.ipynb')).write_text(json.dumps(nb,ensure_ascii=False,indent=1),encoding='utf8')
 print('Cuaderno creado')
-
-
