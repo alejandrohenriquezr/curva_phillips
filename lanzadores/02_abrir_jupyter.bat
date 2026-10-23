@@ -1,8 +1,8 @@
 @echo off
-cd /d "%~dp0"
-set "PHILLIPS_PYTHON=%~dp0venv\Scripts\python.exe"
+cd /d "%~dp0.."
+set "PHILLIPS_PYTHON=%~dp0..\venv\Scripts\python.exe"
 if not exist "%PHILLIPS_PYTHON%" (
-  echo Primero ejecuta INSTALAR.bat
+  echo Primero ejecuta lanzadores\00_instalar.bat
   pause
   exit /b 1
 )

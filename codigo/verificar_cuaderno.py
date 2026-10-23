@@ -5,8 +5,8 @@ import nbformat
 from nbclient import NotebookClient
 from jupyter_client import KernelManager
 
-root=Path(__file__).resolve().parent
-nb=nbformat.read(root/archivo('Curva_de_Phillips.ipynb'),as_version=4)
+root=Path(__file__).resolve().parents[1]
+nb=nbformat.read(root/'cuadernos'/archivo('Curva_de_Phillips.ipynb'),as_version=4)
 nbformat.validate(nb)
 # Fuerza el kernel al mismo intérprete que ejecuta el orquestador.
 manager=KernelManager(kernel_name='python3')
@@ -21,7 +21,7 @@ finally:
     if manager.has_kernel:
         manager.shutdown_kernel(now=True)
     manager.cleanup_resources()
-nbformat.write(nb,root/archivo('Curva_de_Phillips.ipynb'))
+nbformat.write(nb,root/'cuadernos'/archivo('Curva_de_Phillips.ipynb'))
 from nbformat.sign import NotebookNotary
 NotebookNotary().sign(nb)
 errors=[o for c in nb.cells if c.cell_type=='code' for o in c.get('outputs',[]) if o.output_type=='error']

@@ -27,3 +27,10 @@ cuadernos_jupyter/
 informes/
 site/
 src/
+
+cuadernos/*
+!cuadernos/.gitkeep
+
+.jupyter/
+.runtime/
+!cuadernos/Curva_de_Phillips.ipynb

@@ -8,19 +8,19 @@ import hashlib, json, os, re, shutil, subprocess
 import numpy as np
 import pandas as pd
 from salidas import archivo
-ROOT=Path(__file__).resolve().parent
+ROOT=Path(__file__).resolve().parents[1]
 
 
 def executable():
     configured=os.environ.get('X13_EXECUTABLE')
     path=Path(configured) if configured else ROOT/'herramientas'/'x13'/('x13as_ascii.exe' if os.name=='nt' else 'x13as_ascii')
     if not path.is_file():
-        raise FileNotFoundError('Falta X-13. Ejecuta python instalar_x13.py o configura X13_EXECUTABLE con la ruta del ejecutable oficial.')
+        raise FileNotFoundError('Falta X-13. Ejecuta python scripts/00_instalar_x13.py o configura X13_EXECUTABLE con la ruta del ejecutable oficial.')
     return path.resolve()
 
 
 def read_ipc(root=ROOT):
-    raw=pd.read_csv(Path(root)/'ine_ipc_chile.csv')
+    raw=pd.read_csv(Path(root)/'datos/ine_ipc_chile.csv')
     raw=raw.loc[raw['Glosa'].str.strip().eq('IPC General')].copy()
     raw['fecha']=pd.to_datetime(dict(year=raw['Año'],month=raw['Mes'],day=1))
     raw=raw.sort_values('fecha').reset_index(drop=True)
@@ -57,7 +57,7 @@ def read_component(path):
 
 def ajustar_ipc(root=ROOT):
     root=Path(root);d=read_ipc(root);exe=executable();spec=specification(d)
-    source_hash=hashlib.sha256((root/'ine_ipc_chile.csv').read_bytes()).hexdigest()
+    source_hash=hashlib.sha256((root/'datos/ine_ipc_chile.csv').read_bytes()).hexdigest()
     exe_hash=hashlib.sha256(exe.read_bytes()).hexdigest()
     key=hashlib.sha256((source_hash+exe_hash+spec).encode()).hexdigest()
     cache=root/'.cache_x13'/key;cache.mkdir(parents=True,exist_ok=True)

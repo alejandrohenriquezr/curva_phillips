@@ -16,7 +16,7 @@ class PhillipsTests(unittest.TestCase):
 
     def test_join_and_alignment(self):
         d,_,_=load_data()
-        ipc=pd.read_csv(ROOT/'ine_ipc_chile.csv')
+        ipc=pd.read_csv(ROOT/'datos/ine_ipc_chile.csv')
         ipc=ipc[ipc.Glosa.eq('IPC General')]
         self.assertGreater(len(d),12)
         pd.testing.assert_series_equal(d.fecha,pd.Series(pd.date_range(d.fecha.min(),d.fecha.max(),freq='MS'),name='fecha'))
@@ -64,7 +64,7 @@ class PhillipsTests(unittest.TestCase):
 
     def test_imacec_calendar_average_and_annual_ratio(self):
         d=load_imacec().set_index('fecha')
-        raw=pd.read_csv(ROOT/'bcch_imacec_chile.csv',parse_dates=['fecha']).set_index('fecha')
+        raw=pd.read_csv(ROOT/'datos/bcch_imacec_chile.csv',parse_dates=['fecha']).set_index('fecha')
         current=raw.loc['2026-05-01':'2026-07-01','imacec_original'].mean()
         previous=raw.loc['2025-05-01':'2025-07-01','imacec_original'].mean()
         self.assertAlmostEqual(d.loc['2026-06-01','imacec_promedio_anual'],100*(current/previous-1))
@@ -72,14 +72,15 @@ class PhillipsTests(unittest.TestCase):
         final=load_imacec(alignment='final').set_index('fecha')
         self.assertAlmostEqual(final.loc['2026-07-01','imacec_promedio_anual'],d.loc['2026-06-01','imacec_promedio_anual'])
         with tempfile.TemporaryDirectory() as folder:
-            raw.drop(pd.Timestamp('2025-06-01')).to_csv(Path(folder)/'bcch_imacec_chile.csv')
+            (Path(folder)/'datos').mkdir()
+            raw.drop(pd.Timestamp('2025-06-01')).to_csv(Path(folder)/'datos/bcch_imacec_chile.csv')
             with self.assertRaisesRegex(ValueError,'faltan meses'):
                 load_imacec(folder)
 
     def test_year_end_points_labels_and_pandemic(self):
         d,f=self.complete_figure()
         annual=load_imacec().set_index('fecha')
-        raw=pd.read_csv(ROOT/'bcch_imacec_chile.csv',parse_dates=['fecha']).set_index('fecha')
+        raw=pd.read_csv(ROOT/'datos/bcch_imacec_chile.csv',parse_dates=['fecha']).set_index('fecha')
         expected=100*(raw.loc['2021','imacec_original'].mean()/raw.loc['2020','imacec_original'].mean()-1)
         self.assertAlmostEqual(annual.loc['2021-12-01','imacec_acumulado_anual'],expected)
         self.assertAlmostEqual(annual.loc['2021-12-01','imacec_sa_anual'],100*(raw.loc['2021-12-01','imacec_sa']/raw.loc['2020-12-01','imacec_sa']-1))
@@ -116,10 +117,11 @@ class PhillipsTests(unittest.TestCase):
     def test_duplicate_month_rejected(self):
         with tempfile.TemporaryDirectory() as folder:
             p=Path(folder)
-            for source in [*ROOT.glob('ine_*_chile.csv'), ROOT/'bcch_imacec_chile.csv']:
-                (p/source.name).write_bytes(source.read_bytes())
-            ir=pd.read_csv(p/'ine_ir_chile.csv')
-            pd.concat([ir,ir.tail(1)]).to_csv(p/'ine_ir_chile.csv',index=False)
+            (p/'datos').mkdir()
+            for source in [*(ROOT/'datos').glob('ine_*_chile.csv'), ROOT/'datos/bcch_imacec_chile.csv']:
+                (p/'datos'/source.name).write_bytes(source.read_bytes())
+            ir=pd.read_csv(p/'datos/ine_ir_chile.csv')
+            pd.concat([ir,ir.tail(1)]).to_csv(p/'datos/ine_ir_chile.csv',index=False)
             with self.assertRaisesRegex(ValueError,'duplicadas'):
                 load_data(p)
 

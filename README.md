@@ -40,8 +40,8 @@ Conserva o confirma tus cambios locales antes de actualizar si Git indica que ha
 Desde la carpeta del repositorio, en PowerShell:
 
 ```powershell
-.\INSTALAR.bat
-.\EJECUTAR_TODO.bat
+.\lanzadores/00_instalar.bat
+.\lanzadores/01_ejecutar_todo.bat
 ```
 
 El instalador selecciona un Python compatible, crea `venv`, instala paquetes binarios y comprueba sus dependencias. Si encuentra un entorno incompatible, lo conserva como respaldo y crea otro. No necesitas compilar pandas ni instalar Visual Studio.
@@ -51,7 +51,7 @@ El segundo comando descarga las cuatro fuentes oficiales, las valida, ejecuta la
 También puedes ejecutar el mismo proceso directamente:
 
 ```powershell
-.\venv\Scripts\python.exe orquestar.py
+.\venv\Scripts\python.exe scripts/06_ejecutar_todo.py
 ```
 
 ## Instalar y ejecutar en Linux o macOS
@@ -60,8 +60,8 @@ Desde la carpeta del repositorio:
 
 ```bash
 python3.13 -m venv venv
-./venv/bin/python -m pip install --only-binary=:all: -r requirements-completo.txt
-./venv/bin/python orquestar.py
+./venv/bin/python -m pip install --only-binary=:all: -r dependencias/requirements-completo.txt
+./venv/bin/python scripts/06_ejecutar_todo.py
 ```
 
 ## Abrir los resultados
@@ -74,7 +74,7 @@ Cada ejecución utiliza un prefijo de fecha y hora `AAAAMMDD_HH_MM`, compartido 
 | `resultados/` | Gráfico HTML independiente, PNG, datos combinados, cobertura, meses excluidos y registro de ejecución |
 | `resultados/*_evolucion_etapas.csv` | Medias, extremos, variaciones de niveles y tasas para cada etapa |
 | `resultados/*_resumen_economico.json` | Cifras utilizadas por el cuaderno y el artículo, incluidas las etapas pre y pospandemia |
-| `*_Curva_de_Phillips.ipynb` | Cuaderno de esa edición con todas sus celdas ejecutadas |
+| `cuadernos/*_Curva_de_Phillips.ipynb` | Cuaderno de esa edición con todas sus celdas ejecutadas |
 | `site_pages/index.html` | Página con el gráfico integrado sin scroll interno y acceso al artículo |
 | `site_pages/articulo.html` | Versión del artículo para lectura en el navegador |
 
@@ -90,7 +90,7 @@ Los archivos generados no se versionan. El repositorio conserva el código, las 
 
 ## Usar el cuaderno y VS Code
 
-En Windows, `ABRIR_JUPYTER.bat` abre Jupyter. Selecciona el cuaderno base o el de una edición y ejecuta todas las celdas. El cuaderno actualiza las fuentes por defecto. El orquestador descarga una sola vez y reutiliza ese mismo corte para sus etapas.
+En Windows, `lanzadores/02_abrir_jupyter.bat` abre Jupyter. Entra en `cuadernos/` y selecciona el cuaderno base o el de una edición y ejecuta todas las celdas. El cuaderno actualiza las fuentes por defecto. El orquestador descarga una sola vez y reutiliza ese mismo corte para sus etapas.
 
 En VS Code, instala las extensiones Python y Jupyter, abre la carpeta del repositorio y selecciona el intérprete relativo `venv/Scripts/python.exe` en Windows o `venv/bin/python` en Linux/macOS. La tarea **Phillips: ejecutar todo** permite lanzar el proceso con `Ctrl+Shift+B`.
 
@@ -99,7 +99,7 @@ En VS Code, instala las extensiones Python y Jupyter, abre la carpeta del reposi
 Para usar expresamente los CSV que ya están en la carpeta, sin descargarlos:
 
 ```powershell
-.\EJECUTAR_TODO.bat --sin-actualizar-datos
+.\lanzadores/01_ejecutar_todo.bat --sin-actualizar-datos
 ```
 
 En el cuaderno, cambia `ACTUALIZAR_DATOS = False`. No es una actualización de fuentes: el registro identifica este modo como corte local. Para reproducir una edición anterior, conserva también sus CSV y metadatos, no solamente el HTML o el Word.
@@ -110,14 +110,14 @@ El eje horizontal es la desocupación ENE y el vertical la inflación a doce mes
 
 ENE se asigna al mes central del trimestre móvil. El promedio centrado de actividad necesita el mes siguiente: es una comparación retrospectiva, no una reconstrucción de la información conocida en tiempo real. No se rellenan faltantes ni se suman tasas interanuales para obtener crecimientos acumulados.
 
-La línea del 3% es la meta de inflación a horizonte de dos años. La banda 8,0–8,5% y su punto medio 8,25% son una referencia histórica de NAIRU para 2024-T3, no una estimación actual del proyecto. Consulta [la metodología](METODOLOGIA.md) y [las referencias](fuentes/REFERENCIAS.md).
+La línea del 3% es la meta de inflación a horizonte de dos años. La banda 8,0–8,5% y su punto medio 8,25% son una referencia histórica de NAIRU para 2024-T3, no una estimación actual del proyecto. Consulta [la metodología](documentos/METODOLOGIA.md) y [las referencias](fuentes/REFERENCIAS.md).
 
 ## IPC ajustado experimentalmente con X-13
 
 Para instalar el ejecutable oficial de Census y generar la variante ajustada:
 
 ```powershell
-.\EJECUTAR_TODO.bat --ipc sa --instalar-x13
+.\lanzadores/01_ejecutar_todo.bat --ipc sa --instalar-x13
 ```
 
 Después basta `--ipc sa`. El modo predeterminado es `--ipc original`. El ajuste X-13/SEATS es experimental, revisable y no oficial del INE. Conserva la especificación, las advertencias, las tablas y los hashes en los resultados de la edición. No ajusta ENE ni IR ni incorpora un calendario chileno específico. Las dos variantes utilizan nombres distintos y pueden coexistir.
@@ -137,6 +137,20 @@ El workflow descarga las fuentes oficiales y publica una edición nueva. No se e
 
 La firma se configura en `autor.json`. Aparece en la cabecera del sitio y del gráfico independiente y en el texto y las propiedades del Word; el pie del sitio no la repite. Los datos se atribuyen al INE y al BCCh.
 
-Las URL exactas de las fuentes están en `extractors/` y `actualizar_imacec.py`. La descarga conjunta, las coberturas y los hashes se registran en `fuentes/actualizacion.json` y se copian a los resultados de cada edición. Revisa el contenido y la presentación del artículo antes de publicarlo en LinkedIn; el proyecto no publica en esa red social.
+Las URL exactas de las fuentes están en `codigo/extractors/` y `actualizar_imacec.py`. La descarga conjunta, las coberturas y los hashes se registran en `fuentes/actualizacion.json` y se copian a los resultados de cada edición. Revisa el contenido y la presentación del artículo antes de publicarlo en LinkedIn; el proyecto no publica en esa red social.
 
 Al publicar manualmente, la opción **Generar imágenes para revisar el Word** produce un artefacto temporal de revisión visual. No añade el Word al sitio ni activa ejecuciones automáticas.
+
+## Organización
+
+- `scripts/`: entradas numeradas; 00 instala X-13 opcional, 01 actualiza datos, 02 crea el cuaderno, 03 lo ejecuta, 04 genera el artículo y 05 prepara el sitio. 06 coordina todas las etapas; 07 renderiza el Word para revisión opcional.
+- `lanzadores/`: 00 instala el entorno, 01 ejecuta el proceso completo y 02 abre Jupyter.
+- `codigo/`: módulos reutilizables y extractores; conservan nombres importables por Python.
+- `datos/`: CSV oficiales; `fuentes/`: fechas, referencias y hashes.
+- `configuracion/`: autoría y referencias macroeconómicas.
+- `dependencias/`: requisitos de instalación.
+- `documentos/`: metodología; `cuadernos/`: notebooks generados.
+- `tests/`: pruebas automatizadas.
+- `informe/`, `resultados/` y `site_pages/`: salidas regenerables.
+
+Los comandos se ejecutan desde la raíz. El comando habitual es `python scripts/06_ejecutar_todo.py`; no es necesario ejecutar cada etapa por separado.

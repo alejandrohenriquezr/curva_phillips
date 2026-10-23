@@ -1,7 +1,7 @@
 param([switch]$SoloPreparar)
 
 $ErrorActionPreference = 'Stop'
-$root = $PSScriptRoot
+$root = Split-Path -Parent $PSScriptRoot
 $environmentPath = Join-Path $root 'venv'
 
 function Test-CompatiblePython([string]$Executable, [string[]]$Prefix = @()) {
@@ -58,7 +58,7 @@ if (-not $pipReady) {
     if ($LASTEXITCODE -ne 0) { throw 'No se pudo preparar pip en el entorno.' }
 }
 if ($SoloPreparar) { exit 0 }
-& $python -m pip install --only-binary=:all: -r (Join-Path $root 'requirements-completo.txt')
+& $python -m pip install --only-binary=:all: -r (Join-Path $root 'dependencias\requirements-completo.txt')
 if ($LASTEXITCODE -ne 0) { throw 'Fallo la instalacion de dependencias. No se marca la instalacion como completa.' }
 & $python -m pip check
 if ($LASTEXITCODE -ne 0) { throw 'Hay dependencias incompatibles en el entorno.' }

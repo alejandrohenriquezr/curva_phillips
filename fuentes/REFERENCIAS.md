@@ -26,4 +26,4 @@ Se incorporan las series originales y desestacionalizadas empalmadas del BCCh, b
 
 ## IPC histórico empalmado
 
-Archivo INE: serie histórica empalmada diciembre de 2009 a la fecha, hoja `Serie_empalmada`, base 2023. Columnas: Año, Mes, Índice, Variación Mensual (%) y Variación 12 Meses (%). El extractor añade `Glosa = IPC General`. Se preservan las tasas anuales oficiales y los faltantes originales. El corte actual permite 186 meses comunes, enero de 2011 a junio de 2026. URL completa en `extractors/ipc_extractor.py`; versión del CSV identificada por SHA-256 en resultados.
+Archivo INE: serie histórica empalmada diciembre de 2009 a la fecha, hoja `Serie_empalmada`, base 2023. Columnas: Año, Mes, Índice, Variación Mensual (%) y Variación 12 Meses (%). El extractor añade `Glosa = IPC General`. Se preservan las tasas anuales oficiales y los faltantes originales. El corte actual permite 186 meses comunes, enero de 2011 a junio de 2026. URL completa en `codigo/extractors/ipc_extractor.py`; versión del CSV identificada por SHA-256 en resultados.

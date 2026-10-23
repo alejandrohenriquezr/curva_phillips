@@ -1,7 +1,7 @@
 """Instala el ejecutable oficial X-13 v1.1 build 62 (Windows o Linux)."""
 from pathlib import Path
 import hashlib, io, json, platform, tarfile, urllib.request, zipfile
-ROOT=Path(__file__).resolve().parent
+ROOT=Path(__file__).resolve().parents[1]
 
 def instalar():
     windows=platform.system()=='Windows'

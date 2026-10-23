@@ -8,9 +8,10 @@ from phillips import load_data
 
 class IPCX13Tests(unittest.TestCase):
     def test_monthly_input_validation(self):
-        raw=pd.read_csv(ROOT/'ine_ipc_chile.csv')
+        raw=pd.read_csv(ROOT/'datos/ine_ipc_chile.csv')
         with tempfile.TemporaryDirectory() as folder:
-            path=Path(folder)/'ine_ipc_chile.csv'
+            (Path(folder)/'datos').mkdir()
+            path=Path(folder)/'datos/ine_ipc_chile.csv'
             for changed,message in [(raw.drop(index=20),'faltan meses'),(pd.concat([raw,raw.iloc[[10]]]),'duplicados'),(raw.assign(**{'Índice':0}),'positivos')]:
                 changed.to_csv(path,index=False)
                 with self.assertRaisesRegex(ValueError,message):read_ipc(folder)

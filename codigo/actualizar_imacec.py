@@ -7,7 +7,7 @@ import re
 import urllib.request
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 SERIES = {
     'imacec_original': ('CCNN2018_IMACEC_01_A', 'F032.IMC.IND.Z.Z.EP18.Z.Z.0.M'),
     'imacec_sa': ('CCNN2018_IMACEC_03_A', 'F032.IMC.IND.Z.Z.EP18.Z.Z.1.M'),
@@ -44,7 +44,7 @@ def main(root=ROOT):
     data=pd.DataFrame(columns).rename_axis('fecha')
     if data.isna().any().any():
         raise ValueError('Las dos series tienen coberturas diferentes')
-    data.to_csv(Path(root)/'bcch_imacec_chile.csv', date_format='%Y-%m-%d', encoding='utf-8-sig')
+    data.to_csv(Path(root)/'datos/bcch_imacec_chile.csv', date_format='%Y-%m-%d', encoding='utf-8-sig')
     metadata.update(descargado_utc=datetime.now(timezone.utc).isoformat(),base='Promedio 2018=100',
                     precision='Índices publicados en la tabla web con un decimal; tasas calculadas son aproximaciones y pueden diferir de tasas oficiales calculadas con mayor precisión.',
                     transformacion='Color: variación interanual del promedio de tres índices originales centrado en el mes ENE. Panel: variación en 12 meses del índice desestacionalizado oficial, junto con IPC anual. Cierres de diciembre: promedio anual original IMACEC e IPC diciembre/diciembre; tamaño y color normalizados con las variaciones en 12 meses.')

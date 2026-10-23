@@ -16,6 +16,7 @@ class ActualizarTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         (self.root/'fuentes').mkdir()
+        (self.root/'datos').mkdir()
         for name in SOURCES:
             shutil.copy2(ROOT/name, self.root/name)
         self.before = self.hashes()
@@ -47,7 +48,7 @@ class ActualizarTests(unittest.TestCase):
         import pandas as pd
         def truncated(stage):
             self.bcch(stage)
-            path=stage/'bcch_imacec_chile.csv'
+            path=stage/'datos/bcch_imacec_chile.csv'
             pd.read_csv(path).iloc[:-2].to_csv(path,index=False)
         with patch('main.main',side_effect=self.ine), patch('actualizar_imacec.main',side_effect=truncated):
             with self.assertRaisesRegex(ValueError,'cobertura|período común'): actualizar(self.root)
@@ -56,7 +57,7 @@ class ActualizarTests(unittest.TestCase):
     def test_replace_failure_rolls_back(self):
         original=Path.replace
         def fail(source,dest):
-            if source.name=='ine_ir_chile.csv' and source.parent.name.startswith('.actualizacion-'):
+            if source.name=='ine_ir_chile.csv' and source.parent.parent.name.startswith('.actualizacion-'):
                 raise OSError('disco')
             return original(source,dest)
         with patch('main.main',side_effect=self.ine), patch('actualizar_imacec.main',side_effect=self.bcch), patch.object(Path,'replace',fail):

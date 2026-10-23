@@ -3,7 +3,7 @@ import html
 import json
 from pathlib import Path
 
-AUTOR = json.loads((Path(__file__).resolve().parent/'autor.json').read_text(encoding='utf-8'))
+AUTOR = json.loads((Path(__file__).resolve().parents[1]/'configuracion'/'autor.json').read_text(encoding='utf-8'))
 NOMBRE = AUTOR['nombre']
 FIRMA = f'Autor: {NOMBRE}'
 

@@ -6,9 +6,9 @@ from pathlib import Path
 import shutil
 import tempfile
 
-ROOT = Path(__file__).resolve().parent
-SOURCES = ('ine_ipc_chile.csv', 'ine_ene_chile.csv', 'ine_ir_chile.csv',
-           'bcch_imacec_chile.csv', 'fuentes/imacec_metadata.json')
+ROOT = Path(__file__).resolve().parents[1]
+SOURCES = ('datos/ine_ipc_chile.csv', 'datos/ine_ene_chile.csv', 'datos/ine_ir_chile.csv',
+           'datos/bcch_imacec_chile.csv', 'fuentes/imacec_metadata.json')
 
 
 def actualizar(root=ROOT):
@@ -22,6 +22,7 @@ def actualizar(root=ROOT):
     with tempfile.TemporaryDirectory(prefix='.actualizacion-', dir=root) as folder:
         stage = Path(folder)
         (stage / 'fuentes').mkdir()
+        (stage / 'datos').mkdir()
         descargar_ine(stage)
         descargar_bcch(stage)
         data, coverage, _ = load_data(stage)

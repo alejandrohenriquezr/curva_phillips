@@ -34,11 +34,11 @@ jobs:
           python-version: '3.13'
           cache: pip
           cache-dependency-path: |
-            requirements-notebook.txt
-            requirements-document.txt
-      - run: python -m pip install -r requirements-completo.txt
+            dependencias/requirements-notebook.txt
+            dependencias/requirements-document.txt
+      - run: python -m pip install -r dependencias/requirements-completo.txt
       - name: Descargar fuentes oficiales y generar análisis firmado
-        run: python orquestar.py
+        run: python scripts/06_ejecutar_todo.py
       - name: Preparar revisión visual del Word
         if: inputs.revisar_documento
         run: |
@@ -46,7 +46,7 @@ jobs:
           sudo apt-get install -y libreoffice-writer poppler-utils fonts-crosextra-carlito
           python -m pip install pdf2image
           documento=$(find informe -maxdepth 1 -name '*.docx' | sort | tail -n 1)
-          python tools/render_docx.py "$documento" --output_dir revision_documento
+          python scripts/07_renderizar_documento.py "$documento" --output_dir revision_documento
       - uses: actions/upload-artifact@v4
         if: inputs.revisar_documento
         with:

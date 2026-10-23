@@ -1,0 +1,77 @@
+"""Ejecuta validación, cuaderno, gráficos y Word con un único comando."""
+import argparse
+import importlib.util
+from salidas import normalizar_fecha
+from datetime import datetime
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+
+ROOT=Path(__file__).resolve().parents[1]
+
+def main():
+    for stream in [sys.stdout,sys.stderr]:
+        if hasattr(stream,"reconfigure"): stream.reconfigure(encoding="utf8")
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--fecha',default=None,help='Prefijo AAAAMMDD_HH_MM; por defecto fecha y hora local al iniciar')
+    p.add_argument('--ipc',choices=['original','sa'],default='original',help='IPC publicado o ajuste experimental X-13/SEATS')
+    p.add_argument('--instalar-x13',action='store_true',help='Descargar ejecutable oficial antes del proceso')
+    data_options=p.add_mutually_exclusive_group()
+    data_options.add_argument('--actualizar-datos',dest='actualizar_datos',action='store_true',help='Descargar fuentes oficiales (predeterminado)')
+    data_options.add_argument('--sin-actualizar-datos',dest='actualizar_datos',action='store_false',help='Usar explícitamente el corte local sin conexión')
+    p.set_defaults(actualizar_datos=True)
+    p.add_argument('--python-documento',default=sys.executable,help='Python con python-docx; por defecto el mismo intérprete')
+    args=p.parse_args()
+    try: args.fecha=normalizar_fecha(args.fecha)
+    except ValueError: p.error('--fecha debe ser AAAAMMDD_HH_MM, por ejemplo 20260924_07_32')
+    modules=['pandas','numpy','plotly','matplotlib','nbformat','nbclient','ipykernel','notebook','requests','openpyxl','markdown']
+    if args.python_documento==sys.executable: modules.append('docx')
+    missing=[m for m in modules if importlib.util.find_spec(m) is None]
+    print('Python del proceso:',sys.executable,flush=True)
+    if missing:
+        print('Faltan dependencias: '+', '.join(missing),file=sys.stderr)
+        print('Instálalas en este mismo Python y vuelve a ejecutar:\n& "'+sys.executable+'" -m pip install -r "'+str(ROOT/'dependencias'/'requirements-completo.txt')+'"',file=sys.stderr)
+        return 1
+    env=os.environ.copy();env['PYTHONPATH']=os.pathsep.join([str(ROOT/'codigo'),str(ROOT/'tests'),env.get('PYTHONPATH','')]);env['PHILLIPS_FECHA']=args.fecha;env['PYTHONUTF8']='1';env['PHILLIPS_IPC']=args.ipc
+    (ROOT/'resultados').mkdir(exist_ok=True)
+    log={'fecha_edicion':args.fecha,'python':sys.executable,'pasos':[],'estado':'en_proceso'}
+    if args.instalar_x13:
+        subprocess.run([sys.executable,'scripts/00_instalar_x13.py'],cwd=ROOT,check=True)
+    if args.ipc=='sa':
+        from ipc_x13 import executable
+        executable()
+    log['ipc_ajuste']=args.ipc
+    prefix=args.fecha+('_ipc_sa' if args.ipc=='sa' else '')
+    steps=[]
+    if args.actualizar_datos:steps.append(('Actualizar y validar fuentes oficiales',[sys.executable,'scripts/01_actualizar_datos.py']))
+    env['PHILLIPS_SIN_ACTUALIZAR']='1'  # El cuaderno reutiliza el corte de esta ejecución.
+    log['origen_datos']='descarga_oficial' if args.actualizar_datos else 'corte_local'
+    steps.extend([('Pruebas',[sys.executable,'-m','unittest','test_phillips','test_actualizar_datos','test_evolucion','-v']),
+                  ('Pruebas X-13',[sys.executable,'-m','unittest','test_ipc_x13','-v']),
+                  ('Crear cuaderno',[sys.executable,'scripts/02_crear_cuaderno.py']),
+                  ('Ejecutar cuaderno y exportar gráficos',[sys.executable,'scripts/03_ejecutar_cuaderno.py']),
+                  ('Generar Word y Markdown',[args.python_documento,'scripts/04_crear_articulo.py']),
+                  ('Preparar sitio para GitHub Pages',[sys.executable,'scripts/05_crear_sitio.py'])])
+    try:
+        for label,command in steps:
+            print(f'\n{label}',flush=True); start=time.monotonic()
+            result=subprocess.run(command,cwd=ROOT,env=env,check=False)
+            log['pasos'].append({'paso':label,'segundos':round(time.monotonic()-start,2),'codigo':result.returncode})
+            if result.returncode:raise RuntimeError(f'Falló {label}; revisar el mensaje anterior. No se marca esta edición como completa.')
+            if label=='Actualizar y validar fuentes oficiales':
+                log['actualizacion_fuentes']=json.loads((ROOT/'fuentes'/'actualizacion.json').read_text(encoding='utf-8'))
+        outputs=[ROOT/'cuadernos'/f'{prefix}_Curva_de_Phillips.ipynb',ROOT/'resultados'/f'{prefix}_phillips_animado.html',ROOT/'informe'/f'{prefix}_Articulo_LinkedIn_Curva_Phillips.docx',ROOT/'informe'/f'{prefix}_articulo_linkedin.md', ROOT/'site_pages'/'index.html', ROOT/'site_pages'/'articulo.html']
+        for path in outputs:
+            if not path.is_file() or not path.stat().st_size:raise RuntimeError(f'Falta resultado: {path}')
+        log['estado']='correcto';log['archivos']=[str(x) for x in outputs]
+        print('\nProceso completo. Revisar el Word antes de publicar.\n'+'\n'.join(str(x) for x in outputs))
+    except Exception as exc:
+        log['estado']='error';log['error']=str(exc);raise
+    finally:
+        (ROOT/'resultados'/f'{prefix}_ejecucion.json').write_text(json.dumps(log,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
+
+if __name__=='__main__':sys.exit(main())
+
