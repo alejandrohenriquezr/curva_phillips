@@ -6,6 +6,7 @@ import hashlib
 import json
 import numpy as np
 import pandas as pd
+from analisis_evolucion import resumen_etapas
 import plotly.graph_objects as go
 from graficos import enhance, figure_html, annual_normalization, date_labels, PANDEMIC_NOTE, border_color
 
@@ -63,11 +64,11 @@ def load_data(root=ROOT, alignment='central', ipc_ajuste='original'):
 
     ir = pd.read_csv(root/'ine_ir_chile.csv')
     ir['fecha'] = pd.to_datetime(dict(year=ir['año'], month=ir['mes'], day=1))
-    ir = unique_months(ir, 'IR').rename(columns={'var_12':'ir_real_anual', 'estado':'estado_ir'})
+    ir = unique_months(ir, 'IR').rename(columns={'var_12':'ir_real_anual', 'estado':'estado_ir', 'índice':'ir_indice_real'})
     # El IR ya es real: NO se vuelve a deflactar. Contraste por mes calendario.
-    lag = ir.set_index('fecha')['índice'].copy()
+    lag = ir.set_index('fecha')['ir_indice_real'].copy()
     lag.index = lag.index + pd.DateOffset(years=1)
-    computed = 100 * (ir.set_index('fecha')['índice'] / lag - 1)
+    computed = 100 * (ir.set_index('fecha')['ir_indice_real'] / lag - 1)
     check = ir.set_index('fecha')['ir_real_anual'].subtract(computed).dropna()
     if not check.empty and check.abs().max() > 0.11:
         raise ValueError('IR anual inconsistente con los niveles a 12 meses')
@@ -83,7 +84,7 @@ def load_data(root=ROOT, alignment='central', ipc_ajuste='original'):
     imacec=load_imacec(root,alignment)
     parts_data = [('IPC',ipc,'ipc_anual'), ('IR real',ir,'ir_real_anual'), ('ENE',ene,'desocupacion'), ('IMACEC original',imacec,'imacec_original'), ('IMACEC desestacionalizado',imacec,'imacec_sa'), ('IMACEC promedio 3m interanual',imacec,'imacec_promedio_anual')]
     coverage = pd.DataFrame([{'serie':name,'desde':d.fecha.min().strftime('%Y-%m'),'hasta':d.fecha.max().strftime('%Y-%m'),'filas':len(d),'faltantes':int(d[col].isna().sum())} for name,d,col in parts_data])
-    union = ipc[[c for c in ipc.columns if c=='fecha' or c.startswith('ipc_')]].merge(ir[['fecha','ir_real_anual','estado_ir']],on='fecha',how='outer',validate='one_to_one').merge(ene[['fecha','desocupacion','Trimestre','fecha_central_ene','fecha_final_ene']],on='fecha',how='outer',validate='one_to_one').sort_values('fecha')
+    union = ipc[[c for c in ipc.columns if c=='fecha' or c.startswith('ipc_')]].merge(ir[['fecha','ir_real_anual','ir_indice_real','estado_ir']],on='fecha',how='outer',validate='one_to_one').merge(ene[['fecha','desocupacion','Trimestre','fecha_central_ene','fecha_final_ene']],on='fecha',how='outer',validate='one_to_one').sort_values('fecha')
     union=union.merge(imacec,on='fecha',how='outer',validate='one_to_one').sort_values('fecha')
     required=['ipc_anual','ir_real_anual','desocupacion','imacec_promedio_anual','imacec_sa']
     missing = union[union[required].isna().any(axis=1)].copy()
@@ -184,7 +185,7 @@ def economic_summary(data):
             'inicio':row(data.iloc[0]),'final':row(data.iloc[-1]),
             'ir_negativos':int((data.ir_real_anual<0).sum()),'imacec_negativos':int((data.imacec_promedio_anual<0).sum()),
             'extremos':{c:{'min':row(data.loc[data[c].idxmin()]),'max':row(data.loc[data[c].idxmax()])} for c in columns},
-            'subperiodos':periods,'observaciones':{r.mes:row(r) for _,r in data.iterrows()}}
+            'evolucion':resumen_etapas(data),'subperiodos':periods,'observaciones':{r.mes:row(r) for _,r in data.iterrows()}}
 
 
 def export_results(data, coverage, missing, fig, out=ROOT/'resultados'):
@@ -193,9 +194,15 @@ def export_results(data, coverage, missing, fig, out=ROOT/'resultados'):
     (out/archivo('resumen_economico.json')).write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
     pd.DataFrame(summary['subperiodos']).to_csv(out/archivo('correlaciones_subperiodos.csv'),index=False,encoding='utf-8-sig')
     data.to_csv(out/archivo('datos_phillips.csv'),index=False,encoding='utf-8-sig')
+    rows=[]
+    for etapa in summary['evolucion']['etapas']:
+        for indicador,values in etapa['metricas'].items():
+            rows.append({**{k:etapa[k] for k in ('codigo','etapa','desde','hasta','n','correlacion')},'indicador':indicador,**values})
+    pd.DataFrame(rows).to_csv(out/archivo('evolucion_etapas.csv'),index=False,encoding='utf-8-sig')
     coverage.to_csv(out/archivo('cobertura.csv'),index=False,encoding='utf-8-sig')
     missing.to_csv(out/archivo('meses_excluidos.csv'),index=False,encoding='utf-8-sig')
     (out/archivo('phillips_animado.html')).write_text(figure_html(fig),encoding='utf8')
+    (out/archivo('phillips_embebido.html')).write_text(figure_html(fig,full_html=False,incluir_autoria=False),encoding='utf-8')
     data.loc[data.fecha.dt.month.eq(12),['mes','imacec_acumulado_anual','imacec_sa_anual','ipc_acumulado_diciembre','ipc_anual']].to_csv(out/archivo('cierres_anuales.csv'),index=False,encoding='utf-8-sig')
     (out/archivo('referencias_macro.json')).write_text(json.dumps(REFERENCIAS,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     manifest={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in [*ROOT.glob('ine_*_chile.csv'),ROOT/'bcch_imacec_chile.csv']}

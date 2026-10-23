@@ -42,7 +42,7 @@ La correlación descriptiva usa Pearson sobre las fechas comunes, sin interpreta
 
 $$\rho_{u,\pi}=\frac{\sum_t(u_t-\bar u)(\pi_t-\bar\pi)}{\sqrt{\sum_t(u_t-\bar u)^2\sum_t(\pi_t-\bar\pi)^2}}$$
 
-**Precisión y reproducibilidad.** La tabla web BDE publica índices con un decimal. Las tasas derivadas son aproximaciones calculadas con esos índices redondeados; no se presentan como tasas oficiales exactas. Las series pueden revisarse. El CSV local permite ejecutar el cuaderno sin conexión. La descarga y sus códigos, fecha y hashes están en `actualizar_imacec.py` y `fuentes/imacec_metadata.json`. El cuaderno no descarga ni sobrescribe las fuentes.
+**Precisión y reproducibilidad.** La tabla web BDE publica índices con un decimal. Las tasas derivadas son aproximaciones calculadas con esos índices redondeados; no se presentan como tasas oficiales exactas. Las series pueden revisarse. El CSV local permite ejecutar el cuaderno sin conexión. La descarga y sus códigos, fecha y hashes están en `actualizar_imacec.py` y `fuentes/imacec_metadata.json`. El cuaderno descarga y valida las cuatro fuentes por defecto; la reproducción sin descarga debe seleccionarse explícitamente.
 
 Series BCCh: `F032.IMC.IND.Z.Z.EP18.Z.Z.0.M` (original) y `F032.IMC.IND.Z.Z.EP18.Z.Z.1.M` (desestacionalizada). [Descripción oficial del IMACEC](https://www.bcentral.cl/areas/estadisticas/imacec).
 
@@ -62,3 +62,11 @@ La estimación no es oficial del INE. Se vuelve a estimar al cambiar los datos, 
 
 Fuente del software y documentación: [U.S. Census Bureau](https://www.census.gov/data/software/x13as.X-13ARIMA-SEATS.html). [Manual de referencia](https://www2.census.gov/software/x-13arima-seats/x13as/unix-linux/documentation/docx13as.pdf).
 
+
+## Comparación de la evolución por etapas
+
+Se usan ventanas descriptivas coherentes con el gráfico: antes de marzo de 2020; marzo de 2020 a agosto de 2023; y desde septiembre de 2023 hasta el último mes común. Este corte no equivale a una declaración de emergencia sanitaria ni identifica efectos causales.
+
+Para cada etapa se exportan observaciones, correlación IPC–desocupación, medias, extremos y meses correspondientes, además de los valores iniciales y finales. Los cambios de tasas se expresan en puntos porcentuales. Los cambios de niveles del IMACEC desestacionalizado y del índice de remuneraciones reales se calculan como 100 × (índice final / índice inicial − 1); no se suman las tasas anuales. El último mes también se compara con febrero de 2020.
+
+Las medias de tasas interanuales no son tasas acumuladas ni crecimiento compuesto; las ventanas tienen longitudes distintas. La ENE usa trimestres móviles y se alinea al mes central. Los informes no interpretan las correlaciones, las diferencias de medias ni las referencias históricas como estimaciones causales. La tabla `evolucion_etapas.csv` y el resumen JSON conservan los cálculos utilizados por el Word, el artículo HTML y el cuaderno.

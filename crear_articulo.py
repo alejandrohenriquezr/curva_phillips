@@ -1,6 +1,7 @@
 from salidas import archivo, FECHA
 from pathlib import Path
 from autoria import NOMBRE, FIRMA, AUTOR
+from analisis_evolucion import secciones_evolucion
 import json
 from docx import Document
 from docx.shared import Cm, Pt, RGBColor
@@ -30,14 +31,7 @@ sections=[
 ('p','El eje horizontal representa la desocupación ENE y el vertical la inflación anual. El área de las burbujas es proporcional al valor absoluto de la variación anual del IR real. El color muestra la variación interanual del promedio móvil de tres niveles originales del IMACEC: naranja para tasas negativas, claro para cero y azul para positivas. Las escalas son fijas dentro de cada edición.'),
 ('image',''),
 ('caption',f"Período común {summary['desde']}–{summary['hasta']}. ENE e IMACEC promedio 3m alineados al mes central. Bordes segmentados: ventana marzo de 2020–agosto de 2023. Referencias históricas: meta de inflación 3% y punto medio NAIRU 8,25%."),
-('h','Inicio, último punto y extremos'),
-('p',f"En {first['mes']}: IPC anual {f(first['ipc_anual'])}%, desocupación {f(first['desocupacion'])}% e IR real anual {f(first['ir_real_anual'])}%. En {last['mes']}: IPC {f(last['ipc_anual'])}%, desocupación {f(last['desocupacion'])}% e IR real {f(last['ir_real_anual'])}%."),
-('p',f"La inflación máxima de la muestra es {f(ext['ipc_anual']['max']['ipc_anual'])}% en {ext['ipc_anual']['max']['mes']}. La desocupación máxima es {f(ext['desocupacion']['max']['desocupacion'])}% en {ext['desocupacion']['max']['mes']}. Son extremos observados, no estimaciones estructurales."),
-('h','Comparación por períodos'),
-('p',f"Correlaciones por ventanas predefinidas: {period_text}. La última ventana se extiende hasta el último mes común disponible. Las diferencias entre períodos y la correlación agregada dependen de sus movimientos internos y de sus promedios. No se presentan pruebas de significancia ni regímenes estimados."),
-('h','Remuneraciones y actividad'),
-('p',f"El IR real cae en {summary['ir_negativos']} de {n} meses. Su mínimo es {f(ext['ir_real_anual']['min']['ir_real_anual'])}% en {ext['ir_real_anual']['min']['mes']} y su máximo {f(ext['ir_real_anual']['max']['ir_real_anual'])}% en {ext['ir_real_anual']['max']['mes']}. El IR ya está deflactado: no se descuenta otra vez el IPC. La burbuja representa magnitud, no signo salarial."),
-('p',f"El IMACEC promedio 3m tiene {summary['imacec_negativos']} tasas interanuales negativas. En {last['mes']} varía {f(last['imacec_promedio_anual'])}% interanual. El IMACEC desestacionalizado registra un nivel de {f(last['imacec_sa'],1)}, un cambio mensual de {f(last['imacec_sa_mensual'])}% y una variación anual de {f(last['imacec_sa_anual'])}%. Estas medidas comparan ventanas distintas y no estiman una brecha de producto."),
+*secciones_evolucion(summary),
 ('h','Cobertura y fechas de las fuentes'),
 ('p',f"El cruce conserva {n} meses entre {summary['desde']} y {summary['hasta']}. Se excluyen {len(missing)} meses de la unión por falta de al menos una variable necesaria. El último punto es el último mes común completo; puede terminar antes que una fuente individual. No se rellenan faltantes."),
 ('p','ENE se asigna al mes central de su trimestre móvil. El promedio centrado del IMACEC requiere el mes siguiente: el análisis es retrospectivo y no reconstruye la información conocida en tiempo real. Los trimestres móviles y las tasas anuales comparten observaciones.'),
@@ -97,7 +91,7 @@ if ipc_mode=='sa':
 doc=Document()
 s=doc.sections[0]; s.page_width=Cm(21); s.page_height=Cm(29.7)
 s.top_margin=Cm(1.8); s.bottom_margin=Cm(1.8); s.left_margin=Cm(2); s.right_margin=Cm(2)
-normal=doc.styles['Normal']; normal.font.name='Calibri'; normal.font.size=Pt(10.5)
+normal=doc.styles['Normal']; normal.font.name='Calibri'; normal.font.size=Pt(11)
 normal.paragraph_format.space_after=Pt(7); normal.paragraph_format.line_spacing=1.10
 for name,size in [('Title',25),('Subtitle',11),('Heading 1',14)]:
     st=doc.styles[name]; st.font.name='Calibri'; st.font.size=Pt(size); st.font.color.rgb=RGBColor.from_string('000000')

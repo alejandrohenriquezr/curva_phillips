@@ -1,120 +1,142 @@
 # Curva de Phillips de Chile
 
-Salidas con fecha y hora **AAAAMMDD_HH_MM**, con el período común calculado desde las últimas publicaciones oficiales del INE y del Banco Central de Chile. El análisis es descriptivo: no estima causalidad, NAIRU propia ni una recomendación monetaria.
+Este repositorio estudia cómo evolucionan la inflación, la desocupación, las remuneraciones reales y la actividad económica en Chile. Combina fuentes oficiales del Instituto Nacional de Estadísticas (INE) y del Banco Central de Chile (BCCh), y genera un análisis reproducible, un gráfico interactivo y un artículo firmado por **Alejandro Henríquez R.**
 
-## Ejecutar todo en VS Code
+El objetivo es describir las trayectorias de los indicadores y comparar su relación antes, durante y después de la ventana de pandemia. Se distinguen los cambios en niveles de los índices, las tasas interanuales y las diferencias en puntos porcentuales. El ejercicio no estima causalidad, una NAIRU propia ni recomendaciones de política monetaria.
 
-1. Abre la carpeta `C:\Proyectos\Curva_de_Phillips` en VS Code.
-2. Instala las extensiones **Python** y **Jupyter** de Microsoft si faltan.
-3. Ejecuta `INSTALAR.bat` una vez para instalar todas las dependencias, incluido Word.
-4. En `Ctrl+Shift+P` → **Python: Select Interpreter**, selecciona `C:\Proyectos\Curva_de_Phillips\venv\Scripts\python.exe` (opción para introducir la ruta si no aparece).
-5. Pulsa **Ctrl+Shift+B** y elige **Phillips: ejecutar todo**. También puedes usar F5 con **Phillips: proceso completo**.
+## Qué responde el análisis
 
-Alternativa en la terminal PowerShell de VS Code, sin activar el entorno:
+- ¿Cómo cambiaron el empleo, la inflación, los salarios reales y la actividad a lo largo de la muestra?
+- ¿Qué diferencias hay entre la etapa previa a marzo de 2020, la ventana marzo de 2020–agosto de 2023 y el período desde septiembre de 2023?
+- ¿Qué señales de recuperación o desaceleración muestran los niveles y las tasas del último mes común?
+- ¿Cómo varía la correlación inflación–desocupación entre etapas y qué límites tiene su interpretación?
+
+Las ventanas son cortes descriptivos coherentes con las marcas del gráfico. No identifican por sí solas los efectos de la pandemia. El informe incluye las fechas efectivamente disponibles, las medias por etapa, la evolución de cada indicador y conclusiones calculadas a partir de esa edición.
+
+## Requisitos
+
+Instala **Git** y **Python 3.13 de 64 bits**. En Windows también se admiten Python 3.11 y 3.12. La primera instalación y la actualización de fuentes requieren internet. El IPC original no necesita X-13.
+
+## Clonar el repositorio
+
+Abre una terminal en la carpeta donde quieras guardar el proyecto y ejecuta:
 
 ```powershell
-cd C:\Proyectos\Curva_de_Phillips
+git clone https://github.com/alejandrohenriquezr/curva_phillips.git
+cd curva_phillips
+```
+
+El proyecto se mantiene en una sola rama, `main`. Si ya lo tienes clonado, entra en su carpeta y actualízalo antes de ejecutar:
+
+```powershell
+git switch main
+git pull --ff-only
+```
+
+Conserva o confirma tus cambios locales antes de actualizar si Git indica que hay archivos modificados.
+
+## Instalar y ejecutar en Windows
+
+Desde la carpeta del repositorio, en PowerShell:
+
+```powershell
+.\INSTALAR.bat
+.\EJECUTAR_TODO.bat
+```
+
+El instalador selecciona un Python compatible, crea `venv`, instala paquetes binarios y comprueba sus dependencias. Si encuentra un entorno incompatible, lo conserva como respaldo y crea otro. No necesitas compilar pandas ni instalar Visual Studio.
+
+El segundo comando descarga las cuatro fuentes oficiales, las valida, ejecuta las pruebas y genera el cuaderno, los gráficos, el análisis por etapas, el artículo y el sitio. Si una descarga o validación falla, el proceso se detiene y no presenta el corte anterior como una actualización nueva.
+
+También puedes ejecutar el mismo proceso directamente:
+
+```powershell
 .\venv\Scripts\python.exe orquestar.py
 ```
 
-O ejecuta `EJECUTAR_TODO.bat`. El orquestador usa el mismo Python para pruebas, análisis, kernel y Word. Si falla una etapa, detiene la ejecución y registra el error. El parámetro opcional `--python-documento` permite usar otro Python con python-docx para Word; normalmente no es necesario.
+## Instalar y ejecutar en Linux o macOS
 
-El proceso comprende pruebas, creación del notebook, ejecución de todas las celdas (que genera tablas, PNG y HTML), y creación del Word y Markdown. El registro queda en `resultados/AAAAMMDD_HH_MM_ejecucion.json`. No publica automáticamente en GitHub ni LinkedIn.
+Desde la carpeta del repositorio:
 
-## Archivos de esta edición
-
-- `AAAAMMDD_HH_MM_Curva_de_Phillips.ipynb`: cuaderno explicado y ejecutado.
-- `resultados/AAAAMMDD_HH_MM_phillips_animado.html`: gráfico autónomo con Play, pausa, reinicio y selector mensual; funciona sin conexión.
-- `resultados/AAAAMMDD_HH_MM_phillips_estatico.png`: gráfico para el informe.
-- `informe/AAAAMMDD_HH_MM_Articulo_LinkedIn_Curva_Phillips.docx`: informe actualizado.
-- `informe/AAAAMMDD_HH_MM_articulo_linkedin.md`: texto del informe.
-- `resultados/AAAAMMDD_HH_MM_datos_phillips.csv`, `AAAAMMDD_HH_MM_cierres_anuales.csv`, `AAAAMMDD_HH_MM_resumen_economico.json` y `AAAAMMDD_HH_MM_correlaciones_subperiodos.csv`: datos y cifras reproducibles.
-- Cobertura, meses excluidos y hashes también llevan el prefijo de fecha.
-
-Las versiones anteriores permanecen en la carpeta. Para trabajar con esta edición, abre el archivo que comienza con `AAAAMMDD_HH_MM_`. `ABRIR_JUPYTER.bat` abre Jupyter para elegir el cuaderno. Selecciona el kernel del entorno del proyecto en VS Code. GitHub no ejecuta el JavaScript de un notebook: descarga el HTML para usar la animación.
-
-## Lectura del gráfico
-
-Phillips: eje X = desocupación ENE; eje Y = IPC anual; área proporcional a la magnitud del IR real anual; color divergente centrado en cero = crecimiento interanual del promedio móvil 3m del IMACEC original. Etiquetas MM-AAAA en enero, marzo de 2020 y agosto de 2023. El borde tiene un color distinto por año, excepto durante pandemia. Círculos con borde segmentado: ventana de pandemia Covid-19 en Chile definida para el gráfico, marzo de 2020–agosto de 2023.
-
-Panel inferior: IMACEC desestacionalizado e IPC en variación de 12 meses. En diciembre, rombos para el crecimiento del promedio anual del IMACEC original y cuadrados para inflación diciembre/diciembre. La posición vertical muestra el acumulado. Tamaño y color codifican la tasa a 12 meses normalizada con un máximo absoluto común a ambas series y fijo en toda la muestra. El tooltip explica ambas cifras; no se suman tasas. Solo se representan cierres de diciembre incluidos en la muestra; el último año puede ser parcial.
-
-La NAIRU de referencia, 8,25%, es el punto medio propio del rango BCCh 8,0–8,5% para 2024-T3, publicado en diciembre de 2024; no es una estimación oficial para cada año del gráfico. La horizontal es la meta de inflación del 3% a horizonte de dos años. Véanse [fórmulas y metodología](METODOLOGIA.md) y [fuentes](fuentes/REFERENCIAS.md).
-
-## Datos oficiales actualizados en cada ejecución
-
-La ejecución normal descarga IPC, ENE, IR real e IMACEC desde las fuentes oficiales y requiere internet. El comando `python orquestar.py` (también `EJECUTAR_TODO.bat` y la tarea de VS Code) actualiza, valida y después genera el análisis, el cuaderno y el informe. `python phillips.py` actualiza y genera solo gráficos y tablas. El cuaderno generado también actualiza al ejecutar todas sus celdas; el orquestador reutiliza una sola descarga para todas sus etapas. El IPC histórico empalmado tiene niveles desde diciembre de 2009, pero sus tasas anuales publicadas y el IR anual disponibles comienzan en enero de 2011. El extractor incorpora `Glosa = IPC General`. ENE se asigna al mes central: junio corresponde a mayo–julio. Es una comparación retrospectiva.
-
-La actualización es predeterminada; el parámetro anterior se conserva por compatibilidad:
-
-```powershell
-.\venv\Scripts\python.exe orquestar.py --actualizar-datos
+```bash
+python3.13 -m venv venv
+./venv/bin/python -m pip install --only-binary=:all: -r requirements-completo.txt
+./venv/bin/python orquestar.py
 ```
 
-Para reproducir expresamente los archivos locales sin conexión: `python orquestar.py --sin-actualizar-datos` o `python phillips.py --sin-actualizar-datos`. En el cuaderno, selecciona `ACTUALIZAR_DATOS = False`. No se usa automáticamente el corte anterior si falla la red. Las cuatro fuentes se descargan en una carpeta temporal, se validan juntas y solo entonces sustituyen los archivos locales; se rechaza cualquier pérdida de cobertura. `fuentes/actualizacion.json` registra fecha UTC, cobertura y hashes; el registro de ejecución distingue descarga oficial de corte local. Guarda una copia de los CSV para reproducir una edición anterior. El informe y las ventanas estadísticas se calculan con el nuevo corte y no conservan conclusiones del corte de 2026. El Word debe revisarse visualmente antes de publicar.
+## Abrir los resultados
 
-Los scripts principales son `orquestar.py`, `phillips.py` (cálculos y exportación), `graficos.py` (presentación y bordes SVG), `salidas.py` (prefijo), `crear_cuaderno.py`, `verificar_cuaderno.py` y `crear_articulo.py`. Los bordes segmentados se incorporan tanto al HTML independiente como al HTML del notebook mediante un script local de Plotly. No requieren extensiones adicionales.
+Cada ejecución utiliza un prefijo de fecha y hora `AAAAMMDD_HH_MM`, compartido por todos sus resultados. Esa fecha identifica la edición; el corte estadístico es el último mes con datos completos en todas las fuentes necesarias.
 
-## Si aparece ModuleNotFoundError de nbformat
+| Carpeta o archivo | Contenido |
+| --- | --- |
+| `informe/` | Artículo Word para LinkedIn y su texto Markdown, con autoría, evolución por etapas y conclusiones |
+| `resultados/` | Gráfico HTML independiente, PNG, datos combinados, cobertura, meses excluidos y registro de ejecución |
+| `resultados/*_evolucion_etapas.csv` | Medias, extremos, variaciones de niveles y tasas para cada etapa |
+| `resultados/*_resumen_economico.json` | Cifras utilizadas por el cuaderno y el artículo, incluidas las etapas pre y pospandemia |
+| `*_Curva_de_Phillips.ipynb` | Cuaderno de esa edición con todas sus celdas ejecutadas |
+| `site_pages/index.html` | Página con el gráfico integrado sin scroll interno y acceso al artículo |
+| `site_pages/articulo.html` | Versión del artículo para lectura en el navegador |
 
-El Python que ejecuta el proceso necesita todas las dependencias. En la terminal de VS Code:
-
-```powershell
-.\venv\Scripts\python.exe -m pip install -r requirements-completo.txt
-.\venv\Scripts\python.exe orquestar.py
-```
-
-Usa `python orquestar.py` si activaste ese entorno; el comando `py` puede seleccionar otro intérprete según su configuración. El orquestador muestra el ejecutable y detecta dependencias faltantes antes de las pruebas. No instala paquetes automáticamente. `INSTALAR.bat` y los lanzadores utilizan ahora el mismo `venv` de la carpeta.
-
-Cada ejecución fija una fecha y hora local al inicio, por ejemplo `20260924_07_32`, compartida por todos sus archivos. Puedes indicarla con `--fecha 20260924_07_32`. Dos ejecuciones dentro del mismo minuto utilizan el mismo prefijo y reemplazan esa edición. La fecha es de generación, no el corte de las series.
-
-## IPC con o sin ajuste estacional X-13
-
-Instala una vez el ejecutable oficial de Census (v1.1 build 62):
+Para abrir el sitio local con el gráfico interactivo, desde la carpeta del proyecto:
 
 ```powershell
-.\venv\Scripts\python.exe instalar_x13.py
+.\venv\Scripts\python.exe -m http.server 8000 --directory site_pages
 ```
 
-Después elige la variante para ejecutar todo:
+Después abre `http://localhost:8000` en tu navegador. Para terminar el servidor, pulsa `Ctrl+C`. En Linux o macOS usa `./venv/bin/python` en el mismo comando.
+
+Los archivos generados no se versionan. El repositorio conserva el código, las pruebas, el cuaderno base y un corte de referencia de las fuentes. El Word queda en `informe/`; no se publica ni se enlaza en GitHub Pages.
+
+## Usar el cuaderno y VS Code
+
+En Windows, `ABRIR_JUPYTER.bat` abre Jupyter. Selecciona el cuaderno base o el de una edición y ejecuta todas las celdas. El cuaderno actualiza las fuentes por defecto. El orquestador descarga una sola vez y reutiliza ese mismo corte para sus etapas.
+
+En VS Code, instala las extensiones Python y Jupyter, abre la carpeta del repositorio y selecciona el intérprete relativo `venv/Scripts/python.exe` en Windows o `venv/bin/python` en Linux/macOS. La tarea **Phillips: ejecutar todo** permite lanzar el proceso con `Ctrl+Shift+B`.
+
+## Reproducir un corte sin actualizar
+
+Para usar expresamente los CSV que ya están en la carpeta, sin descargarlos:
 
 ```powershell
-# Tasas originales publicadas por INE (opción predeterminada)
-.\venv\Scripts\python.exe orquestar.py --ipc original
-
-# IPC desestacionalizado experimental con SEATS
-.\venv\Scripts\python.exe orquestar.py --ipc sa
+.\EJECUTAR_TODO.bat --sin-actualizar-datos
 ```
 
-Puedes combinar instalación y proceso con `--ipc sa --instalar-x13`. El instalador descarga únicamente el ejecutable del archivo oficial de Census. Para usar un binario ya instalado, define `$env:X13_EXECUTABLE = 'C:\ruta\x13as_ascii.exe'`. El ejecutable no se publica en el repositorio. El IPC original no requiere X-13.
+En el cuaderno, cambia `ACTUALIZAR_DATOS = False`. No es una actualización de fuentes: el registro identifica este modo como corte local. Para reproducir una edición anterior, conserva también sus CSV y metadatos, no solamente el HTML o el Word.
 
-En el notebook, cambia `IPC_AJUSTE = 'original'` por `IPC_AJUSTE = 'sa'` en la primera celda y ejecuta todas las celdas. El selector cambia el eje del IPC en Phillips, la serie del panel inferior, los cierres de diciembre y las estadísticas exportadas. Para generar también un Word coherente con esa selección utiliza el orquestador. Los resultados SA se llaman `AAAAMMDD_HH_MM_ipc_sa_...`, de modo que las dos variantes pueden coexistir incluso con la misma fecha y hora.
+## Leer el gráfico y las comparaciones
 
-El código de ajuste está en [ipc_x13.py](ipc_x13.py). Para generar solo la comparación del IPC:
+El eje horizontal es la desocupación ENE y el vertical la inflación a doce meses. El área representa la magnitud de la variación anual del IR real; su signo se consulta en el tooltip. El color representa la variación interanual del promedio móvil centrado de tres niveles originales del IMACEC. El panel inferior compara tasas anuales de IMACEC desestacionalizado e IPC y marca los cierres de diciembre.
+
+ENE se asigna al mes central del trimestre móvil. El promedio centrado de actividad necesita el mes siguiente: es una comparación retrospectiva, no una reconstrucción de la información conocida en tiempo real. No se rellenan faltantes ni se suman tasas interanuales para obtener crecimientos acumulados.
+
+La línea del 3% es la meta de inflación a horizonte de dos años. La banda 8,0–8,5% y su punto medio 8,25% son una referencia histórica de NAIRU para 2024-T3, no una estimación actual del proyecto. Consulta [la metodología](METODOLOGIA.md) y [las referencias](fuentes/REFERENCIAS.md).
+
+## IPC ajustado experimentalmente con X-13
+
+Para instalar el ejecutable oficial de Census y generar la variante ajustada:
 
 ```powershell
-.\venv\Scripts\python.exe ipc_x13.py
+.\EJECUTAR_TODO.bat --ipc sa --instalar-x13
 ```
 
-La tabla `ipc_comparacion.csv` incluye índices original y ajustado, variaciones mensuales y anuales, tendencia, factor estacional e irregular. Se conservan las tasas oficiales y se añade la variación anual calculada desde niveles originales para distinguir el redondeo del efecto estacional. El directorio fechado `x13` guarda la especificación `.spc`, el informe `.out`, las advertencias `.err` y las tablas SEATS `s10`–`s13`; los metadatos incluyen hashes del CSV, ejecutable y especificación. Se reutiliza la caché solo cuando esos tres insumos coinciden.
+Después basta `--ipc sa`. El modo predeterminado es `--ipc original`. El ajuste X-13/SEATS es experimental, revisable y no oficial del INE. Conserva la especificación, las advertencias, las tablas y los hashes en los resultados de la edición. No ajusta ENE ni IR ni incorpora un calendario chileno específico. Las dos variantes utilizan nombres distintos y pueden coexistir.
 
-El ajuste es **experimental del proyecto, no oficial del INE**. Usa toda la historia mensual disponible, transformación logarítmica, selección ARIMA y detección de atípicos. No ajusta la ENE ni el IR. No incluye regresores de calendario chileno: la ejecución actual advierte un posible efecto calendario en residuos. Los datos ajustados pueden revisarse y usan información posterior a cada observación histórica. Consulte [METODOLOGIA.md](METODOLOGIA.md) y los diagnósticos antes de interpretar el resultado.
+## Publicar el sitio en GitHub Pages
 
-## Python compatible en Windows
+El sitio público está en [GitHub Pages](https://alejandrohenriquezr.github.io/curva_phillips/). El repositorio tiene un único workflow: **Publicar análisis en GitHub Pages**.
 
-`INSTALAR.bat` selecciona Python de 64 bits 3.13, 3.12 o 3.11. Evita Python 3.15 para estas dependencias. Reutiliza un entorno `venv` compatible; si no lo es, lo conserva como `venv_incompatible_...` y crea uno nuevo. Busca primero `PHILLIPS_PYTHON` y `.venv`, después el lanzador `py` y `python`.
+1. Confirma y sube los cambios de código a `main`.
+2. En GitHub, abre **Actions → Publicar análisis en GitHub Pages**.
+3. Pulsa **Run workflow**, selecciona `main` y confirma la ejecución.
+4. Espera a que terminen la generación y el despliegue; después comprueba el sitio.
 
-La instalación usa paquetes binarios y comprueba las dependencias con `pip check`; no requiere compilar pandas ni instalar Visual Studio. Para elegir un intérprete explícito, define `$env:PHILLIPS_PYTHON` con su ruta antes de ejecutar `INSTALAR.bat`.
+El workflow descarga las fuentes oficiales y publica una edición nueva. No se ejecuta por cada push, por un PR ni por un horario periódico. Las ejecuciones históricas de Actions son registros, no procesos que sigan activos.
 
+## Autoría y trazabilidad
 
-## Autoría y GitHub Pages
+La firma se configura en `autor.json`. Aparece en la cabecera del sitio y del gráfico independiente y en el texto y las propiedades del Word; el pie del sitio no la repite. Los datos se atribuyen al INE y al BCCh.
 
-Autor del análisis, cálculos y visualización: **Alejandro Henríquez R.** La firma se configura en `autor.json` y aparece en el HTML, Markdown y Word.
+Las URL exactas de las fuentes están en `extractors/` y `actualizar_imacec.py`. La descarga conjunta, las coberturas y los hashes se registran en `fuentes/actualizacion.json` y se copian a los resultados de cada edición. Revisa el contenido y la presentación del artículo antes de publicarlo en LinkedIn; el proyecto no publica en esa red social.
 
-El repositorio mantiene una sola rama de trabajo, `main`, y un único workflow: **Publicar análisis en GitHub Pages**. Se ejecuta únicamente cuando lo solicitas en Actions → Publicar análisis en GitHub Pages → Run workflow → main. No hay ejecuciones por cada push o PR, programaciones periódicas ni PR automáticos de datos. El workflow tiene un límite de 25 minutos para generar el análisis.
-
-Cada publicación descarga las cuatro fuentes oficiales, valida y genera una sola edición del análisis y publica `site_pages`. URL: https://alejandrohenriquezr.github.io/curva_phillips/ . La página permite leer el artículo y usar el gráfico. El documento Word para LinkedIn se genera en la carpeta local `informe` y no se publica ni se enlaza desde Pages.
-
-Para preparar el documento en tu equipo, ejecuta `EJECUTAR_TODO.bat`. El Word y el Markdown con tu firma quedan en `informe`, y los gráficos y tablas en `resultados`. Estas salidas y los cuadernos fechados no se versionan. El cuaderno base y los CSV de referencia se conservan para reproducibilidad.
-
-Las variantes anteriores y el historial se respaldaron antes de consolidar main. Los cambios de la actualización se integran en un solo commit mediante squash; no se reescribe el historial publicado.
+Al publicar manualmente, la opción **Generar imágenes para revisar el Word** produce un artefacto temporal de revisión visual. No añade el Word al sitio ni activa ejecuciones automáticas.

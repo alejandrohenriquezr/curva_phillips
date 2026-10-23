@@ -33,10 +33,12 @@ DASH_SCRIPT=r'''
 })();
 '''
 
-def figure_html(fig,full_html=True):
+def figure_html(fig,full_html=True,incluir_autoria=True):
     rendered=fig.to_html(full_html=full_html,include_plotlyjs=True,auto_play=False,
                        post_script=DASH_SCRIPT,config={'responsive':True,'displaylogo':False})
     credit='<header style="font:15px/1.5 system-ui;padding:16px 24px;color:#172b4d">'+credito_html()+'</header>'
+    if not incluir_autoria:
+        return rendered
     if full_html:
         rendered=rendered.replace('<head>', '<head><meta name="author" content="'+html.escape(NOMBRE,quote=True)+'">',1)
         return rendered.replace('<body>', '<body>'+credit,1)

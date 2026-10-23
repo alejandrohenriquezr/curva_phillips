@@ -27,7 +27,7 @@ def main():
     args=p.parse_args()
     try: args.fecha=normalizar_fecha(args.fecha)
     except ValueError: p.error('--fecha debe ser AAAAMMDD_HH_MM, por ejemplo 20260924_07_32')
-    modules=['pandas','numpy','plotly','matplotlib','nbformat','nbclient','ipykernel','notebook','requests','openpyxl']
+    modules=['pandas','numpy','plotly','matplotlib','nbformat','nbclient','ipykernel','notebook','requests','openpyxl','markdown']
     if args.python_documento==sys.executable: modules.append('docx')
     missing=[m for m in modules if importlib.util.find_spec(m) is None]
     print('Python del proceso:',sys.executable,flush=True)
@@ -49,7 +49,7 @@ def main():
     if args.actualizar_datos:steps.append(('Actualizar y validar fuentes oficiales',[sys.executable,'actualizar_datos.py']))
     env['PHILLIPS_SIN_ACTUALIZAR']='1'  # El cuaderno reutiliza el corte de esta ejecución.
     log['origen_datos']='descarga_oficial' if args.actualizar_datos else 'corte_local'
-    steps.extend([('Pruebas',[sys.executable,'-m','unittest','test_phillips','test_actualizar_datos','-v']),
+    steps.extend([('Pruebas',[sys.executable,'-m','unittest','test_phillips','test_actualizar_datos','test_evolucion','-v']),
                   ('Pruebas X-13',[sys.executable,'-m','unittest','test_ipc_x13','-v']),
                   ('Crear cuaderno',[sys.executable,'crear_cuaderno.py']),
                   ('Ejecutar cuaderno y exportar gráficos',[sys.executable,'verificar_cuaderno.py']),

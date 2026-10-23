@@ -79,6 +79,17 @@ estadisticas = economic_summary(datos)
 print(f"Correlación muestra completa: {estadisticas['correlacion']:.3f}")
 display(pd.DataFrame(estadisticas['subperiodos']).round(3))
 print('Subperíodos descriptivos predefinidos; no son regímenes estimados ni pruebas causales.')
+
+print(estadisticas['evolucion']['regla'])
+etapas = estadisticas['evolucion']['etapas']
+display(pd.DataFrame([dict(etapa=e['etapa'], desde=e['desde'], hasta=e['hasta'], meses=e['n'],
+    correlacion=e['correlacion'], **{k+'_media':v['media'] for k,v in e['metricas'].items()})
+    for e in etapas]).round(3))
+from analisis_evolucion import secciones_evolucion
+for tipo, texto in secciones_evolucion(estadisticas):
+    if tipo == 'h': print('\n'+texto)
+    else: print(texto+'\n')
+
 display(datos[['mes','distancia_meta_ipc_pp','distancia_referencia_nairu_pp']].tail(1).round(3))
 display(datos.groupby(datos.fecha.dt.year)[['desocupacion','ipc_anual','ir_real_anual','imacec_promedio_anual','imacec_sa']].mean().round(3))
 print('Advertencia: el último año puede ser parcial; no comparar promedios como años completos.')
