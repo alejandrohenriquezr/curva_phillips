@@ -5,5 +5,5 @@ if not exist "%PHILLIPS_PYTHON%" (
  echo Ejecuta lanzadores\00_instalar.bat primero.
  exit /b 1
 )
-"%PHILLIPS_PYTHON%" -X utf8 scripts\06_ejecutar_todo.py %*
+"%PHILLIPS_PYTHON%" -X utf8 scripts\05_ejecutar_todo.py %*
 if errorlevel 1 pause

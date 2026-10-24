@@ -2,11 +2,9 @@
 import html
 from html.parser import HTMLParser
 from urllib.parse import urlsplit, unquote
-from docx import Document
 import json
 from pathlib import Path
 import shutil
-import markdown
 from autoria import NOMBRE, credito_html
 from salidas import archivo, FECHA
 
@@ -18,9 +16,9 @@ def construir():
     summary=json.loads((ROOT/'resultados'/archivo('resumen_economico.json')).read_text(encoding='utf-8'))
     for name in ('phillips_animado.html','phillips_estatico.png','datos_phillips.csv','cobertura.csv','meses_excluidos.csv','fuentes_sha256.json','evolucion_etapas.csv','resumen_economico.json'):
         shutil.copy2(ROOT/'resultados'/archivo(name),site/'resultados'/archivo(name))
-    # El documento de LinkedIn se conserva localmente, fuera del sitio público.
-    (site/'articulo_linkedin.docx').unlink(missing_ok=True)
-    shutil.copy2(ROOT/'informe'/archivo('articulo_linkedin.md'),site/'articulo_linkedin.md')
+    # Evitar que un sitio generado anteriormente conserve páginas retiradas.
+    for name in ('articulo_linkedin.docx','articulo_linkedin.md','articulo.html'):
+        (site/name).unlink(missing_ok=True)
     shutil.copy2(ROOT/'cuadernos'/archivo('Curva_de_Phillips.ipynb'),site/'Curva_de_Phillips.ipynb')
     (site/'.nojekyll').write_text('',encoding='utf-8')
     css='''body{margin:0;background:#f7f7f2;color:#172b4d;font:17px/1.6 system-ui,sans-serif}main{max-width:1100px;margin:auto;padding:40px 24px}h1{font-size:clamp(30px,5vw,48px);line-height:1.15}h2{margin-top:2em}a{color:#2166ac}nav{display:flex;flex-wrap:wrap;gap:12px 24px;margin:28px 0}.grafico{width:100%;border:1px solid #d7dfe4;background:white;border-radius:8px;overflow:visible}.grafico>div{max-width:100%}img{max-width:100%;height:auto}.autoria{border-left:3px solid #2166ac;padding-left:18px;font-size:15px}.meta{color:#516477}article{max-width:850px}footer{margin-top:40px;font-size:14px}'''
@@ -35,16 +33,12 @@ def construir():
     body=(f'<h1>Curva de Phillips de Chile</h1>{credito_html()}'
           f'<p class="meta">{summary["desde"]} a {summary["hasta"]} · {summary["n"]} meses comunes · Edición {FECHA}</p>'
           '<p>Inflación, desocupación, remuneraciones reales y actividad. Análisis descriptivo con las últimas fuentes oficiales disponibles; la muestra termina en el último mes común completo.</p>'
-          '<nav aria-label="Documentos"><a href="articulo.html">Leer el artículo</a>'
-          '<a href="articulo_linkedin.md" download>Texto Markdown</a><a href="Curva_de_Phillips.ipynb" download>Cuaderno ejecutado</a>'
+          '<nav aria-label="Resultados"><a href="Curva_de_Phillips.ipynb" download>Cuaderno ejecutado</a>'
           f'<a href="{plot}">Abrir gráfico completo</a></nav>'
           f'<section class="grafico" aria-label="Gráfico interactivo de Phillips">{embedded}</section>'
           '<p>El gráfico permite reproducir y seleccionar meses. La asociación observada no identifica causalidad ni constituye una recomendación monetaria.</p>'
           f'<a href="resultados/{archivo("datos_phillips.csv")}" download>Descargar datos del análisis</a>')
     (site/'index.html').write_text(page('Curva de Phillips de Chile',body),encoding='utf-8')
-    text=(ROOT/'informe'/archivo('articulo_linkedin.md')).read_text(encoding='utf-8')
-    article=markdown.markdown(text).replace('../resultados/','resultados/')
-    (site/'articulo.html').write_text(page('Artículo de LinkedIn','<a href="index.html">Volver al gráfico</a><article>'+article+'</article>'),encoding='utf-8')
     validar(site)
     print('Sitio preparado y enlaces verificados:',site/'index.html')
     return site
@@ -55,7 +49,7 @@ def validar(site):
             super().__init__(); self.paths=[]
         def handle_starttag(self,tag,attrs):
             self.paths.extend(value for key,value in attrs if key in ('href','src') and value)
-    for name in ('index.html','articulo.html'):
+    for name in ('index.html',):
         text=(site/name).read_text(encoding='utf-8')
         if NOMBRE not in text:
             raise ValueError(f'Falta autoría en {name}')
@@ -68,8 +62,7 @@ def validar(site):
             dest=(site/unquote(url.path)).resolve()
             if not dest.is_relative_to(site.resolve()) or not dest.is_file():
                 raise ValueError(f'Enlace local inválido en {name}: {link}')
-    doc=Document(ROOT/'informe'/archivo('Articulo_LinkedIn_Curva_Phillips.docx'))
-    if doc.core_properties.author != NOMBRE or not any(NOMBRE in p.text for p in doc.paragraphs):
-        raise ValueError('El Word no conserva la firma visible y sus metadatos')
+    if any(site.rglob('*.docx')) or (site/'articulo.html').exists():
+        raise ValueError('El sitio no debe contener artículos ni documentos Word')
 
 if __name__=='__main__': construir()

@@ -69,7 +69,7 @@ Se usan ventanas descriptivas coherentes con el gráfico: antes de marzo de 2020
 
 Para cada etapa se exportan observaciones, correlación IPC–desocupación, medias, extremos y meses correspondientes, además de los valores iniciales y finales. Los cambios de tasas se expresan en puntos porcentuales. Los cambios de niveles del IMACEC desestacionalizado y del índice de remuneraciones reales se calculan como 100 × (índice final / índice inicial − 1); no se suman las tasas anuales. El último mes también se compara con febrero de 2020.
 
-Las medias de tasas interanuales no son tasas acumuladas ni crecimiento compuesto; las ventanas tienen longitudes distintas. La ENE usa trimestres móviles y se alinea al mes central. Los informes no interpretan las correlaciones, las diferencias de medias ni las referencias históricas como estimaciones causales. La tabla `evolucion_etapas.csv` y el resumen JSON conservan los cálculos utilizados por el Word, el artículo HTML y el cuaderno.
+Las medias de tasas interanuales no son tasas acumuladas ni crecimiento compuesto; las ventanas tienen longitudes distintas. La ENE usa trimestres móviles y se alinea al mes central. Los informes no interpretan las correlaciones, las diferencias de medias ni las referencias históricas como estimaciones causales. La tabla `evolucion_etapas.csv` y el resumen JSON conservan los cálculos utilizados por los resultados y el cuaderno.
 
 ## Calendario chileno del IPC experimental
 

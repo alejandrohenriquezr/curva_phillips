@@ -1,11 +1,6 @@
 name: Publicar análisis en GitHub Pages
 on:
   workflow_dispatch:
-    inputs:
-      revisar_documento:
-        description: Generar imágenes para revisar el Word
-        type: boolean
-        default: false
 
 env:
   TZ: America/Santiago
@@ -35,24 +30,9 @@ jobs:
           cache: pip
           cache-dependency-path: |
             dependencias/requirements-notebook.txt
-            dependencias/requirements-document.txt
       - run: python -m pip install -r dependencias/requirements-completo.txt
       - name: Descargar fuentes oficiales y generar análisis firmado
-        run: python scripts/06_ejecutar_todo.py
-      - name: Preparar revisión visual del Word
-        if: inputs.revisar_documento
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y libreoffice-writer poppler-utils fonts-crosextra-carlito
-          python -m pip install pdf2image
-          documento=$(find informe -maxdepth 1 -name '*.docx' | sort | tail -n 1)
-          python scripts/07_renderizar_documento.py "$documento" --output_dir revision_documento
-      - uses: actions/upload-artifact@v4
-        if: inputs.revisar_documento
-        with:
-          name: revision-documento
-          path: revision_documento/page-*.png
-          retention-days: 1
+        run: python scripts/05_ejecutar_todo.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

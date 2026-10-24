@@ -1,4 +1,4 @@
-"""Una firma compartida por HTML, Word y Markdown."""
+"""Una firma compartida por HTML y visualizaciones."""
 import html
 import json
 from pathlib import Path

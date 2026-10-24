@@ -1,4 +1,4 @@
-"""Ejecuta validación, cuaderno, gráficos y Word con un único comando."""
+"""Ejecuta validación, cuaderno, gráficos y sitio con un único comando."""
 import argparse
 import importlib.util
 from salidas import normalizar_fecha
@@ -23,12 +23,10 @@ def main():
     data_options.add_argument('--actualizar-datos',dest='actualizar_datos',action='store_true',help='Descargar fuentes oficiales (predeterminado)')
     data_options.add_argument('--sin-actualizar-datos',dest='actualizar_datos',action='store_false',help='Usar explícitamente el corte local sin conexión')
     p.set_defaults(actualizar_datos=True)
-    p.add_argument('--python-documento',default=sys.executable,help='Python con python-docx; por defecto el mismo intérprete')
     args=p.parse_args()
     try: args.fecha=normalizar_fecha(args.fecha)
     except ValueError: p.error('--fecha debe ser AAAAMMDD_HH_MM, por ejemplo 20260924_07_32')
-    modules=['pandas','numpy','plotly','matplotlib','nbformat','nbclient','ipykernel','notebook','requests','openpyxl','markdown','holidays']
-    if args.python_documento==sys.executable: modules.append('docx')
+    modules=['pandas','numpy','plotly','matplotlib','nbformat','nbclient','ipykernel','notebook','requests','openpyxl','holidays']
     missing=[m for m in modules if importlib.util.find_spec(m) is None]
     print('Python del proceso:',sys.executable,flush=True)
     if missing:
@@ -53,8 +51,7 @@ def main():
                   ('Pruebas X-13',[sys.executable,'-m','unittest','test_ipc_x13','-v']),
                   ('Crear cuaderno',[sys.executable,'scripts/02_crear_cuaderno.py']),
                   ('Ejecutar cuaderno y exportar gráficos',[sys.executable,'scripts/03_ejecutar_cuaderno.py']),
-                  ('Generar Word y Markdown',[args.python_documento,'scripts/04_crear_articulo.py']),
-                  ('Preparar sitio para GitHub Pages',[sys.executable,'scripts/05_crear_sitio.py'])])
+                  ('Preparar sitio para GitHub Pages',[sys.executable,'scripts/04_crear_sitio.py'])])
     try:
         for label,command in steps:
             print(f'\n{label}',flush=True); start=time.monotonic()
@@ -63,11 +60,11 @@ def main():
             if result.returncode:raise RuntimeError(f'Falló {label}; revisar el mensaje anterior. No se marca esta edición como completa.')
             if label=='Actualizar y validar fuentes oficiales':
                 log['actualizacion_fuentes']=json.loads((ROOT/'fuentes'/'actualizacion.json').read_text(encoding='utf-8'))
-        outputs=[ROOT/'cuadernos'/f'{prefix}_Curva_de_Phillips.ipynb',ROOT/'resultados'/f'{prefix}_phillips_animado.html',ROOT/'informe'/f'{prefix}_Articulo_LinkedIn_Curva_Phillips.docx',ROOT/'informe'/f'{prefix}_articulo_linkedin.md', ROOT/'site_pages'/'index.html', ROOT/'site_pages'/'articulo.html']
+        outputs=[ROOT/'cuadernos'/f'{prefix}_Curva_de_Phillips.ipynb',ROOT/'resultados'/f'{prefix}_phillips_animado.html', ROOT/'site_pages'/'index.html']
         for path in outputs:
             if not path.is_file() or not path.stat().st_size:raise RuntimeError(f'Falta resultado: {path}')
         log['estado']='correcto';log['archivos']=[str(x) for x in outputs]
-        print('\nProceso completo. Revisar el Word antes de publicar.\n'+'\n'.join(str(x) for x in outputs))
+        print('\nProceso completo.\n'+'\n'.join(str(x) for x in outputs))
     except Exception as exc:
         log['estado']='error';log['error']=str(exc);raise
     finally:

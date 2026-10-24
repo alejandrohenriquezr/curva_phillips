@@ -3,15 +3,15 @@
     "codigo": "F032.IMC.IND.Z.Z.EP18.Z.Z.0.M",
     "url": "https://si3.bcentral.cl/siete/ES/Siete/Cuadro/CAP_CCNN/MN_CCNN76/CCNN2018_IMACEC_01_A?idSerie=F032.IMC.IND.Z.Z.EP18.Z.Z.0.M",
     "actualizacion_bcch": "01.Oct.2026",
-    "sha256_respuesta": "8b8c0d028fefe4fce31df575615ccc7e3e35afe82d818f8719b70a730988783a"
+    "sha256_respuesta": "cc76e641488e9cb226857e75c25fa751e17de3af81def811686c2e36c5b1a5b9"
   },
   "imacec_sa": {
     "codigo": "F032.IMC.IND.Z.Z.EP18.Z.Z.1.M",
     "url": "https://si3.bcentral.cl/siete/ES/Siete/Cuadro/CAP_CCNN/MN_CCNN76/CCNN2018_IMACEC_03_A?idSerie=F032.IMC.IND.Z.Z.EP18.Z.Z.1.M",
     "actualizacion_bcch": "01.Oct.2026",
-    "sha256_respuesta": "67ae1ebc2f856aaee5226d1c4a988f29c2b1505e3d3421d9ec97937142e7868c"
+    "sha256_respuesta": "c2beb14f806219f2d5a02461c25037b0b022a5a4d72b12c5bfcb88ec6d4e8285"
   },
-  "descargado_utc": "2026-10-23T10:50:24.832033+00:00",
+  "descargado_utc": "2026-10-24T01:47:33.541018+00:00",
   "base": "Promedio 2018=100",
   "precision": "Índices publicados en la tabla web con un decimal; tasas calculadas son aproximaciones y pueden diferir de tasas oficiales calculadas con mayor precisión.",
   "transformacion": "Color: variación interanual del promedio de tres índices originales centrado en el mes ENE. Panel: variación en 12 meses del índice desestacionalizado oficial, junto con IPC anual. Cierres de diciembre: promedio anual original IMACEC e IPC diciembre/diciembre; tamaño y color normalizados con las variaciones en 12 meses."
